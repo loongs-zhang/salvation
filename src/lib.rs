@@ -19,6 +19,7 @@ const WIDTH: i32 = 960;
 const HEIGHT: i32 = 600;
 const LAND: Vector2i = Vector2i::new(0, 0);
 const WATER: Vector2i = Vector2i::new(0, 1);
+const SOURCE_ID: i32 = 0;
 
 // Deriving GodotClass makes the class available to Godot.
 #[derive(GodotClass)]
@@ -57,6 +58,7 @@ impl INode2D for RustWorld {
                 let val = noise.get_noise_2d(x as f32, y as f32);
                 self.tile_map_layer
                     .set_cell_ex(Vector2i::new(x, y))
+                    .source_id(SOURCE_ID)
                     .atlas_coords(if val > 0.1 { LAND } else { WATER })
                     .done();
             }

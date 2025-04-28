@@ -1,0 +1,16 @@
+[gd_scene load_steps=5 format=3 uid="uid://bwjfxc5vam4x3"]
+
+[ext_resource type="Script" uid="uid://d2qdea5ll4v6g" path="res://scripts/gd_world.gd" id="1_61uf6"]
+[ext_resource type="TileSet" uid="uid://br38cdjufbhgt" path="res://data/world.tres" id="1_hdhtd"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_rbxnn"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_qt27h"]
+noise = SubResource("FastNoiseLite_rbxnn")
+
+[node name="GDWorld" type="Node2D"]
+script = ExtResource("1_61uf6")
+noise_texture = SubResource("NoiseTexture2D_qt27h")
+
+[node name="TileMapLayer" type="TileMapLayer" parent="."]
+tile_set = ExtResource("1_hdhtd")
