@@ -1,0 +1,16 @@
+[configuration]
+entry_symbol = "gdext_rust_init"
+compatibility_minimum = 4.3
+reloadable = true
+
+[libraries]
+linux.debug.x86_64 = "res://../target/debug/libsalvation.so"
+linux.release.x86_64 = "res://../target/release/libsalvation.so"
+windows.debug.x86_64 = "res://../target/debug/salvation.dll"
+windows.release.x86_64 = "res://../target/release/salvation.dll"
+macos.debug = "res://../target/debug/libsalvation.dylib"
+macos.release = "res://../target/release/libsalvation.dylib"
+macos.debug.arm64 = "res://../target/debug/libsalvation.dylib"
+macos.release.arm64 = "res://../target/release/libsalvation.dylib"
+web.debug.wasm32 = "res://../target/wasm32-unknown-emscripten/debug/salvation.wasm"
+web.release.wasm32 = "res://../target/wasm32-unknown-emscripten/release/salvation.wasm"
