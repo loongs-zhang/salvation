@@ -4,6 +4,8 @@ pub mod world;
 
 pub mod player;
 
+pub mod bullet;
+
 struct Salvation;
 
 #[gdextension]

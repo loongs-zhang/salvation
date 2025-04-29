@@ -127,3 +127,6 @@ animation = &"guard"
 autoplay = "guard"
 
 [node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="BulletPoint" type="Node2D" parent="."]
+position = Vector2(28.5, 2.3)

@@ -86,9 +86,9 @@ impl RustWorld {
                 let val = noise.get_noise_2d(x as f32, y as f32);
                 if val <= 0.0 {
                     soil_array.push(vector2i);
-                } else if 0.0 >= val && val <= 0.1 {
+                } else if val <= 0.1 {
                     sand_array.push(vector2i);
-                } else if 0.1 >= val && val <= 0.2 {
+                } else if val <= 0.2 {
                     self.tile_map_layer
                         .set_cell_ex(vector2i)
                         .source_id(SOURCE_ID)
@@ -98,7 +98,7 @@ impl RustWorld {
                                 .expect("Atlas should not be empty"),
                         )
                         .done();
-                } else if 0.2 >= val && val <= 0.4 {
+                } else if val <= 0.4 {
                     glass_array.push(vector2i);
                 } else {
                     soil_array.push(vector2i);
