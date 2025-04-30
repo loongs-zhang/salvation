@@ -4,7 +4,7 @@ use godot::classes::{
     AnimatedSprite2D, Camera2D, CharacterBody2D, CollisionShape2D, ICharacterBody2D, Input,
     InputEvent, Node2D,
 };
-use godot::obj::{Base, Gd, OnReady};
+use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 
 #[derive(Default)]
@@ -42,14 +42,20 @@ impl ICharacterBody2D for RustPlayer {
     }
 
     fn process(&mut self, _delta: f64) {
+        let player_position = self.base().get_global_position();
         let mouse_position = self.get_mouse_position();
-        self.animated_sprite2d.look_at(mouse_position);
         self.weapon.look_at(mouse_position);
         let input = Input::singleton();
         let dir = Vector2::new(
             input.get_axis("move_left", "move_right"),
             input.get_axis("move_up", "move_down"),
         );
+        match self.state {
+            PlayerState::Guard | PlayerState::Shoot => {
+                self.animated_sprite2d.look_at(mouse_position)
+            }
+            PlayerState::Run => self.animated_sprite2d.look_at(player_position + dir),
+        }
         let mut character_body2d = self.base.to_gd();
         if dir != Vector2::ZERO {
             character_body2d.set_velocity(dir.normalized() * self.speed);
