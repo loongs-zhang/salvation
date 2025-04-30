@@ -243,9 +243,10 @@ shape = SubResource("CircleShape2D_xgxvb")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_a2hqs")
-animation = &"attack"
+animation = &"run"
 autoplay = "guard"
-frame = 2
+frame = 5
+frame_progress = 0.920894
 
 [node name="Area2D" type="ZombieAttackArea" parent="."]
 light_mask = 0
