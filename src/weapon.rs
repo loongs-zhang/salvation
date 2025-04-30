@@ -26,6 +26,10 @@ impl INode2D for RustWeapon {
             base,
         }
     }
+
+    fn ready(&mut self) {
+        self.last_shot_time -= self.fire_cooldown;
+    }
 }
 
 #[godot_api]
