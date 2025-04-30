@@ -1,7 +1,7 @@
 use crate::player::RustPlayer;
 use godot::builtin::{Array, Vector2i, array};
 use godot::classes::fast_noise_lite::NoiseType;
-use godot::classes::{FastNoiseLite, INode2D, Node2D, PackedScene, TileMapLayer};
+use godot::classes::{FastNoiseLite, INode2D, Node2D, TileMapLayer};
 use godot::global::godot_print;
 use godot::obj::{Base, Gd, NewGd, OnReady};
 use godot::register::{GodotClass, godot_api};
@@ -17,7 +17,6 @@ const SOURCE_ID: i32 = 0;
 #[derive(GodotClass)]
 #[class(base=Node2D)]
 pub struct RustWorld {
-    play_scene: OnReady<Gd<PackedScene>>,
     tile_map_layer: OnReady<Gd<TileMapLayer>>,
     rust_player: OnReady<Gd<RustPlayer>>,
     generated: HashSet<Vector2i>,
@@ -30,8 +29,6 @@ impl INode2D for RustWorld {
         // We could also initialize those manually inside ready(), but OnReady automatically defers initialization.
         // Alternatively to init(), you can use #[init(...)] on the struct fields.
         Self {
-            // OnReady::from_loaded(path) == OnReady::new(|| tools::load(path)).
-            play_scene: OnReady::from_loaded("res://scenes/rust_world.tscn"),
             tile_map_layer: OnReady::from_node("TileMapLayer"),
             rust_player: OnReady::from_node("RustPlayer"),
             generated: HashSet::new(),

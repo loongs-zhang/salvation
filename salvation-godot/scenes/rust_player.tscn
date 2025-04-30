@@ -1,8 +1,9 @@
-[gd_scene load_steps=19 format=3 uid="uid://d2ryhlh122dqg"]
+[gd_scene load_steps=20 format=3 uid="uid://d2ryhlh122dqg"]
 
 [ext_resource type="Texture2D" uid="uid://b0dlxb302gr4n" path="res://asserts/player_idle.png" id="1_iwbmd"]
 [ext_resource type="Texture2D" uid="uid://cxaowrd50063m" path="res://asserts/player_run.png" id="2_0rh5x"]
 [ext_resource type="Texture2D" uid="uid://c2qtrj3x75jew" path="res://asserts/player_walk.png" id="3_53o8o"]
+[ext_resource type="PackedScene" uid="uid://cigcujmruac6u" path="res://scenes/rust_weapon.tscn" id="4_0rh5x"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_h4u8k"]
 radius = 21.0
@@ -128,5 +129,6 @@ autoplay = "guard"
 
 [node name="Camera2D" type="Camera2D" parent="."]
 
-[node name="BulletPoint" type="Node2D" parent="."]
-position = Vector2(28.5, 2.3)
+[node name="Weapon" type="Node2D" parent="."]
+
+[node name="RustWeapon" parent="Weapon" instance=ExtResource("4_0rh5x")]

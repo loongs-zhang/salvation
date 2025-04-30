@@ -7,7 +7,7 @@ use godot::prelude::{GodotClass, godot_api};
 #[class(base=Node2D)]
 pub struct RustBullet {
     speed: real,
-    vector2: Vector2,
+    direction: Vector2,
     base: Base<Node2D>,
 }
 
@@ -16,7 +16,7 @@ impl INode2D for RustBullet {
     fn init(base: Base<Self::Base>) -> Self {
         Self {
             speed: 400.0,
-            vector2: Vector2::ONE,
+            direction: Vector2::ONE,
             base,
         }
     }
@@ -29,7 +29,7 @@ impl INode2D for RustBullet {
     }
 
     fn physics_process(&mut self, delta: f64) {
-        let vector2 = self.vector2;
+        let vector2 = self.direction;
         let speed = self.speed;
         let mut base_mut = self.base_mut();
         let current = base_mut.get_global_position();
@@ -46,7 +46,7 @@ impl INode2D for RustBullet {
 #[godot_api]
 impl RustBullet {
     #[func]
-    pub fn set_vector2(&mut self, vector2: Vector2) {
-        self.vector2 = vector2;
+    pub fn set_direction(&mut self, direction: Vector2) {
+        self.direction = direction;
     }
 }
