@@ -1,11 +1,13 @@
 use crate::weapon::RustWeapon;
+use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
 use godot::classes::{
-    AnimatedSprite2D, Camera2D, CharacterBody2D, CollisionShape2D, ICharacterBody2D, Input,
-    InputEvent, Node2D,
+    AnimatedSprite2D, CharacterBody2D, ICharacterBody2D, Input, InputEvent, Node2D,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
+
+static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
 #[derive(Default)]
 enum PlayerState {
@@ -21,9 +23,7 @@ pub struct RustPlayer {
     state: PlayerState,
     speed: real,
     animated_sprite2d: OnReady<Gd<AnimatedSprite2D>>,
-    collision_shape2d: OnReady<Gd<CollisionShape2D>>,
     weapon: OnReady<Gd<Node2D>>,
-    camera2d: OnReady<Gd<Camera2D>>,
     base: Base<CharacterBody2D>,
 }
 
@@ -34,15 +34,14 @@ impl ICharacterBody2D for RustPlayer {
             state: PlayerState::Guard,
             speed: 200.0,
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
-            collision_shape2d: OnReady::from_node("CollisionShape2D"),
             weapon: OnReady::from_node("Weapon"),
-            camera2d: OnReady::from_node("Camera2D"),
             base,
         }
     }
 
     fn process(&mut self, _delta: f64) {
         let player_position = self.base().get_global_position();
+        POSITION.store(player_position);
         let mouse_position = self.get_mouse_position();
         self.weapon.look_at(mouse_position);
         let input = Input::singleton();
@@ -103,11 +102,15 @@ impl RustPlayer {
     }
 
     pub fn get_mouse_position(&self) -> Vector2 {
-        self.camera2d.get_canvas_transform().affine_inverse()
+        self.base().get_canvas_transform().affine_inverse()
             * self
-                .camera2d
+                .base()
                 .get_viewport()
                 .expect("Viewport not found")
                 .get_mouse_position()
+    }
+
+    pub fn get_position() -> Vector2 {
+        POSITION.load()
     }
 }

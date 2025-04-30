@@ -8,6 +8,8 @@ pub mod weapon;
 
 pub mod bullet;
 
+pub mod zombie;
+
 struct Salvation;
 
 #[gdextension]

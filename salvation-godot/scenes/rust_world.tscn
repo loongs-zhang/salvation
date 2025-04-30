@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://dd7psn2s8iij0"]
+[gd_scene load_steps=4 format=3 uid="uid://dd7psn2s8iij0"]
 
 [ext_resource type="TileSet" uid="uid://br38cdjufbhgt" path="res://data/world.tres" id="1_nncyh"]
 [ext_resource type="PackedScene" uid="uid://d2ryhlh122dqg" path="res://scenes/rust_player.tscn" id="2_8q5hl"]
+[ext_resource type="PackedScene" uid="uid://5koe2fd6n3fc" path="res://scenes/rust_zombie.tscn" id="3_b5is2"]
 
 [node name="RustWorld" type="RustWorld"]
 
@@ -11,3 +12,6 @@ tile_set = ExtResource("1_nncyh")
 [node name="RustPlayer" parent="." instance=ExtResource("2_8q5hl")]
 
 [node name="Timer" type="Timer" parent="."]
+
+[node name="RustZombie" parent="." instance=ExtResource("3_b5is2")]
+position = Vector2(-238, -97)

@@ -4,6 +4,8 @@
 size = Vector2(8.2, 3.2)
 
 [node name="RustBullet" type="RustBullet"]
+light_mask = 0
+visibility_layer = 4
 
 [node name="ColorRect" type="ColorRect" parent="."]
 anchors_preset = 8

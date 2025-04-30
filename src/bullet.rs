@@ -22,10 +22,8 @@ impl INode2D for RustBullet {
     }
 
     fn ready(&mut self) {
-        let viewport = self.base().get_viewport().expect("Viewport not found");
-        let mouse =
-            viewport.get_canvas_transform().affine_inverse() * viewport.get_mouse_position();
-        self.base_mut().look_at(mouse);
+        let mouse_position = self.get_mouse_position();
+        self.base_mut().look_at(mouse_position);
     }
 
     fn physics_process(&mut self, delta: f64) {
@@ -48,5 +46,14 @@ impl RustBullet {
     #[func]
     pub fn set_direction(&mut self, direction: Vector2) {
         self.direction = direction;
+    }
+
+    pub fn get_mouse_position(&self) -> Vector2 {
+        self.base().get_canvas_transform().affine_inverse()
+            * self
+                .base()
+                .get_viewport()
+                .expect("Viewport not found")
+                .get_mouse_position()
     }
 }

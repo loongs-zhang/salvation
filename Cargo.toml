@@ -9,4 +9,5 @@ crate-type = ["cdylib"]
 
 [dependencies]
 rand = "0.8"
+crossbeam-utils = "0.8"
 godot = { git = "https://github.com/godot-rust/gdext.git", features = ["api-4-4"] }
