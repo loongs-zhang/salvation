@@ -1,11 +1,11 @@
 use crate::weapon::RustWeapon;
+use crate::world::RustWorld;
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
 use godot::classes::{
     AnimatedSprite2D, CharacterBody2D, ICharacterBody2D, Input, InputEvent, Node2D, Object,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
-use godot::prelude::godot_print;
 use godot::register::{GodotClass, godot_api};
 
 const MAX_HEALTH: u32 = 100;
@@ -17,6 +17,7 @@ static HEALTH: AtomicCell<u32> = AtomicCell::new(MAX_HEALTH);
 #[derive(Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
 enum PlayerState {
     #[default]
+    Born,
     Guard,
     Run,
     Shoot,
@@ -37,11 +38,20 @@ pub struct RustPlayer {
 impl ICharacterBody2D for RustPlayer {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
-            state: PlayerState::Guard,
+            state: PlayerState::Born,
             speed: 200.0,
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             weapon: OnReady::from_node("Weapon"),
             base,
+        }
+    }
+
+    fn ready(&mut self) {
+        if let Some(tree) = self.base().get_parent() {
+            tree.cast::<RustWorld>()
+                .signals()
+                .change_attack_animation()
+                .connect_self(RustWorld::on_change_attack_animation);
         }
     }
 
@@ -66,7 +76,7 @@ impl ICharacterBody2D for RustPlayer {
             input.get_axis("move_up", "move_down"),
         );
         match self.state {
-            PlayerState::Guard | PlayerState::Shoot | PlayerState::Dead => {
+            PlayerState::Born | PlayerState::Guard | PlayerState::Shoot | PlayerState::Dead => {
                 self.animated_sprite2d.look_at(mouse_position)
             }
             PlayerState::Run => self.animated_sprite2d.look_at(player_position + dir),
@@ -98,6 +108,20 @@ impl RustPlayer {
     #[signal]
     pub fn hit(hit_val: i64);
 
+    #[func]
+    pub fn born(&mut self) {
+        self.animated_sprite2d.play_ex().name("guard").done();
+        self.speed = 200.0;
+        self.state = PlayerState::Born;
+        Self::set_health(MAX_HEALTH);
+        if let Some(tree) = self.base().get_parent() {
+            tree.cast::<RustWorld>()
+                .signals()
+                .change_attack_animation()
+                .emit(true);
+        }
+    }
+
     pub fn guard(&mut self) {
         self.animated_sprite2d.play_ex().name("guard").done();
         self.speed = 200.0;
@@ -124,19 +148,17 @@ impl RustPlayer {
         self.animated_sprite2d.play_ex().name("die").done();
         self.speed = 0.0;
         self.state = PlayerState::Dead;
+        if let Some(tree) = self.base().get_parent() {
+            tree.cast::<RustWorld>()
+                .signals()
+                .change_attack_animation()
+                .emit(false);
+        }
         if let Some(mut tree) = self.base().get_tree() {
             if let Some(mut timer) = tree.create_timer(3.0) {
-                timer.connect("timeout", &self.base().callable("reset"));
+                timer.connect("timeout", &self.base().callable("born"));
             }
         }
-    }
-
-    #[func]
-    pub fn reset(&mut self) {
-        //todo alert or restart game
-        godot_print!("Player is dead, resetting health");
-        self.guard();
-        Self::set_health(MAX_HEALTH);
     }
 
     #[func]

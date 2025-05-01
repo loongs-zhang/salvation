@@ -1,9 +1,11 @@
 use crate::player::RustPlayer;
-use godot::builtin::{Array, Vector2i, array};
+use crate::zombie::RustZombie;
+use crate::zombie::animation::ZombieAnimation;
+use godot::builtin::{Array, Vector2, Vector2i, array};
 use godot::classes::fast_noise_lite::NoiseType;
-use godot::classes::{FastNoiseLite, INode2D, Node2D, TileMapLayer};
+use godot::classes::{FastNoiseLite, INode2D, Node2D, Object, PackedScene, TileMapLayer};
 use godot::global::godot_print;
-use godot::obj::{Base, Gd, NewGd, OnReady};
+use godot::obj::{Base, Gd, NewGd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use std::collections::HashSet;
 use std::time::Instant;
@@ -19,6 +21,7 @@ const SOURCE_ID: i32 = 0;
 pub struct RustWorld {
     tile_map_layer: OnReady<Gd<TileMapLayer>>,
     rust_player: OnReady<Gd<RustPlayer>>,
+    zombie_scene: OnReady<Gd<PackedScene>>,
     generated: HashSet<Vector2i>,
     base: Base<Node2D>,
 }
@@ -31,6 +34,7 @@ impl INode2D for RustWorld {
         Self {
             tile_map_layer: OnReady::from_node("TileMapLayer"),
             rust_player: OnReady::from_node("RustPlayer"),
+            zombie_scene: OnReady::from_loaded("res://scenes/rust_zombie.tscn"),
             generated: HashSet::new(),
             base,
         }
@@ -45,11 +49,26 @@ impl INode2D for RustWorld {
         // timer.set_one_shot(false);
         // timer.set_autostart(true);
         // timer.start();
+
+        self.generate_zombie(Vector2::new(250.0, 0.0));
     }
 }
 
 #[godot_api]
 impl RustWorld {
+    #[signal]
+    pub fn change_attack_animation(repeat: bool);
+
+    #[func]
+    pub fn on_change_attack_animation(&mut self, repeat: bool) {
+        self.base().get_children().iter_shared().for_each(|node| {
+            if node.is_class("RustZombie") {
+                let mut animation = node.get_node_as::<ZombieAnimation>("AnimatedSprite2D");
+                animation.signals().change_attack_animation().emit(repeat)
+            }
+        });
+    }
+
     #[func]
     pub fn generate(&mut self) {
         self.generate_world(20);
@@ -122,5 +141,19 @@ impl RustWorld {
             glass_array.len(),
             Instant::now().duration_since(now).as_millis()
         );
+    }
+
+    // todo 批量生成僵尸
+    pub fn generate_zombie(&mut self, position: Vector2) {
+        if let Some(mut zombie) = self.zombie_scene.try_instantiate_as::<RustZombie>() {
+            zombie.set_global_position(position);
+            self.base_mut().add_child(&zombie);
+            let mut animation = zombie.get_node_as::<ZombieAnimation>("AnimatedSprite2D");
+            animation
+                .signals()
+                .change_attack_animation()
+                .connect_self(ZombieAnimation::on_change_attack_animation);
+            godot_print!("Generated zombie with position:{:?}", position);
+        }
     }
 }
