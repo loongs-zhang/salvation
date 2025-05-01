@@ -1,21 +1,26 @@
 use crate::player::RustPlayer;
 use dashmap::DashMap;
-use godot::builtin::{Vector2, real};
+use godot::builtin::{GString, Vector2, real};
 use godot::classes::{
-    AnimatedSprite2D, Area2D, CharacterBody2D, IAnimatedSprite2D, IArea2D, ICharacterBody2D,
-    Node2D, Object,
+    AnimatedSprite2D, Area2D, CharacterBody2D, CollisionShape2D, IAnimatedSprite2D, IArea2D,
+    ICharacterBody2D, Node2D, Object,
 };
 use godot::global::godot_print;
 use godot::obj::{Base, Gd, InstanceId, OnReady, WithBaseField, WithUserSignals};
-use godot::register::{GodotClass, godot_api};
+use godot::register::{GodotClass, GodotConvert, godot_api};
 use rand::Rng;
 use std::sync::LazyLock;
 use std::time::{Duration, Instant};
 
-static ZOMBIE_STATE: LazyLock<DashMap<InstanceId, ZombieState>> = LazyLock::new(DashMap::default);
+const DAMAGE: i64 = 10;
 
-#[derive(Default, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
-enum ZombieState {
+const MAX_HEALTH: u32 = 100;
+
+static ZOMBIE_HEALTH: LazyLock<DashMap<InstanceId, u32>> = LazyLock::new(DashMap::default);
+
+#[derive(GodotConvert, Default, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
+#[godot(via = GString)]
+pub enum ZombieState {
     #[default]
     Guard,
     Run,
@@ -30,6 +35,8 @@ pub struct RustZombie {
     turn_cooldown: Duration,
     state: ZombieState,
     speed: real,
+    collision_shape2d: OnReady<Gd<CollisionShape2D>>,
+    area2d: OnReady<Gd<ZombieAttackArea>>,
     animated_sprite2d: OnReady<Gd<ZombieAnimation>>,
     base: Base<CharacterBody2D>,
 }
@@ -42,6 +49,8 @@ impl ICharacterBody2D for RustZombie {
             turn_cooldown: Duration::from_secs(5),
             state: ZombieState::Guard,
             speed: 50.0,
+            collision_shape2d: OnReady::from_node("CollisionShape2D"),
+            area2d: OnReady::from_node("Area2D"),
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             base,
         }
@@ -49,11 +58,22 @@ impl ICharacterBody2D for RustZombie {
 
     fn ready(&mut self) {
         self.last_turn_time -= self.turn_cooldown;
+        self.animated_sprite2d
+            .signals()
+            .state_change()
+            .connect_self(ZombieAnimation::on_state_change);
+        _ = ZOMBIE_HEALTH.insert(self.animated_sprite2d.instance_id(), MAX_HEALTH);
     }
 
     fn physics_process(&mut self, _delta: f64) {
-        if self.state == ZombieState::Attack || self.state == ZombieState::Dead {
+        if ZombieState::Attack == self.state || ZombieState::Dead == self.state {
             return;
+        }
+        if let Some(health) = ZOMBIE_HEALTH.get(&self.animated_sprite2d.instance_id()) {
+            if 0 == *health {
+                self.die();
+                return;
+            }
         }
         let zombie_position = self.base().get_global_position();
         let player_position = RustPlayer::get_position();
@@ -88,33 +108,58 @@ impl ICharacterBody2D for RustZombie {
 #[godot_api]
 impl RustZombie {
     pub fn guard(&mut self) {
+        if ZombieState::Dead == self.state {
+            return;
+        }
         self.animated_sprite2d.play_ex().name("guard").done();
         self.speed = 50.0;
         self.state = ZombieState::Guard;
-        _ = ZOMBIE_STATE.insert(self.animated_sprite2d.instance_id(), self.state);
+        self.animated_sprite2d
+            .signals()
+            .state_change()
+            .emit(self.state);
     }
 
     pub fn run(&mut self) {
+        if ZombieState::Dead == self.state {
+            return;
+        }
         self.base_mut().look_at(RustPlayer::get_position());
         self.animated_sprite2d.play_ex().name("run").done();
         self.speed = 250.0;
         self.state = ZombieState::Run;
-        _ = ZOMBIE_STATE.insert(self.animated_sprite2d.instance_id(), self.state);
+        self.animated_sprite2d
+            .signals()
+            .state_change()
+            .emit(self.state);
     }
 
     pub fn attack(&mut self) {
+        if ZombieState::Dead == self.state {
+            return;
+        }
         self.base_mut().look_at(RustPlayer::get_position());
         self.animated_sprite2d.play_ex().name("attack").done();
         self.speed = 50.0;
         self.state = ZombieState::Attack;
-        _ = ZOMBIE_STATE.insert(self.animated_sprite2d.instance_id(), self.state);
+        self.animated_sprite2d
+            .signals()
+            .state_change()
+            .emit(self.state);
     }
 
     pub fn die(&mut self) {
+        if ZombieState::Dead == self.state {
+            return;
+        }
         self.animated_sprite2d.play_ex().name("die").done();
         self.speed = 0.0;
         self.state = ZombieState::Dead;
-        _ = ZOMBIE_STATE.insert(self.animated_sprite2d.instance_id(), self.state);
+        self.collision_shape2d.queue_free();
+        self.animated_sprite2d
+            .signals()
+            .state_change()
+            .emit(self.state);
     }
 
     pub fn get_distance(&self) -> real {
@@ -125,57 +170,6 @@ impl RustZombie {
 
     pub fn is_face_to_face(angle: real) -> bool {
         (-60.0..=60.0).contains(&angle)
-    }
-}
-
-const HURT_FRAME: [i32; 4] = [2, 3, 4, 5];
-
-#[derive(GodotClass)]
-#[class(base=AnimatedSprite2D)]
-pub struct ZombieAnimation {
-    base: Base<AnimatedSprite2D>,
-}
-
-#[godot_api]
-impl IAnimatedSprite2D for ZombieAnimation {
-    fn init(base: Base<AnimatedSprite2D>) -> Self {
-        Self { base }
-    }
-
-    fn ready(&mut self) {
-        self.signals()
-            .frame_changed()
-            .connect_self(Self::on_animated_sprite_2d_frame_changed);
-    }
-}
-
-#[godot_api]
-impl ZombieAnimation {
-    #[signal]
-    pub fn sig();
-
-    #[func]
-    pub fn on_animated_sprite_2d_frame_changed(&mut self) {
-        let base = self.base();
-        let state = ZOMBIE_STATE
-            .get(&base.instance_id())
-            .map(|r| *r)
-            .unwrap_or_default();
-        let distance = self.get_distance();
-        if ZombieState::Attack == state
-            && distance <= 120.0
-            && base.get_animation() == "attack".into()
-            && HURT_FRAME.contains(&base.get_frame())
-        {
-            // 伤害玩家
-            godot_print!("distance:{}, attack frame:{}", distance, base.get_frame());
-        }
-    }
-
-    pub fn get_distance(&self) -> real {
-        let zombie_position = self.base().get_global_position();
-        let player_position = RustPlayer::get_position();
-        zombie_position.distance_to(player_position)
     }
 }
 
@@ -208,6 +202,7 @@ impl ZombieAttackArea {
 
     #[func]
     pub fn on_area_2d_body_entered(&mut self, body: Gd<Node2D>) {
+        godot_print!("ZombieAttackArea body entered: {:?}", body);
         if body.is_class("RustPlayer") {
             // 攻击玩家
             self.get_zombie().bind_mut().attack();
@@ -236,5 +231,89 @@ impl ZombieAttackArea {
             .get_parent()
             .expect("ZombieAttackArea parent not found")
             .cast::<RustZombie>()
+    }
+}
+
+const HURT_FRAME: [i32; 4] = [2, 3, 4, 5];
+
+#[derive(GodotClass)]
+#[class(base=AnimatedSprite2D)]
+pub struct ZombieAnimation {
+    state: ZombieState,
+    base: Base<AnimatedSprite2D>,
+}
+
+#[godot_api]
+impl IAnimatedSprite2D for ZombieAnimation {
+    fn init(base: Base<AnimatedSprite2D>) -> Self {
+        Self {
+            state: ZombieState::Guard,
+            base,
+        }
+    }
+
+    fn ready(&mut self) {
+        self.signals()
+            .frame_changed()
+            .connect_self(Self::on_animated_sprite_2d_frame_changed);
+        if let Some(tree) = self.base().get_parent() {
+            if let Some(tree) = tree.get_parent() {
+                tree.get_node_as::<RustPlayer>("RustPlayer")
+                    .signals()
+                    .hit()
+                    .connect_self(RustPlayer::on_hit);
+            }
+        }
+    }
+}
+
+#[godot_api]
+impl ZombieAnimation {
+    #[signal]
+    pub fn state_change(state: ZombieState);
+
+    #[func]
+    pub fn on_state_change(&mut self, state: ZombieState) {
+        self.state = state;
+    }
+
+    #[func]
+    pub fn on_animated_sprite_2d_frame_changed(&mut self) {
+        let base = self.base();
+        let distance = self.get_distance();
+        if ZombieState::Attack == self.state
+            && distance <= 120.0
+            && base.get_animation() == "attack".into()
+            && HURT_FRAME.contains(&base.get_frame())
+        {
+            if RustPlayer::is_dead() {
+                //todo 通过信号重新开始播放动画
+                if let Some(mut frames) = base.get_sprite_frames() {
+                    frames.set_animation_loop("attack", false);
+                }
+                return;
+            }
+            if let Some(tree) = base.get_parent() {
+                if let Some(tree) = tree.get_parent() {
+                    // 伤害玩家
+                    godot_print!(
+                        "zombie attack player, damage:{} distance:{} frame:{}",
+                        DAMAGE,
+                        distance,
+                        base.get_frame()
+                    );
+                    tree.get_node_as::<RustPlayer>("RustPlayer")
+                        .signals()
+                        .hit()
+                        .emit(DAMAGE);
+                }
+            }
+        }
+    }
+
+    pub fn get_distance(&self) -> real {
+        let zombie_position = self.base().get_global_position();
+        let player_position = RustPlayer::get_position();
+        zombie_position.distance_to(player_position)
     }
 }

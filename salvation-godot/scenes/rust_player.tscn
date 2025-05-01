@@ -1,12 +1,37 @@
-[gd_scene load_steps=20 format=3 uid="uid://d2ryhlh122dqg"]
+[gd_scene load_steps=27 format=3 uid="uid://d2ryhlh122dqg"]
 
 [ext_resource type="Texture2D" uid="uid://b0dlxb302gr4n" path="res://asserts/player_idle.png" id="1_iwbmd"]
 [ext_resource type="Texture2D" uid="uid://cxaowrd50063m" path="res://asserts/player_run.png" id="2_0rh5x"]
+[ext_resource type="Texture2D" uid="uid://dqjhelwwr6uaw" path="res://asserts/zombie.png" id="2_53o8o"]
 [ext_resource type="Texture2D" uid="uid://c2qtrj3x75jew" path="res://asserts/player_walk.png" id="3_53o8o"]
 [ext_resource type="PackedScene" uid="uid://cigcujmruac6u" path="res://scenes/rust_weapon.tscn" id="4_0rh5x"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_h4u8k"]
 radius = 18.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h4u8k"]
+atlas = ExtResource("2_53o8o")
+region = Rect2(2816, 640, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_g8j1n"]
+atlas = ExtResource("2_53o8o")
+region = Rect2(2944, 640, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ai780"]
+atlas = ExtResource("2_53o8o")
+region = Rect2(3072, 640, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jrx5i"]
+atlas = ExtResource("2_53o8o")
+region = Rect2(3200, 640, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1k218"]
+atlas = ExtResource("2_53o8o")
+region = Rect2(3328, 640, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4ayag"]
+atlas = ExtResource("2_53o8o")
+region = Rect2(3456, 640, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_tuyoq"]
 atlas = ExtResource("1_iwbmd")
@@ -64,6 +89,44 @@ region = Rect2(175, 0, 35, 57)
 animations = [{
 "frames": [{
 "duration": 1.0,
+"texture": ExtResource("1_iwbmd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h4u8k")
+}, {
+"duration": 1.0,
+"texture": ExtResource("1_iwbmd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h4u8k")
+}, {
+"duration": 1.0,
+"texture": ExtResource("1_iwbmd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h4u8k")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_g8j1n")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ai780")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jrx5i")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1k218")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4ayag")
+}],
+"loop": false,
+"name": &"die",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_tuyoq")
 }],
 "loop": true,
@@ -118,6 +181,7 @@ animations = [{
 }]
 
 [node name="RustPlayer" type="RustPlayer"]
+z_index = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 light_mask = 2
@@ -126,8 +190,10 @@ shape = SubResource("CircleShape2D_h4u8k")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_g8j1n")
-animation = &"guard"
+animation = &"die"
 autoplay = "guard"
+frame = 10
+frame_progress = 1.0
 
 [node name="Camera2D" type="Camera2D" parent="."]
 

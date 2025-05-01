@@ -2,19 +2,25 @@ use crate::weapon::RustWeapon;
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
 use godot::classes::{
-    AnimatedSprite2D, CharacterBody2D, ICharacterBody2D, Input, InputEvent, Node2D,
+    AnimatedSprite2D, CharacterBody2D, ICharacterBody2D, Input, InputEvent, Node2D, Object,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
+use godot::prelude::godot_print;
 use godot::register::{GodotClass, godot_api};
+
+const MAX_HEALTH: u32 = 100;
 
 static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
-#[derive(Default)]
+static HEALTH: AtomicCell<u32> = AtomicCell::new(MAX_HEALTH);
+
+#[derive(Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
 enum PlayerState {
     #[default]
     Guard,
     Run,
     Shoot,
+    Dead,
 }
 
 #[derive(GodotClass)]
@@ -40,6 +46,13 @@ impl ICharacterBody2D for RustPlayer {
     }
 
     fn process(&mut self, _delta: f64) {
+        if PlayerState::Dead == self.state {
+            return;
+        }
+        if Self::is_dead() {
+            self.die();
+            return;
+        }
         let player_position = self.base().get_global_position();
         POSITION.store(player_position);
         let mouse_position = self.get_mouse_position();
@@ -53,7 +66,7 @@ impl ICharacterBody2D for RustPlayer {
             input.get_axis("move_up", "move_down"),
         );
         match self.state {
-            PlayerState::Guard | PlayerState::Shoot => {
+            PlayerState::Guard | PlayerState::Shoot | PlayerState::Dead => {
                 self.animated_sprite2d.look_at(mouse_position)
             }
             PlayerState::Run => self.animated_sprite2d.look_at(player_position + dir),
@@ -82,6 +95,9 @@ impl ICharacterBody2D for RustPlayer {
 
 #[godot_api]
 impl RustPlayer {
+    #[signal]
+    pub fn hit(hit_val: i64);
+
     pub fn guard(&mut self) {
         self.animated_sprite2d.play_ex().name("guard").done();
         self.speed = 200.0;
@@ -104,6 +120,35 @@ impl RustPlayer {
             .fire();
     }
 
+    pub fn die(&mut self) {
+        self.animated_sprite2d.play_ex().name("die").done();
+        self.speed = 0.0;
+        self.state = PlayerState::Dead;
+        if let Some(mut tree) = self.base().get_tree() {
+            if let Some(mut timer) = tree.create_timer(3.0) {
+                timer.connect("timeout", &self.base().callable("reset"));
+            }
+        }
+    }
+
+    #[func]
+    pub fn reset(&mut self) {
+        //todo alert or restart game
+        godot_print!("Player is dead, resetting health");
+        self.guard();
+        Self::set_health(MAX_HEALTH);
+    }
+
+    #[func]
+    pub fn on_hit(&mut self, hit_val: i64) {
+        let health = Self::get_health();
+        Self::set_health(if hit_val > 0 {
+            health.saturating_sub(hit_val as u32)
+        } else {
+            health.saturating_add(-hit_val as u32)
+        });
+    }
+
     pub fn get_mouse_position(&self) -> Vector2 {
         self.base().get_canvas_transform().affine_inverse()
             * self
@@ -115,5 +160,17 @@ impl RustPlayer {
 
     pub fn get_position() -> Vector2 {
         POSITION.load()
+    }
+
+    pub fn set_health(health: u32) {
+        HEALTH.store(health);
+    }
+
+    pub fn get_health() -> u32 {
+        HEALTH.load()
+    }
+
+    pub fn is_dead() -> bool {
+        0 == Self::get_health()
     }
 }

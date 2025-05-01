@@ -15,4 +15,3 @@ tile_set = ExtResource("1_nncyh")
 
 [node name="RustZombie" parent="." instance=ExtResource("3_b5is2")]
 position = Vector2(250, 0)
-rotation = -2.0944
