@@ -1,45 +1,26 @@
 use crate::player::RustPlayer;
 use crate::zombie::animation::ZombieAnimation;
-use crate::zombie::attack::ZombieAttackArea;
-use dashmap::DashMap;
-use godot::builtin::{GString, Vector2, real};
+use crate::{ZOMBIE_MAX_HEALTH, ZombieState};
+use godot::builtin::{Vector2, real};
 use godot::classes::{CharacterBody2D, CollisionShape2D, ICharacterBody2D};
-use godot::obj::{Base, Gd, InstanceId, OnReady, WithBaseField};
-use godot::register::{GodotClass, GodotConvert, godot_api};
+use godot::obj::{Base, Gd, OnReady, WithBaseField};
+use godot::register::{GodotClass, godot_api};
 use rand::Rng;
-use std::sync::LazyLock;
 use std::time::{Duration, Instant};
 
 pub mod attack;
 
 pub mod animation;
 
-const DAMAGE: i64 = 10;
-
-const MAX_HEALTH: u32 = 100;
-
-static ZOMBIE_HEALTH: LazyLock<DashMap<InstanceId, u32>> = LazyLock::new(DashMap::default);
-
-#[derive(GodotConvert, Default, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
-#[godot(via = GString)]
-pub enum ZombieState {
-    #[default]
-    Guard,
-    Run,
-    Attack,
-    Dead,
-}
-
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
 pub struct RustZombie {
+    health: u32,
     last_turn_time: Instant,
     turn_cooldown: Duration,
     state: ZombieState,
     speed: real,
-    // todo 增加子弹受击检测
     collision_shape2d: OnReady<Gd<CollisionShape2D>>,
-    area2d: OnReady<Gd<ZombieAttackArea>>,
     animated_sprite2d: OnReady<Gd<ZombieAnimation>>,
     base: Base<CharacterBody2D>,
 }
@@ -48,12 +29,12 @@ pub struct RustZombie {
 impl ICharacterBody2D for RustZombie {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
+            health: ZOMBIE_MAX_HEALTH,
             last_turn_time: Instant::now(),
             turn_cooldown: Duration::from_secs(5),
             state: ZombieState::Guard,
             speed: 50.0,
             collision_shape2d: OnReady::from_node("CollisionShape2D"),
-            area2d: OnReady::from_node("Area2D"),
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             base,
         }
@@ -63,20 +44,13 @@ impl ICharacterBody2D for RustZombie {
         self.last_turn_time -= self.turn_cooldown;
         self.animated_sprite2d
             .signals()
-            .change_state()
-            .connect_self(ZombieAnimation::on_change_state);
-        _ = ZOMBIE_HEALTH.insert(self.animated_sprite2d.instance_id(), MAX_HEALTH);
+            .change_zombie_state()
+            .connect_self(ZombieAnimation::on_change_zombie_state);
     }
 
     fn physics_process(&mut self, _delta: f64) {
         if ZombieState::Attack == self.state || ZombieState::Dead == self.state {
             return;
-        }
-        if let Some(health) = ZOMBIE_HEALTH.get(&self.animated_sprite2d.instance_id()) {
-            if 0 == *health {
-                self.die();
-                return;
-            }
         }
         let zombie_position = self.base().get_global_position();
         let player_position = RustPlayer::get_position();
@@ -86,7 +60,7 @@ impl ICharacterBody2D for RustZombie {
         let to_player_dir = zombie_position.direction_to(player_position).normalized();
         let angle = current_zombie_dir.angle_to(to_player_dir).to_degrees();
         let mut character_body2d = self.base.to_gd();
-        if -60.0 < angle && angle < 60.0 && distance <= 200.0 {
+        if distance <= 200.0 && Self::is_face_to_face(angle) {
             // 跑向玩家
             self.run();
             character_body2d.set_velocity(to_player_dir * self.speed);
@@ -105,6 +79,19 @@ impl ICharacterBody2D for RustZombie {
 
 #[godot_api]
 impl RustZombie {
+    #[func]
+    pub fn on_hit(&mut self, hit_val: i64) {
+        let health = self.health;
+        self.health = if hit_val > 0 {
+            health.saturating_sub(hit_val as u32)
+        } else {
+            health.saturating_add(-hit_val as u32)
+        };
+        if 0 == self.health {
+            self.die();
+        }
+    }
+
     pub fn look_at_random_direction(&mut self) -> Vector2 {
         let zombie_position = self.base().get_global_position();
         let mut rng = rand::thread_rng();
@@ -114,17 +101,26 @@ impl RustZombie {
         direction
     }
 
+    pub fn get_animated_sprite2d(&self) -> Gd<ZombieAnimation> {
+        self.base()
+            .get_node_as::<ZombieAnimation>("AnimatedSprite2D")
+    }
+
+    fn notify_animation(&mut self) {
+        self.animated_sprite2d
+            .signals()
+            .change_zombie_state()
+            .emit(self.state);
+    }
+
     pub fn guard(&mut self) {
         if ZombieState::Dead == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("guard").done();
-        self.speed = 50.0;
+        self.speed = 20.0;
         self.state = ZombieState::Guard;
-        self.animated_sprite2d
-            .signals()
-            .change_state()
-            .emit(self.state);
+        self.notify_animation();
     }
 
     pub fn run(&mut self) {
@@ -135,10 +131,7 @@ impl RustZombie {
         self.animated_sprite2d.play_ex().name("run").done();
         self.speed = 250.0;
         self.state = ZombieState::Run;
-        self.animated_sprite2d
-            .signals()
-            .change_state()
-            .emit(self.state);
+        self.notify_animation();
     }
 
     pub fn attack(&mut self) {
@@ -149,10 +142,7 @@ impl RustZombie {
         self.animated_sprite2d.play_ex().name("attack").done();
         self.speed = 50.0;
         self.state = ZombieState::Attack;
-        self.animated_sprite2d
-            .signals()
-            .change_state()
-            .emit(self.state);
+        self.notify_animation();
     }
 
     pub fn die(&mut self) {
@@ -163,10 +153,7 @@ impl RustZombie {
         self.speed = 0.0;
         self.state = ZombieState::Dead;
         self.collision_shape2d.queue_free();
-        self.animated_sprite2d
-            .signals()
-            .change_state()
-            .emit(self.state);
+        self.notify_animation();
     }
 
     pub fn get_distance(&self) -> real {

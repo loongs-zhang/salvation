@@ -1,6 +1,8 @@
+use crate::BULLET_DAMAGE;
+use crate::zombie::RustZombie;
 use godot::builtin::{Vector2, real};
-use godot::classes::{INode2D, Node2D};
-use godot::obj::{Base, WithBaseField};
+use godot::classes::{Area2D, IArea2D, INode2D, Node2D, Object};
+use godot::obj::{Base, Gd, WithBaseField, WithUserSignals};
 use godot::prelude::{GodotClass, godot_api};
 
 #[derive(GodotClass)]
@@ -55,5 +57,39 @@ impl RustBullet {
                 .get_viewport()
                 .expect("Viewport not found")
                 .get_mouse_position()
+    }
+}
+
+#[derive(GodotClass)]
+#[class(base=Area2D)]
+pub struct BulletDamageArea {
+    base: Base<Area2D>,
+}
+
+#[godot_api]
+impl IArea2D for BulletDamageArea {
+    fn init(base: Base<Area2D>) -> Self {
+        Self { base }
+    }
+
+    fn ready(&mut self) {
+        self.signals()
+            .body_entered()
+            .connect_self(Self::on_area_2d_body_entered);
+    }
+}
+
+#[godot_api]
+impl BulletDamageArea {
+    #[signal]
+    pub fn sig();
+
+    #[func]
+    pub fn on_area_2d_body_entered(&mut self, body: Gd<Node2D>) {
+        if body.is_class("RustZombie") {
+            body.cast::<RustZombie>().bind_mut().on_hit(BULLET_DAMAGE);
+            let mut rust_bullet = self.base().get_parent().expect("RustBullet not found");
+            rust_bullet.queue_free();
+        }
     }
 }

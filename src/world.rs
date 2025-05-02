@@ -1,3 +1,4 @@
+use crate::PlayerState;
 use crate::player::RustPlayer;
 use crate::zombie::RustZombie;
 use crate::zombie::animation::ZombieAnimation;
@@ -57,14 +58,18 @@ impl INode2D for RustWorld {
 #[godot_api]
 impl RustWorld {
     #[signal]
-    pub fn change_attack_animation(repeat: bool);
+    pub fn change_player_state(player_state: PlayerState);
 
     #[func]
-    pub fn on_change_attack_animation(&mut self, repeat: bool) {
+    pub fn on_change_player_state(&mut self, player_state: PlayerState) {
         self.base().get_children().iter_shared().for_each(|node| {
             if node.is_class("RustZombie") {
-                let mut animation = node.get_node_as::<ZombieAnimation>("AnimatedSprite2D");
-                animation.signals().change_attack_animation().emit(repeat)
+                node.cast::<RustZombie>()
+                    .bind()
+                    .get_animated_sprite2d()
+                    .signals()
+                    .change_player_state()
+                    .emit(player_state)
             }
         });
     }
@@ -147,12 +152,13 @@ impl RustWorld {
     pub fn generate_zombie(&mut self, position: Vector2) {
         if let Some(mut zombie) = self.zombie_scene.try_instantiate_as::<RustZombie>() {
             zombie.set_global_position(position);
-            self.base_mut().add_child(&zombie);
-            let mut animation = zombie.get_node_as::<ZombieAnimation>("AnimatedSprite2D");
-            animation
+            zombie
+                .bind()
+                .get_animated_sprite2d()
                 .signals()
-                .change_attack_animation()
-                .connect_self(ZombieAnimation::on_change_attack_animation);
+                .change_player_state()
+                .connect_self(ZombieAnimation::on_change_player_state);
+            self.base_mut().add_child(&zombie);
             godot_print!("Generated zombie with position:{:?}", position);
         }
     }

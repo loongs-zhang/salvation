@@ -1,5 +1,6 @@
 use crate::weapon::RustWeapon;
 use crate::world::RustWorld;
+use crate::{PLAYER_MAX_HEALTH, PlayerState};
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
 use godot::classes::{
@@ -8,25 +9,12 @@ use godot::classes::{
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 
-const MAX_HEALTH: u32 = 100;
-
 static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
-
-static HEALTH: AtomicCell<u32> = AtomicCell::new(MAX_HEALTH);
-
-#[derive(Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
-enum PlayerState {
-    #[default]
-    Born,
-    Guard,
-    Run,
-    Shoot,
-    Dead,
-}
 
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
 pub struct RustPlayer {
+    health: u32,
     state: PlayerState,
     speed: real,
     animated_sprite2d: OnReady<Gd<AnimatedSprite2D>>,
@@ -38,6 +26,7 @@ pub struct RustPlayer {
 impl ICharacterBody2D for RustPlayer {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
+            health: PLAYER_MAX_HEALTH,
             state: PlayerState::Born,
             speed: 200.0,
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
@@ -50,17 +39,13 @@ impl ICharacterBody2D for RustPlayer {
         if let Some(tree) = self.base().get_parent() {
             tree.cast::<RustWorld>()
                 .signals()
-                .change_attack_animation()
-                .connect_self(RustWorld::on_change_attack_animation);
+                .change_player_state()
+                .connect_self(RustWorld::on_change_player_state);
         }
     }
 
     fn process(&mut self, _delta: f64) {
         if PlayerState::Dead == self.state {
-            return;
-        }
-        if Self::is_dead() {
-            self.die();
             return;
         }
         let player_position = self.base().get_global_position();
@@ -109,17 +94,25 @@ impl RustPlayer {
     pub fn hit(hit_val: i64);
 
     #[func]
+    pub fn on_hit(&mut self, hit_val: i64) {
+        let health = self.health;
+        self.health = if hit_val > 0 {
+            health.saturating_sub(hit_val as u32)
+        } else {
+            health.saturating_add(-hit_val as u32)
+        };
+        if 0 == self.health {
+            self.die();
+        }
+    }
+
+    #[func]
     pub fn born(&mut self) {
         self.animated_sprite2d.play_ex().name("guard").done();
         self.speed = 200.0;
         self.state = PlayerState::Born;
-        Self::set_health(MAX_HEALTH);
-        if let Some(tree) = self.base().get_parent() {
-            tree.cast::<RustWorld>()
-                .signals()
-                .change_attack_animation()
-                .emit(true);
-        }
+        self.health = PLAYER_MAX_HEALTH;
+        self.notify_zombies();
     }
 
     pub fn guard(&mut self) {
@@ -148,27 +141,12 @@ impl RustPlayer {
         self.animated_sprite2d.play_ex().name("die").done();
         self.speed = 0.0;
         self.state = PlayerState::Dead;
-        if let Some(tree) = self.base().get_parent() {
-            tree.cast::<RustWorld>()
-                .signals()
-                .change_attack_animation()
-                .emit(false);
-        }
+        self.notify_zombies();
         if let Some(mut tree) = self.base().get_tree() {
             if let Some(mut timer) = tree.create_timer(3.0) {
                 timer.connect("timeout", &self.base().callable("born"));
             }
         }
-    }
-
-    #[func]
-    pub fn on_hit(&mut self, hit_val: i64) {
-        let health = Self::get_health();
-        Self::set_health(if hit_val > 0 {
-            health.saturating_sub(hit_val as u32)
-        } else {
-            health.saturating_add(-hit_val as u32)
-        });
     }
 
     pub fn get_mouse_position(&self) -> Vector2 {
@@ -180,19 +158,16 @@ impl RustPlayer {
                 .get_mouse_position()
     }
 
+    fn notify_zombies(&mut self) {
+        if let Some(tree) = self.base().get_parent() {
+            tree.cast::<RustWorld>()
+                .signals()
+                .change_player_state()
+                .emit(self.state);
+        }
+    }
+
     pub fn get_position() -> Vector2 {
         POSITION.load()
-    }
-
-    pub fn set_health(health: u32) {
-        HEALTH.store(health);
-    }
-
-    pub fn get_health() -> u32 {
-        HEALTH.load()
-    }
-
-    pub fn is_dead() -> bool {
-        0 == Self::get_health()
     }
 }

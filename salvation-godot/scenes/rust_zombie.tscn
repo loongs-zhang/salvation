@@ -1,4 +1,4 @@
-[gd_scene load_steps=34 format=3 uid="uid://5koe2fd6n3fc"]
+[gd_scene load_steps=35 format=3 uid="uid://5koe2fd6n3fc"]
 
 [ext_resource type="Texture2D" uid="uid://dqjhelwwr6uaw" path="res://asserts/zombie.png" id="1_4lcne"]
 
@@ -232,7 +232,10 @@ animations = [{
 }]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_4lcne"]
-radius = 66.0
+radius = 36.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_ojx4y"]
+radius = 100.0
 
 [node name="RustZombie" type="RustZombie"]
 
@@ -243,14 +246,23 @@ shape = SubResource("CircleShape2D_xgxvb")
 
 [node name="AnimatedSprite2D" type="ZombieAnimation" parent="."]
 sprite_frames = SubResource("SpriteFrames_a2hqs")
-animation = &"attack"
+animation = &"guard"
 autoplay = "guard"
 
-[node name="Area2D" type="ZombieAttackArea" parent="."]
+[node name="ZombieAttackArea" type="ZombieAttackArea" parent="."]
 light_mask = 0
 visibility_layer = 2
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ZombieAttackArea"]
 light_mask = 0
 visibility_layer = 2
 shape = SubResource("CircleShape2D_4lcne")
+
+[node name="ZombieDamageArea" type="ZombieDamageArea" parent="."]
+light_mask = 0
+visibility_layer = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ZombieDamageArea"]
+light_mask = 0
+visibility_layer = 2
+shape = SubResource("CircleShape2D_ojx4y")
