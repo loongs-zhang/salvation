@@ -102,11 +102,6 @@ impl RustZombie {
         direction
     }
 
-    pub fn get_animated_sprite2d(&self) -> Gd<ZombieAnimation> {
-        self.base()
-            .get_node_as::<ZombieAnimation>("AnimatedSprite2D")
-    }
-
     fn notify_animation(&mut self) {
         self.animated_sprite2d
             .signals()
@@ -114,6 +109,7 @@ impl RustZombie {
             .emit(self.state);
     }
 
+    #[func]
     pub fn guard(&mut self) {
         if ZombieState::Dead == self.state {
             return;

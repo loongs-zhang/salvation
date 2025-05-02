@@ -30,6 +30,7 @@ pub enum PlayerState {
     Guard,
     Run,
     Shoot,
+    Hit,
     Dead,
 }
 

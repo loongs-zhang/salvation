@@ -53,15 +53,10 @@ impl ZombieAttackArea {
             self.get_zombie().bind_mut().attack();
             if let Some(mut tree) = self.base().get_tree() {
                 if let Some(mut timer) = tree.create_timer(0.5) {
-                    timer.connect("timeout", &self.base().callable("back_to_guard"));
+                    timer.connect("timeout", &self.get_zombie().callable("guard"));
                 }
             }
         }
-    }
-
-    #[func]
-    pub fn back_to_guard(&mut self) {
-        self.get_zombie().bind_mut().guard();
     }
 
     fn get_zombie(&self) -> Gd<RustZombie> {
@@ -71,8 +66,12 @@ impl ZombieAttackArea {
             .cast::<RustZombie>()
     }
 
-    fn get_zombie_animation(&mut self) -> Gd<ZombieAnimation> {
-        self.get_zombie().bind().get_animated_sprite2d()
+    fn get_zombie_animation(&self) -> Gd<ZombieAnimation> {
+        self.base()
+            .get_parent()
+            .expect("ZombieAttackArea parent not found")
+            .cast::<RustZombie>()
+            .get_node_as::<ZombieAnimation>("AnimatedSprite2D")
     }
 }
 
@@ -114,14 +113,11 @@ impl ZombieDamageArea {
         }
     }
 
-    fn get_zombie(&self) -> Gd<RustZombie> {
+    fn get_zombie_animation(&self) -> Gd<ZombieAnimation> {
         self.base()
             .get_parent()
             .expect("ZombieAttackArea parent not found")
             .cast::<RustZombie>()
-    }
-
-    fn get_zombie_animation(&mut self) -> Gd<ZombieAnimation> {
-        self.get_zombie().bind().get_animated_sprite2d()
+            .get_node_as::<ZombieAnimation>("AnimatedSprite2D")
     }
 }

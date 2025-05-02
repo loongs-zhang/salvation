@@ -1,10 +1,8 @@
-use crate::PlayerState;
 use crate::player::RustPlayer;
 use crate::zombie::RustZombie;
-use crate::zombie::animation::ZombieAnimation;
 use godot::builtin::{Array, Vector2, Vector2i, array};
 use godot::classes::fast_noise_lite::NoiseType;
-use godot::classes::{FastNoiseLite, INode2D, Node2D, Object, PackedScene, TileMapLayer};
+use godot::classes::{FastNoiseLite, INode2D, Node2D, PackedScene, TileMapLayer};
 use godot::global::godot_print;
 use godot::obj::{Base, Gd, NewGd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -59,23 +57,6 @@ impl INode2D for RustWorld {
 
 #[godot_api]
 impl RustWorld {
-    #[signal]
-    pub fn change_player_state(player_state: PlayerState);
-
-    #[func]
-    pub fn on_change_player_state(&mut self, player_state: PlayerState) {
-        self.base().get_children().iter_shared().for_each(|node| {
-            if node.is_class("RustZombie") {
-                node.cast::<RustZombie>()
-                    .bind()
-                    .get_animated_sprite2d()
-                    .signals()
-                    .change_player_state()
-                    .emit(player_state)
-            }
-        });
-    }
-
     #[func]
     pub fn generate(&mut self) {
         self.generate_world(20);
@@ -154,12 +135,6 @@ impl RustWorld {
     pub fn generate_zombie(&mut self, position: Vector2) {
         if let Some(mut zombie) = self.zombie_scene.try_instantiate_as::<RustZombie>() {
             zombie.set_global_position(position);
-            zombie
-                .bind()
-                .get_animated_sprite2d()
-                .signals()
-                .change_player_state()
-                .connect_self(ZombieAnimation::on_change_player_state);
             self.base_mut().add_child(&zombie);
             godot_print!("Generated zombie with position:{:?}", position);
         }

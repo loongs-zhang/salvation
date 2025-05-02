@@ -1,7 +1,6 @@
 use crate::player::RustPlayer;
 use crate::{PlayerState, ZOMBIE_DAMAGE, ZombieState};
 use godot::classes::{AnimatedSprite2D, IAnimatedSprite2D, Object};
-use godot::global::godot_print;
 use godot::obj::{Base, Gd, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
 
@@ -11,7 +10,6 @@ const HURT_FRAME: [i32; 4] = [2, 3, 4, 5];
 #[class(base=AnimatedSprite2D)]
 pub struct ZombieAnimation {
     player_in_area: bool,
-    player_state: PlayerState,
     zombie_state: ZombieState,
     base: Base<AnimatedSprite2D>,
 }
@@ -21,7 +19,6 @@ impl IAnimatedSprite2D for ZombieAnimation {
     fn init(base: Base<AnimatedSprite2D>) -> Self {
         Self {
             player_in_area: false,
-            player_state: PlayerState::Born,
             zombie_state: ZombieState::Guard,
             base,
         }
@@ -31,10 +28,23 @@ impl IAnimatedSprite2D for ZombieAnimation {
         self.signals()
             .frame_changed()
             .connect_self(Self::on_animated_sprite_2d_frame_changed);
-        self.get_rust_player()
-            .signals()
-            .hit()
-            .connect_self(RustPlayer::on_hit);
+    }
+
+    fn physics_process(&mut self, _delta: f64) {
+        if ZombieState::Attack != self.zombie_state {
+            return;
+        }
+        let mut base = self.base_mut();
+        if let Some(mut frames) = base.get_sprite_frames() {
+            match RustPlayer::get_state() {
+                PlayerState::Born => {
+                    frames.set_animation_loop("attack", true);
+                    base.play_ex().name("attack").done();
+                }
+                PlayerState::Dead => frames.set_animation_loop("attack", false),
+                _ => {}
+            }
+        }
     }
 }
 
@@ -49,25 +59,6 @@ impl ZombieAnimation {
     }
 
     #[signal]
-    pub fn change_player_state(player_state: PlayerState);
-
-    #[func]
-    pub fn on_change_player_state(&mut self, player_state: PlayerState) {
-        self.player_state = player_state;
-        let mut base = self.base_mut();
-        if let Some(mut frames) = base.get_sprite_frames() {
-            match player_state {
-                PlayerState::Born => {
-                    frames.set_animation_loop("attack", true);
-                    base.play_ex().name("attack").done();
-                }
-                PlayerState::Dead => frames.set_animation_loop("attack", false),
-                _ => {}
-            }
-        }
-    }
-
-    #[signal]
     pub fn player_in_area(player_in_area: bool);
 
     #[func]
@@ -79,14 +70,13 @@ impl ZombieAnimation {
     pub fn on_animated_sprite_2d_frame_changed(&mut self) {
         let base = self.base();
         if self.player_in_area
-            && PlayerState::Dead != self.player_state
+            && PlayerState::Dead != RustPlayer::get_state()
             && ZombieState::Attack == self.zombie_state
             && base.get_animation() == "attack".into()
             && HURT_FRAME.contains(&base.get_frame())
         {
             // 伤害玩家
-            godot_print!("zombie attack player in frame:{}", base.get_frame());
-            self.get_rust_player().signals().hit().emit(ZOMBIE_DAMAGE);
+            self.get_rust_player().bind_mut().on_hit(ZOMBIE_DAMAGE);
         }
     }
 

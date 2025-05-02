@@ -1,17 +1,18 @@
 use crate::weapon::RustWeapon;
-use crate::world::RustWorld;
 use crate::{PLAYER_MAX_HEALTH, PlayerState};
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
 use godot::classes::{
     AnimatedSprite2D, CanvasLayer, CharacterBody2D, Control, ICharacterBody2D, Input, InputEvent,
-    Label, Node2D, Object,
+    Label, Node2D,
 };
 use godot::global::godot_print;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 
 static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
+
+static STATE: AtomicCell<PlayerState> = AtomicCell::new(PlayerState::Born);
 
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
@@ -45,18 +46,13 @@ impl ICharacterBody2D for RustPlayer {
     }
 
     fn ready(&mut self) {
-        if let Some(tree) = self.base().get_parent() {
-            tree.cast::<RustWorld>()
-                .signals()
-                .change_player_state()
-                .connect_self(RustWorld::on_change_player_state);
-        }
         godot_print!(
             "Player ready with damage:{} max_hit_count:{} health:{}",
             self.damage,
             self.max_hit_count,
             self.health
         );
+        self.update_hud();
     }
 
     fn process(&mut self, _delta: f64) {
@@ -76,10 +72,8 @@ impl ICharacterBody2D for RustPlayer {
             input.get_axis("move_up", "move_down"),
         );
         match self.state {
-            PlayerState::Born | PlayerState::Guard | PlayerState::Shoot | PlayerState::Dead => {
-                self.animated_sprite2d.look_at(mouse_position)
-            }
             PlayerState::Run => self.animated_sprite2d.look_at(player_position + dir),
+            _ => self.animated_sprite2d.look_at(mouse_position),
         }
         let mut character_body2d = self.base.to_gd();
         if dir != Vector2::ZERO {
@@ -105,18 +99,15 @@ impl ICharacterBody2D for RustPlayer {
 
 #[godot_api]
 impl RustPlayer {
-    #[signal]
-    pub fn hit(hit_val: i64);
-
     #[func]
     pub fn on_hit(&mut self, hit_val: i64) {
-        godot_print!("player be attacked");
         let health = self.health;
         self.health = if hit_val > 0 {
             health.saturating_sub(hit_val as u32)
         } else {
             health.saturating_add(-hit_val as u32)
         };
+        self.hit();
         self.update_hud();
         if 0 == self.health {
             self.die();
@@ -125,40 +116,68 @@ impl RustPlayer {
 
     #[func]
     pub fn born(&mut self) {
+        if PlayerState::Dead != self.state {
+            return;
+        }
         self.animated_sprite2d.play_ex().name("guard").done();
         self.speed = 200.0;
         self.state = PlayerState::Born;
         self.health = PLAYER_MAX_HEALTH;
-        self.notify_zombies();
+        STATE.store(self.state);
     }
 
     pub fn guard(&mut self) {
+        if PlayerState::Dead == self.state {
+            return;
+        }
         self.animated_sprite2d.play_ex().name("guard").done();
         self.speed = 200.0;
         self.state = PlayerState::Guard;
+        STATE.store(self.state);
     }
 
     pub fn run(&mut self) {
+        if PlayerState::Dead == self.state {
+            return;
+        }
         self.animated_sprite2d.play_ex().name("run").done();
         self.speed = 300.0;
         self.state = PlayerState::Run;
+        STATE.store(self.state);
     }
 
     pub fn shoot(&mut self) {
+        if PlayerState::Dead == self.state {
+            return;
+        }
         self.animated_sprite2d.play_ex().name("guard").done();
         self.speed = 100.0;
         self.state = PlayerState::Shoot;
+        STATE.store(self.state);
         self.weapon
             .get_node_as::<RustWeapon>("RustWeapon")
             .bind_mut()
             .fire(self.damage, self.max_hit_count);
     }
 
+    pub fn hit(&mut self) {
+        if PlayerState::Dead == self.state {
+            return;
+        }
+        self.animated_sprite2d.play_ex().name("hit").done();
+        self.speed = 100.0;
+        self.state = PlayerState::Hit;
+        STATE.store(self.state);
+    }
+
     pub fn die(&mut self) {
+        if PlayerState::Dead == self.state {
+            return;
+        }
         self.animated_sprite2d.play_ex().name("die").done();
         self.speed = 0.0;
         self.state = PlayerState::Dead;
-        self.notify_zombies();
+        STATE.store(self.state);
         if let Some(mut tree) = self.base().get_tree() {
             if let Some(mut timer) = tree.create_timer(3.0) {
                 timer.connect("timeout", &self.base().callable("born"));
@@ -188,16 +207,11 @@ impl RustPlayer {
                 .get_mouse_position()
     }
 
-    fn notify_zombies(&mut self) {
-        if let Some(tree) = self.base().get_parent() {
-            tree.cast::<RustWorld>()
-                .signals()
-                .change_player_state()
-                .emit(self.state);
-        }
-    }
-
     pub fn get_position() -> Vector2 {
         POSITION.load()
+    }
+
+    pub fn get_state() -> PlayerState {
+        STATE.load()
     }
 }
