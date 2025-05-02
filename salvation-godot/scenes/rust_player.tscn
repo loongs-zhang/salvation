@@ -184,3 +184,21 @@ autoplay = "guard"
 [node name="Weapon" type="Node2D" parent="."]
 
 [node name="RustWeapon" parent="Weapon" instance=ExtResource("4_0rh5x")]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Control" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="CanvasLayer/Control"]
+layout_mode = 2
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 75.0
+offset_bottom = 30.0
+text = "HP 100"

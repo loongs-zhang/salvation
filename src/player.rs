@@ -4,7 +4,8 @@ use crate::{PLAYER_MAX_HEALTH, PlayerState};
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
 use godot::classes::{
-    AnimatedSprite2D, CharacterBody2D, ICharacterBody2D, Input, InputEvent, Node2D, Object,
+    AnimatedSprite2D, CanvasLayer, CharacterBody2D, Control, ICharacterBody2D, Input, InputEvent,
+    Label, Node2D, Object,
 };
 use godot::global::godot_print;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
@@ -109,12 +110,14 @@ impl RustPlayer {
 
     #[func]
     pub fn on_hit(&mut self, hit_val: i64) {
+        godot_print!("player be attacked");
         let health = self.health;
         self.health = if hit_val > 0 {
             health.saturating_sub(hit_val as u32)
         } else {
             health.saturating_add(-hit_val as u32)
         };
+        self.update_hud();
         if 0 == self.health {
             self.die();
         }
@@ -161,6 +164,19 @@ impl RustPlayer {
                 timer.connect("timeout", &self.base().callable("born"));
             }
         }
+    }
+
+    pub fn update_hud(&mut self) {
+        let mut hud = self
+            .base()
+            .get_node_as::<CanvasLayer>("CanvasLayer")
+            .get_node_as::<Control>("Control")
+            .get_node_as::<Label>("Label");
+        hud.set_text(&format!(
+            "HP {}\nDAMAGE {}\nMAX HIT {}",
+            self.health, self.damage, self.max_hit_count
+        ));
+        hud.show();
     }
 
     pub fn get_mouse_position(&self) -> Vector2 {
