@@ -6,6 +6,7 @@ use godot::builtin::{Vector2, real};
 use godot::classes::{
     AnimatedSprite2D, CharacterBody2D, ICharacterBody2D, Input, InputEvent, Node2D, Object,
 };
+use godot::global::godot_print;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 
@@ -14,6 +15,11 @@ static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
 pub struct RustPlayer {
+    #[export]
+    damage: i64,
+    #[export]
+    max_hit_count: u8,
+    #[export]
     health: u32,
     state: PlayerState,
     speed: real,
@@ -26,6 +32,8 @@ pub struct RustPlayer {
 impl ICharacterBody2D for RustPlayer {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
+            damage: 0,
+            max_hit_count: 0,
             health: PLAYER_MAX_HEALTH,
             state: PlayerState::Born,
             speed: 200.0,
@@ -42,6 +50,12 @@ impl ICharacterBody2D for RustPlayer {
                 .change_player_state()
                 .connect_self(RustWorld::on_change_player_state);
         }
+        godot_print!(
+            "Player ready with damage:{} max_hit_count:{} health:{}",
+            self.damage,
+            self.max_hit_count,
+            self.health
+        );
     }
 
     fn process(&mut self, _delta: f64) {
@@ -134,7 +148,7 @@ impl RustPlayer {
         self.weapon
             .get_node_as::<RustWeapon>("RustWeapon")
             .bind_mut()
-            .fire();
+            .fire(self.damage, self.max_hit_count);
     }
 
     pub fn die(&mut self) {

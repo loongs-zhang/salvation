@@ -15,6 +15,7 @@ pub mod animation;
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
 pub struct RustZombie {
+    #[export]
     health: u32,
     last_turn_time: Instant,
     turn_cooldown: Duration,

@@ -52,6 +52,8 @@ impl INode2D for RustWorld {
         // timer.start();
 
         self.generate_zombie(Vector2::new(250.0, 0.0));
+        self.generate_zombie(Vector2::new(300.0, 0.0));
+        self.generate_zombie(Vector2::new(350.0, 0.0));
     }
 }
 

@@ -16,6 +16,8 @@ const PLAYER_MAX_HEALTH: u32 = 100;
 
 const BULLET_DAMAGE: i64 = 20;
 
+const MAX_BULLET_HIT: u8 = 2;
+
 const ZOMBIE_DAMAGE: i64 = 10;
 
 const ZOMBIE_MAX_HEALTH: u32 = 100;

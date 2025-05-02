@@ -1,4 +1,5 @@
 use crate::bullet::RustBullet;
+use crate::{BULLET_DAMAGE, MAX_BULLET_HIT};
 use godot::builtin::Vector2;
 use godot::classes::{INode2D, Node2D, PackedScene};
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
@@ -8,8 +9,13 @@ use std::time::{Duration, Instant};
 #[derive(GodotClass)]
 #[class(base=Node2D)]
 pub struct RustWeapon {
+    #[export]
+    damage: i64,
+    #[export]
+    max_hit_count: u8,
+    #[export]
+    fire_cooldown: u32,
     last_shot_time: Instant,
-    fire_cooldown: Duration,
     bullet_scene: OnReady<Gd<PackedScene>>,
     bullet_point: OnReady<Gd<Node2D>>,
     base: Base<Node2D>,
@@ -19,8 +25,10 @@ pub struct RustWeapon {
 impl INode2D for RustWeapon {
     fn init(base: Base<Self::Base>) -> Self {
         Self {
+            damage: BULLET_DAMAGE,
+            max_hit_count: MAX_BULLET_HIT,
+            fire_cooldown: 200,
             last_shot_time: Instant::now(),
-            fire_cooldown: Duration::from_millis(200),
             bullet_scene: OnReady::from_loaded("res://scenes/rust_bullet.tscn"),
             bullet_point: OnReady::from_node("BulletPoint"),
             base,
@@ -28,15 +36,17 @@ impl INode2D for RustWeapon {
     }
 
     fn ready(&mut self) {
-        self.last_shot_time -= self.fire_cooldown;
+        self.last_shot_time -= Duration::from_millis(self.fire_cooldown as u64);
     }
 }
 
 #[godot_api]
 impl RustWeapon {
-    pub fn fire(&mut self) {
+    pub fn fire(&mut self, player_damage: i64, player_max_hit_count: u8) {
         let now = Instant::now();
-        if now.duration_since(self.last_shot_time) < self.fire_cooldown {
+        if now.duration_since(self.last_shot_time)
+            < Duration::from_millis(self.fire_cooldown as u64)
+        {
             return;
         }
         if let Some(mut bullet) = self.bullet_scene.try_instantiate_as::<RustBullet>() {
@@ -46,7 +56,11 @@ impl RustWeapon {
                 .get_global_position()
                 .direction_to(self.get_mouse_position());
             bullet.set_global_position(bullet_point);
-            bullet.bind_mut().set_direction(direction);
+            let mut gd_mut = bullet.bind_mut();
+            gd_mut.set_final_damage(player_damage.saturating_add(self.damage));
+            gd_mut.set_final_max_hit_count(player_max_hit_count.saturating_add(self.max_hit_count));
+            gd_mut.set_direction(direction);
+            drop(gd_mut);
             if let Some(tree) = self.base().get_tree() {
                 if let Some(mut root) = tree.get_root() {
                     root.add_child(&bullet);
