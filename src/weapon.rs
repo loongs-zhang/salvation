@@ -1,5 +1,5 @@
 use crate::bullet::RustBullet;
-use crate::{BULLET_DAMAGE, MAX_BULLET_HIT};
+use crate::{BULLET_DAMAGE, MAX_AMMO, MAX_BULLET_HIT};
 use godot::builtin::Vector2;
 use godot::classes::{INode2D, Node2D, PackedScene};
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
@@ -11,6 +11,8 @@ use std::time::{Duration, Instant};
 pub struct RustWeapon {
     #[export]
     damage: i64,
+    #[export]
+    ammo: i64,
     #[export]
     max_hit_count: u8,
     #[export]
@@ -26,6 +28,7 @@ impl INode2D for RustWeapon {
     fn init(base: Base<Self::Base>) -> Self {
         Self {
             damage: BULLET_DAMAGE,
+            ammo: MAX_AMMO,
             max_hit_count: MAX_BULLET_HIT,
             fire_cooldown: 200,
             last_shot_time: Instant::now(),
@@ -43,6 +46,9 @@ impl INode2D for RustWeapon {
 #[godot_api]
 impl RustWeapon {
     pub fn fire(&mut self, player_damage: i64, player_max_hit_count: u8) {
+        if 0 == self.ammo {
+            return;
+        }
         let now = Instant::now();
         if now.duration_since(self.last_shot_time)
             < Duration::from_millis(self.fire_cooldown as u64)
@@ -65,9 +71,17 @@ impl RustWeapon {
                 if let Some(mut root) = tree.get_root() {
                     root.add_child(&bullet);
                     self.last_shot_time = now;
+                    self.ammo -= 1;
                 }
             }
         }
+    }
+
+    pub fn reload(&mut self) {
+        if MAX_AMMO == self.ammo {
+            return;
+        }
+        self.ammo = MAX_AMMO;
     }
 
     pub fn get_mouse_position(&self) -> Vector2 {

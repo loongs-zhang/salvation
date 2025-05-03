@@ -1,10 +1,12 @@
-[gd_scene load_steps=25 format=3 uid="uid://d2ryhlh122dqg"]
+[gd_scene load_steps=32 format=3 uid="uid://d2ryhlh122dqg"]
 
 [ext_resource type="Texture2D" uid="uid://b0dlxb302gr4n" path="res://asserts/player_idle.png" id="1_iwbmd"]
 [ext_resource type="Texture2D" uid="uid://cxaowrd50063m" path="res://asserts/player_run.png" id="2_0rh5x"]
 [ext_resource type="Texture2D" uid="uid://dqjhelwwr6uaw" path="res://asserts/zombie.png" id="2_53o8o"]
 [ext_resource type="Texture2D" uid="uid://c2qtrj3x75jew" path="res://asserts/player_walk.png" id="3_53o8o"]
+[ext_resource type="Texture2D" uid="uid://daykfevp7syil" path="res://asserts/player_gun_reload.png" id="3_g8j1n"]
 [ext_resource type="PackedScene" uid="uid://cigcujmruac6u" path="res://scenes/rust_weapon.tscn" id="4_0rh5x"]
+[ext_resource type="PackedScene" uid="uid://nofytueli5e4" path="res://scenes/hud.tscn" id="6_h4u8k"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_h4u8k"]
 radius = 18.0
@@ -28,6 +30,26 @@ region = Rect2(384, 640, 128, 128)
 [sub_resource type="AtlasTexture" id="AtlasTexture_tuyoq"]
 atlas = ExtResource("1_iwbmd")
 region = Rect2(0, 0, 63, 57)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jrx5i"]
+atlas = ExtResource("3_g8j1n")
+region = Rect2(0, 0, 63, 57)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1k218"]
+atlas = ExtResource("3_g8j1n")
+region = Rect2(63, 0, 63, 57)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4ayag"]
+atlas = ExtResource("3_g8j1n")
+region = Rect2(126, 0, 63, 57)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_e5vhl"]
+atlas = ExtResource("3_g8j1n")
+region = Rect2(189, 0, 63, 57)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dmfm0"]
+atlas = ExtResource("3_g8j1n")
+region = Rect2(252, 0, 63, 57)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_fjrip"]
 atlas = ExtResource("2_0rh5x")
@@ -138,6 +160,26 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_jrx5i")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1k218")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4ayag")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_e5vhl")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dmfm0")
+}],
+"loop": true,
+"name": &"reload",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_fjrip")
 }, {
 "duration": 1.0,
@@ -193,7 +235,7 @@ shape = SubResource("CircleShape2D_h4u8k")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_g8j1n")
-animation = &"hit"
+animation = &"reload"
 autoplay = "guard"
 
 [node name="Camera2D" type="Camera2D" parent="."]
@@ -202,20 +244,4 @@ autoplay = "guard"
 
 [node name="RustWeapon" parent="Weapon" instance=ExtResource("4_0rh5x")]
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
-
-[node name="Control" type="Control" parent="CanvasLayer"]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Label" type="Label" parent="CanvasLayer/Control"]
-layout_mode = 2
-offset_left = 10.0
-offset_top = 10.0
-offset_right = 75.0
-offset_bottom = 30.0
-text = "HP 100"
+[node name="CanvasLayer" parent="." instance=ExtResource("6_h4u8k")]

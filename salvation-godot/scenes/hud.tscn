@@ -1,0 +1,26 @@
+[gd_scene load_steps=3 format=3 uid="uid://nofytueli5e4"]
+
+[ext_resource type="FontFile" uid="uid://b341brf04jvyw" path="res://asserts/Xolonium-Regular.ttf" id="1_ahhtf"]
+
+[sub_resource type="Theme" id="Theme_g8j1n"]
+default_font = ExtResource("1_ahhtf")
+default_font_size = 12
+
+[node name="CanvasLayer" type="CanvasLayer"]
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="Control"]
+layout_mode = 2
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 11.0
+offset_bottom = 26.0
+theme = SubResource("Theme_g8j1n")
+text = "HUD"

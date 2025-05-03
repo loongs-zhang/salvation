@@ -1,5 +1,5 @@
 use crate::weapon::RustWeapon;
-use crate::{PLAYER_MAX_HEALTH, PlayerState};
+use crate::{MAX_AMMO, PLAYER_MAX_HEALTH, PlayerState, RELOAD_TIME};
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
 use godot::classes::{
@@ -13,6 +13,8 @@ use godot::register::{GodotClass, godot_api};
 static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
 static STATE: AtomicCell<PlayerState> = AtomicCell::new(PlayerState::Born);
+
+static RELOADING: AtomicCell<f64> = AtomicCell::new(0.0);
 
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
@@ -55,9 +57,16 @@ impl ICharacterBody2D for RustPlayer {
         self.update_hud();
     }
 
-    fn process(&mut self, _delta: f64) {
+    fn process(&mut self, delta: f64) {
         if PlayerState::Dead == self.state {
             return;
+        }
+        if PlayerState::Reload == self.state {
+            let reload_cost = RELOADING.load() + delta;
+            RELOADING.store(reload_cost);
+            if reload_cost >= RELOAD_TIME {
+                self.reloaded();
+            }
         }
         let player_position = self.base().get_global_position();
         POSITION.store(player_position);
@@ -86,7 +95,9 @@ impl ICharacterBody2D for RustPlayer {
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
-        if event.is_action_pressed("shift") || event.is_action_pressed("mouse_right") {
+        if event.is_action_pressed("r") {
+            self.reload();
+        } else if event.is_action_pressed("shift") || event.is_action_pressed("mouse_right") {
             self.run();
         } else if event.is_action_released("shift")
             || event.is_action_released("mouse_left")
@@ -126,6 +137,7 @@ impl RustPlayer {
         STATE.store(self.state);
     }
 
+    #[func]
     pub fn guard(&mut self) {
         if PlayerState::Dead == self.state {
             return;
@@ -144,10 +156,12 @@ impl RustPlayer {
         self.speed = 300.0;
         self.state = PlayerState::Run;
         STATE.store(self.state);
+        //打断换弹
+        RELOADING.store(0.0);
     }
 
     pub fn shoot(&mut self) {
-        if PlayerState::Dead == self.state {
+        if PlayerState::Dead == self.state || PlayerState::Reload == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("guard").done();
@@ -158,6 +172,35 @@ impl RustPlayer {
             .get_node_as::<RustWeapon>("RustWeapon")
             .bind_mut()
             .fire(self.damage, self.max_hit_count);
+        self.update_hud();
+    }
+
+    pub fn reload(&mut self) {
+        if PlayerState::Dead == self.state
+            || MAX_AMMO
+                == self
+                    .weapon
+                    .get_node_as::<RustWeapon>("RustWeapon")
+                    .bind()
+                    .get_ammo()
+        {
+            return;
+        }
+        self.animated_sprite2d.play_ex().name("reload").done();
+        self.speed = 125.0;
+        self.state = PlayerState::Reload;
+        STATE.store(self.state);
+    }
+
+    #[func]
+    pub fn reloaded(&mut self) {
+        self.weapon
+            .get_node_as::<RustWeapon>("RustWeapon")
+            .bind_mut()
+            .reload();
+        self.guard();
+        self.update_hud();
+        RELOADING.store(0.0);
     }
 
     pub fn hit(&mut self) {
@@ -186,14 +229,21 @@ impl RustPlayer {
     }
 
     pub fn update_hud(&mut self) {
+        let rust_weapon = self.weapon.get_node_as::<RustWeapon>("RustWeapon");
         let mut hud = self
             .base()
             .get_node_as::<CanvasLayer>("CanvasLayer")
             .get_node_as::<Control>("Control")
             .get_node_as::<Label>("Label");
         hud.set_text(&format!(
-            "HP {}\nDAMAGE {}\nMAX HIT {}",
-            self.health, self.damage, self.max_hit_count
+            "HP {}/{}\nDAMAGE {}\nPENETRATE {}\nAMMO {}/{}",
+            self.health,
+            PLAYER_MAX_HEALTH,
+            self.damage.saturating_add(rust_weapon.bind().get_damage()),
+            self.max_hit_count
+                .saturating_add(rust_weapon.bind().get_max_hit_count()),
+            rust_weapon.bind().get_ammo(),
+            MAX_AMMO
         ));
         hud.show();
     }

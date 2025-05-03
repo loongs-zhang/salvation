@@ -16,7 +16,11 @@ const PLAYER_MAX_HEALTH: u32 = 100;
 
 const BULLET_DAMAGE: i64 = 20;
 
-const MAX_BULLET_HIT: u8 = 2;
+const MAX_AMMO: i64 = 30;
+
+const MAX_BULLET_HIT: u8 = 1;
+
+const RELOAD_TIME: f64 = 3.0;
 
 const ZOMBIE_DAMAGE: i64 = 10;
 
@@ -30,6 +34,7 @@ pub enum PlayerState {
     Guard,
     Run,
     Shoot,
+    Reload,
     Hit,
     Dead,
 }
