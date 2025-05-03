@@ -1,5 +1,5 @@
 use crate::weapon::RustWeapon;
-use crate::{MAX_AMMO, PLAYER_MAX_HEALTH, PlayerState, RELOAD_TIME};
+use crate::{MAX_AMMO, PLAYER_MAX_HEALTH, PlayerState, ZOMBIE_RAMPAGE_TIME};
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
 use godot::classes::{
@@ -64,7 +64,7 @@ impl ICharacterBody2D for RustPlayer {
         if PlayerState::Reload == self.state {
             let reload_cost = RELOADING.load() + delta;
             RELOADING.store(reload_cost);
-            if reload_cost >= RELOAD_TIME {
+            if reload_cost >= self.get_rust_weapon().bind().get_reload_time() as f64 / 1000.0 {
                 self.reloaded();
             }
         }
@@ -135,11 +135,12 @@ impl RustPlayer {
         self.state = PlayerState::Born;
         self.health = PLAYER_MAX_HEALTH;
         STATE.store(self.state);
+        self.update_hud();
     }
 
     #[func]
     pub fn guard(&mut self) {
-        if PlayerState::Dead == self.state {
+        if PlayerState::Dead == self.state || PlayerState::Reload == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("guard").done();
@@ -168,22 +169,14 @@ impl RustPlayer {
         self.speed = 100.0;
         self.state = PlayerState::Shoot;
         STATE.store(self.state);
-        self.weapon
-            .get_node_as::<RustWeapon>("RustWeapon")
+        self.get_rust_weapon()
             .bind_mut()
             .fire(self.damage, self.max_hit_count);
         self.update_hud();
     }
 
     pub fn reload(&mut self) {
-        if PlayerState::Dead == self.state
-            || MAX_AMMO
-                == self
-                    .weapon
-                    .get_node_as::<RustWeapon>("RustWeapon")
-                    .bind()
-                    .get_ammo()
-        {
+        if PlayerState::Dead == self.state || MAX_AMMO == self.get_rust_weapon().bind().get_ammo() {
             return;
         }
         self.animated_sprite2d.play_ex().name("reload").done();
@@ -194,10 +187,8 @@ impl RustPlayer {
 
     #[func]
     pub fn reloaded(&mut self) {
-        self.weapon
-            .get_node_as::<RustWeapon>("RustWeapon")
-            .bind_mut()
-            .reload();
+        self.state = PlayerState::Guard;
+        self.get_rust_weapon().bind_mut().reload();
         self.guard();
         self.update_hud();
         RELOADING.store(0.0);
@@ -236,14 +227,15 @@ impl RustPlayer {
             .get_node_as::<Control>("Control")
             .get_node_as::<Label>("Label");
         hud.set_text(&format!(
-            "HP {}/{}\nDAMAGE {}\nPENETRATE {}\nAMMO {}/{}",
+            "HP {}/{}\nDAMAGE {}\nPENETRATE {}\nAMMO {}/{}\nRAMPAGE TIME {}",
             self.health,
             PLAYER_MAX_HEALTH,
             self.damage.saturating_add(rust_weapon.bind().get_damage()),
             self.max_hit_count
                 .saturating_add(rust_weapon.bind().get_max_hit_count()),
             rust_weapon.bind().get_ammo(),
-            MAX_AMMO
+            MAX_AMMO,
+            ZOMBIE_RAMPAGE_TIME,
         ));
         hud.show();
     }
@@ -255,6 +247,10 @@ impl RustPlayer {
                 .get_viewport()
                 .expect("Viewport not found")
                 .get_mouse_position()
+    }
+
+    pub fn get_rust_weapon(&mut self) -> Gd<RustWeapon> {
+        self.weapon.get_node_as::<RustWeapon>("RustWeapon")
     }
 
     pub fn get_position() -> Vector2 {

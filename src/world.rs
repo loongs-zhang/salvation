@@ -136,7 +136,6 @@ impl RustWorld {
         if let Some(mut zombie) = self.zombie_scene.try_instantiate_as::<RustZombie>() {
             zombie.set_global_position(position);
             self.base_mut().add_child(&zombie);
-            godot_print!("Generated zombie with position:{:?}", position);
         }
     }
 }

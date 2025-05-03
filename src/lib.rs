@@ -20,11 +20,13 @@ const MAX_AMMO: i64 = 30;
 
 const MAX_BULLET_HIT: u8 = 1;
 
-const RELOAD_TIME: f64 = 3.0;
+const RELOAD_TIME: u32 = 3000;
 
 const ZOMBIE_DAMAGE: i64 = 10;
 
 const ZOMBIE_MAX_HEALTH: u32 = 100;
+
+const ZOMBIE_RAMPAGE_TIME: u32 = 10_000;
 
 #[derive(GodotConvert, Default, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
 #[godot(via = GString)]

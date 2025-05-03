@@ -37,12 +37,11 @@ impl IAnimatedSprite2D for ZombieAnimation {
         let mut base = self.base_mut();
         if let Some(mut frames) = base.get_sprite_frames() {
             match RustPlayer::get_state() {
-                PlayerState::Born => {
+                PlayerState::Dead => frames.set_animation_loop("attack", false),
+                _ => {
                     frames.set_animation_loop("attack", true);
                     base.play_ex().name("attack").done();
                 }
-                PlayerState::Dead => frames.set_animation_loop("attack", false),
-                _ => {}
             }
         }
     }

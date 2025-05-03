@@ -1,5 +1,5 @@
 use crate::bullet::RustBullet;
-use crate::{BULLET_DAMAGE, MAX_AMMO, MAX_BULLET_HIT};
+use crate::{BULLET_DAMAGE, MAX_AMMO, MAX_BULLET_HIT, RELOAD_TIME};
 use godot::builtin::Vector2;
 use godot::classes::{INode2D, Node2D, PackedScene};
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
@@ -17,6 +17,8 @@ pub struct RustWeapon {
     max_hit_count: u8,
     #[export]
     fire_cooldown: u32,
+    #[export]
+    reload_time: u32,
     last_shot_time: Instant,
     bullet_scene: OnReady<Gd<PackedScene>>,
     bullet_point: OnReady<Gd<Node2D>>,
@@ -31,6 +33,7 @@ impl INode2D for RustWeapon {
             ammo: MAX_AMMO,
             max_hit_count: MAX_BULLET_HIT,
             fire_cooldown: 200,
+            reload_time: RELOAD_TIME,
             last_shot_time: Instant::now(),
             bullet_scene: OnReady::from_loaded("res://scenes/rust_bullet.tscn"),
             bullet_point: OnReady::from_node("BulletPoint"),

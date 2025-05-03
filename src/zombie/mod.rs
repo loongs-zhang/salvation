@@ -1,8 +1,9 @@
 use crate::player::RustPlayer;
 use crate::zombie::animation::ZombieAnimation;
-use crate::{ZOMBIE_MAX_HEALTH, ZombieState};
+use crate::{PlayerState, ZOMBIE_MAX_HEALTH, ZOMBIE_RAMPAGE_TIME, ZombieState};
 use godot::builtin::{Vector2, real};
 use godot::classes::{CharacterBody2D, CollisionShape2D, ICharacterBody2D};
+use godot::global::godot_print;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use rand::Rng;
@@ -17,6 +18,9 @@ pub mod animation;
 pub struct RustZombie {
     #[export]
     health: u32,
+    #[export]
+    rampage_time: u32,
+    create_time: Instant,
     last_turn_time: Instant,
     turn_cooldown: Duration,
     state: ZombieState,
@@ -31,6 +35,8 @@ impl ICharacterBody2D for RustZombie {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
             health: ZOMBIE_MAX_HEALTH,
+            rampage_time: ZOMBIE_RAMPAGE_TIME,
+            create_time: Instant::now(),
             last_turn_time: Instant::now(),
             turn_cooldown: Duration::from_secs(5),
             state: ZombieState::Guard,
@@ -47,6 +53,11 @@ impl ICharacterBody2D for RustZombie {
             .signals()
             .change_zombie_state()
             .connect_self(ZombieAnimation::on_change_zombie_state);
+        godot_print!(
+            "Zombie ready at position:{:?}, create time:{:?}",
+            self.base().get_global_position(),
+            self.create_time
+        );
     }
 
     fn physics_process(&mut self, _delta: f64) {
@@ -61,7 +72,7 @@ impl ICharacterBody2D for RustZombie {
         let to_player_dir = zombie_position.direction_to(player_position).normalized();
         let angle = current_zombie_dir.angle_to(to_player_dir).to_degrees();
         let mut character_body2d = self.base.to_gd();
-        if distance <= 200.0 && Self::is_face_to_face(angle) {
+        if distance <= 200.0 && Self::is_face_to_face(angle) || self.can_rampage() {
             // 跑向玩家
             self.run();
             character_body2d.set_velocity(to_player_dir * self.speed);
@@ -151,6 +162,13 @@ impl RustZombie {
         self.state = ZombieState::Dead;
         self.collision_shape2d.queue_free();
         self.notify_animation();
+    }
+
+    pub fn can_rampage(&self) -> bool {
+        if PlayerState::Dead == RustPlayer::get_state() {
+            return false;
+        }
+        Instant::now().duration_since(self.create_time).as_millis() as u32 >= self.rampage_time
     }
 
     pub fn get_distance(&self) -> real {
