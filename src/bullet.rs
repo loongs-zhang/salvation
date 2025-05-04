@@ -1,3 +1,4 @@
+use crate::BULLET_REPEL;
 use crate::zombie::RustZombie;
 use godot::builtin::{Vector2, real};
 use godot::classes::{Area2D, IArea2D, INode2D, Node2D, Object};
@@ -9,6 +10,7 @@ use godot::register::{GodotClass, godot_api};
 pub struct RustBullet {
     #[export]
     speed: real,
+    final_repel: real,
     final_damage: i64,
     final_max_hit_count: u8,
     hit_count: u8,
@@ -21,6 +23,7 @@ impl INode2D for RustBullet {
     fn init(base: Base<Self::Base>) -> Self {
         Self {
             speed: 400.0,
+            final_repel: BULLET_REPEL,
             final_damage: 0,
             final_max_hit_count: 0,
             hit_count: 0,
@@ -35,15 +38,15 @@ impl INode2D for RustBullet {
     }
 
     fn physics_process(&mut self, delta: f64) {
-        let vector2 = self.direction;
+        let direction = self.direction;
         let speed = self.speed;
         let mut base_mut = self.base_mut();
         let current = base_mut.get_global_position();
         base_mut.set_global_position(
             current
                 + Vector2::new(
-                    vector2.x * delta as f32 * speed,
-                    vector2.y * delta as f32 * speed,
+                    direction.x * delta as f32 * speed,
+                    direction.y * delta as f32 * speed,
                 ),
         );
     }
@@ -53,6 +56,10 @@ impl INode2D for RustBullet {
 impl RustBullet {
     pub fn set_final_damage(&mut self, damage: i64) {
         self.final_damage = damage;
+    }
+
+    pub fn set_final_repel(&mut self, final_repel: real) {
+        self.final_repel = final_repel;
     }
 
     pub fn set_final_max_hit_count(&mut self, max_hit_count: u8) {
@@ -113,10 +120,12 @@ impl BulletDamageArea {
                 .get_parent()
                 .expect("RustBullet not found")
                 .cast::<RustBullet>();
-            body.cast::<RustZombie>()
-                .bind_mut()
-                .on_hit(rust_bullet.bind().final_damage);
             rust_bullet.bind_mut().on_hit();
+            body.cast::<RustZombie>().bind_mut().on_hit(
+                rust_bullet.bind().final_damage,
+                rust_bullet.bind().direction,
+                rust_bullet.bind().final_repel,
+            );
         }
     }
 }

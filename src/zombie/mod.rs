@@ -104,13 +104,20 @@ impl ICharacterBody2D for RustZombie {
 #[godot_api]
 impl RustZombie {
     #[func]
-    pub fn on_hit(&mut self, hit_val: i64) {
+    pub fn on_hit(&mut self, hit_val: i64, direction: Vector2, repel: real) {
         let health = self.health;
         self.health = if hit_val > 0 {
             health.saturating_sub(hit_val as u32)
         } else {
             health.saturating_add(-hit_val as u32)
         };
+        let zombie_position = self.base().get_global_position();
+        let moved = direction * repel;
+        let new_position = zombie_position + moved;
+        let mut base_mut = self.base_mut();
+        base_mut.look_at(zombie_position - direction);
+        base_mut.set_global_position(new_position);
+        drop(base_mut);
         if 0 == self.health {
             self.die();
         }

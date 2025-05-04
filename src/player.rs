@@ -9,6 +9,7 @@ use godot::classes::{
 use godot::global::godot_print;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
+use std::ops::Add;
 
 static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
@@ -23,6 +24,8 @@ pub struct RustPlayer {
     damage: i64,
     #[export]
     max_hit_count: u8,
+    #[export]
+    repel: real,
     #[export]
     max_health: u32,
     health: u32,
@@ -40,6 +43,7 @@ impl ICharacterBody2D for RustPlayer {
         Self {
             damage: 0,
             max_hit_count: 0,
+            repel: 0.0,
             max_health: PLAYER_MAX_HEALTH,
             health: PLAYER_MAX_HEALTH,
             state: PlayerState::Born,
@@ -63,6 +67,7 @@ impl ICharacterBody2D for RustPlayer {
         hud.update_hp_hud(self.health, self.max_health);
         hud.update_ammo_hud(rust_weapon.bind().get_ammo(), MAX_AMMO);
         hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
+        hud.update_repel_hud(self.repel.add(rust_weapon.bind().get_repel()));
         hud.update_penetrate_hud(
             self.max_hit_count
                 .saturating_add(rust_weapon.bind().get_max_hit_count()),
@@ -186,7 +191,9 @@ impl RustPlayer {
         self.state = PlayerState::Shoot;
         STATE.store(self.state);
         let mut rust_weapon = self.get_rust_weapon();
-        rust_weapon.bind_mut().fire(self.damage, self.max_hit_count);
+        rust_weapon
+            .bind_mut()
+            .fire(self.damage, self.max_hit_count, self.repel);
         self.hud
             .bind_mut()
             .update_ammo_hud(rust_weapon.bind().get_ammo(), rust_weapon.bind().get_clip());
@@ -314,5 +321,14 @@ impl PlayerHUD {
             .get_node_as::<Label>("Penetrate");
         penetrate_hud.set_text(&format!("PENETRATE {}", penetrate));
         penetrate_hud.show();
+    }
+
+    pub fn update_repel_hud(&mut self, repel: real) {
+        let mut repel_hud = self
+            .control
+            .get_node_as::<VBoxContainer>("VBoxContainer")
+            .get_node_as::<Label>("Repel");
+        repel_hud.set_text(&format!("REPEL {}", repel));
+        repel_hud.show();
     }
 }

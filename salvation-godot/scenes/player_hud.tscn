@@ -38,6 +38,11 @@ layout_mode = 2
 theme = SubResource("Theme_g8j1n")
 text = "DAMAGE"
 
+[node name="Repel" type="Label" parent="Control/VBoxContainer"]
+layout_mode = 2
+theme = SubResource("Theme_g8j1n")
+text = "REPEL"
+
 [node name="Penetrate" type="Label" parent="Control/VBoxContainer"]
 layout_mode = 2
 theme = SubResource("Theme_g8j1n")

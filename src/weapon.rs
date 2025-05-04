@@ -1,9 +1,10 @@
 use crate::bullet::RustBullet;
-use crate::{BULLET_DAMAGE, MAX_AMMO, MAX_BULLET_HIT, RELOAD_TIME};
-use godot::builtin::Vector2;
+use crate::{BULLET_DAMAGE, BULLET_REPEL, MAX_AMMO, MAX_BULLET_HIT, RELOAD_TIME};
+use godot::builtin::{Vector2, real};
 use godot::classes::{INode2D, Node2D, PackedScene};
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
+use std::ops::Add;
 use std::time::{Duration, Instant};
 
 #[derive(GodotClass)]
@@ -13,6 +14,8 @@ pub struct RustWeapon {
     damage: i64,
     #[export]
     clip: i64,
+    #[export]
+    repel: real,
     #[export]
     max_hit_count: u8,
     #[export]
@@ -32,6 +35,7 @@ impl INode2D for RustWeapon {
         Self {
             damage: BULLET_DAMAGE,
             clip: MAX_AMMO,
+            repel: BULLET_REPEL,
             max_hit_count: MAX_BULLET_HIT,
             fire_cooldown: 200,
             reload_time: RELOAD_TIME,
@@ -50,7 +54,7 @@ impl INode2D for RustWeapon {
 
 #[godot_api]
 impl RustWeapon {
-    pub fn fire(&mut self, player_damage: i64, player_max_hit_count: u8) {
+    pub fn fire(&mut self, player_damage: i64, player_max_hit_count: u8, player_repel: real) {
         if 0 == self.ammo {
             return;
         }
@@ -65,11 +69,13 @@ impl RustWeapon {
             let direction = self
                 .base()
                 .get_global_position()
-                .direction_to(self.get_mouse_position());
+                .direction_to(self.get_mouse_position())
+                .normalized();
             bullet.set_global_position(bullet_point);
             let mut gd_mut = bullet.bind_mut();
             gd_mut.set_final_damage(player_damage.saturating_add(self.damage));
             gd_mut.set_final_max_hit_count(player_max_hit_count.saturating_add(self.max_hit_count));
+            gd_mut.set_final_repel(player_repel.add(self.repel));
             gd_mut.set_direction(direction);
             drop(gd_mut);
             if let Some(tree) = self.base().get_tree() {

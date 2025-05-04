@@ -14,21 +14,26 @@ pub mod bullet;
 
 pub mod zombie;
 
+// player
 const PLAYER_MAX_HEALTH: u32 = 100;
 
-const BULLET_DAMAGE: i64 = 20;
+// weapon
+const BULLET_DAMAGE: i64 = 2;
+
+const BULLET_REPEL: f32 = 15.0;
 
 const MAX_AMMO: i64 = 30;
 
 const MAX_BULLET_HIT: u8 = 2;
 
-const RELOAD_TIME: u32 = 3000;
+const RELOAD_TIME: u32 = 2000;
 
+// zombie
 const ZOMBIE_DAMAGE: i64 = 10;
 
 const ZOMBIE_MAX_HEALTH: u32 = 100;
 
-const ZOMBIE_RAMPAGE_TIME: u32 = 10_000;
+const ZOMBIE_RAMPAGE_TIME: u32 = 60_000;
 
 #[derive(GodotConvert, Default, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
 #[godot(via = GString)]
