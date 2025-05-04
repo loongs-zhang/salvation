@@ -1,0 +1,44 @@
+[gd_scene load_steps=3 format=3 uid="uid://6mpjo4ff6g2a"]
+
+[ext_resource type="FontFile" uid="uid://b341brf04jvyw" path="res://asserts/Xolonium-Regular.ttf" id="1_mlvnn"]
+
+[sub_resource type="Theme" id="Theme_g8j1n"]
+default_font = ExtResource("1_mlvnn")
+default_font_size = 12
+
+[node name="PlayerHUD" type="PlayerHUD"]
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Control"]
+layout_mode = 1
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 50.0
+offset_bottom = 50.0
+
+[node name="HP" type="Label" parent="Control/VBoxContainer"]
+layout_mode = 2
+theme = SubResource("Theme_g8j1n")
+text = "HP"
+
+[node name="Ammo" type="Label" parent="Control/VBoxContainer"]
+layout_mode = 2
+theme = SubResource("Theme_g8j1n")
+text = "Ammo"
+
+[node name="Damage" type="Label" parent="Control/VBoxContainer"]
+layout_mode = 2
+theme = SubResource("Theme_g8j1n")
+text = "DAMAGE"
+
+[node name="Penetrate" type="Label" parent="Control/VBoxContainer"]
+layout_mode = 2
+theme = SubResource("Theme_g8j1n")
+text = "PENETRATE"

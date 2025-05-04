@@ -12,13 +12,14 @@ pub struct RustWeapon {
     #[export]
     damage: i64,
     #[export]
-    ammo: i64,
+    clip: i64,
     #[export]
     max_hit_count: u8,
     #[export]
     fire_cooldown: u32,
     #[export]
     reload_time: u32,
+    ammo: i64,
     last_shot_time: Instant,
     bullet_scene: OnReady<Gd<PackedScene>>,
     bullet_point: OnReady<Gd<Node2D>>,
@@ -30,10 +31,11 @@ impl INode2D for RustWeapon {
     fn init(base: Base<Self::Base>) -> Self {
         Self {
             damage: BULLET_DAMAGE,
-            ammo: MAX_AMMO,
+            clip: MAX_AMMO,
             max_hit_count: MAX_BULLET_HIT,
             fire_cooldown: 200,
             reload_time: RELOAD_TIME,
+            ammo: MAX_AMMO,
             last_shot_time: Instant::now(),
             bullet_scene: OnReady::from_loaded("res://scenes/rust_bullet.tscn"),
             bullet_point: OnReady::from_node("BulletPoint"),
@@ -80,11 +82,12 @@ impl RustWeapon {
         }
     }
 
-    pub fn reload(&mut self) {
-        if MAX_AMMO == self.ammo {
-            return;
+    pub fn reload(&mut self) -> i64 {
+        if self.clip == self.ammo {
+            return self.clip;
         }
-        self.ammo = MAX_AMMO;
+        self.ammo = self.clip;
+        self.ammo
     }
 
     pub fn get_mouse_position(&self) -> Vector2 {
@@ -94,5 +97,9 @@ impl RustWeapon {
                 .get_viewport()
                 .expect("Viewport not found")
                 .get_mouse_position()
+    }
+
+    pub fn get_ammo(&self) -> i64 {
+        self.ammo
     }
 }

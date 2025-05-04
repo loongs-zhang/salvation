@@ -1,10 +1,10 @@
 use crate::weapon::RustWeapon;
-use crate::{MAX_AMMO, PLAYER_MAX_HEALTH, PlayerState, ZOMBIE_RAMPAGE_TIME};
+use crate::{MAX_AMMO, PLAYER_MAX_HEALTH, PlayerState};
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
 use godot::classes::{
-    AnimatedSprite2D, CanvasLayer, CharacterBody2D, Control, ICharacterBody2D, Input, InputEvent,
-    Label, Node2D,
+    AnimatedSprite2D, CanvasLayer, CharacterBody2D, Control, ICanvasLayer, ICharacterBody2D, Input,
+    InputEvent, Label, Node2D, VBoxContainer,
 };
 use godot::global::godot_print;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
@@ -24,11 +24,13 @@ pub struct RustPlayer {
     #[export]
     max_hit_count: u8,
     #[export]
+    max_health: u32,
     health: u32,
     state: PlayerState,
     speed: real,
     animated_sprite2d: OnReady<Gd<AnimatedSprite2D>>,
     weapon: OnReady<Gd<Node2D>>,
+    hud: OnReady<Gd<PlayerHUD>>,
     base: Base<CharacterBody2D>,
 }
 
@@ -38,11 +40,13 @@ impl ICharacterBody2D for RustPlayer {
         Self {
             damage: 0,
             max_hit_count: 0,
+            max_health: PLAYER_MAX_HEALTH,
             health: PLAYER_MAX_HEALTH,
             state: PlayerState::Born,
             speed: 200.0,
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             weapon: OnReady::from_node("Weapon"),
+            hud: OnReady::from_node("PlayerHUD"),
             base,
         }
     }
@@ -54,7 +58,15 @@ impl ICharacterBody2D for RustPlayer {
             self.max_hit_count,
             self.health
         );
-        self.update_hud();
+        let rust_weapon = self.weapon.get_node_as::<RustWeapon>("RustWeapon");
+        let mut hud = self.hud.bind_mut();
+        hud.update_hp_hud(self.health, self.max_health);
+        hud.update_ammo_hud(rust_weapon.bind().get_ammo(), MAX_AMMO);
+        hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
+        hud.update_penetrate_hud(
+            self.max_hit_count
+                .saturating_add(rust_weapon.bind().get_max_hit_count()),
+        );
     }
 
     fn process(&mut self, delta: f64) {
@@ -119,7 +131,9 @@ impl RustPlayer {
             health.saturating_add(-hit_val as u32)
         };
         self.hit();
-        self.update_hud();
+        self.hud
+            .bind_mut()
+            .update_hp_hud(self.health, self.max_health);
         if 0 == self.health {
             self.die();
         }
@@ -133,9 +147,11 @@ impl RustPlayer {
         self.animated_sprite2d.play_ex().name("guard").done();
         self.speed = 200.0;
         self.state = PlayerState::Born;
-        self.health = PLAYER_MAX_HEALTH;
+        self.health = self.max_health;
         STATE.store(self.state);
-        self.update_hud();
+        self.hud
+            .bind_mut()
+            .update_hp_hud(self.health, self.max_health);
     }
 
     #[func]
@@ -169,10 +185,11 @@ impl RustPlayer {
         self.speed = 100.0;
         self.state = PlayerState::Shoot;
         STATE.store(self.state);
-        self.get_rust_weapon()
+        let mut rust_weapon = self.get_rust_weapon();
+        rust_weapon.bind_mut().fire(self.damage, self.max_hit_count);
+        self.hud
             .bind_mut()
-            .fire(self.damage, self.max_hit_count);
-        self.update_hud();
+            .update_ammo_hud(rust_weapon.bind().get_ammo(), rust_weapon.bind().get_clip());
     }
 
     pub fn reload(&mut self) {
@@ -188,9 +205,12 @@ impl RustPlayer {
     #[func]
     pub fn reloaded(&mut self) {
         self.state = PlayerState::Guard;
-        self.get_rust_weapon().bind_mut().reload();
+        let mut rust_weapon = self.get_rust_weapon();
+        let clip = rust_weapon.bind_mut().reload();
+        self.hud
+            .bind_mut()
+            .update_ammo_hud(rust_weapon.bind().get_ammo(), clip);
         self.guard();
-        self.update_hud();
         RELOADING.store(0.0);
     }
 
@@ -219,27 +239,6 @@ impl RustPlayer {
         }
     }
 
-    pub fn update_hud(&mut self) {
-        let rust_weapon = self.weapon.get_node_as::<RustWeapon>("RustWeapon");
-        let mut hud = self
-            .base()
-            .get_node_as::<CanvasLayer>("CanvasLayer")
-            .get_node_as::<Control>("Control")
-            .get_node_as::<Label>("Label");
-        hud.set_text(&format!(
-            "HP {}/{}\nDAMAGE {}\nPENETRATE {}\nAMMO {}/{}\nRAMPAGE TIME {}",
-            self.health,
-            PLAYER_MAX_HEALTH,
-            self.damage.saturating_add(rust_weapon.bind().get_damage()),
-            self.max_hit_count
-                .saturating_add(rust_weapon.bind().get_max_hit_count()),
-            rust_weapon.bind().get_ammo(),
-            MAX_AMMO,
-            ZOMBIE_RAMPAGE_TIME,
-        ));
-        hud.show();
-    }
-
     pub fn get_mouse_position(&self) -> Vector2 {
         self.base().get_canvas_transform().affine_inverse()
             * self
@@ -259,5 +258,61 @@ impl RustPlayer {
 
     pub fn get_state() -> PlayerState {
         STATE.load()
+    }
+}
+
+#[derive(GodotClass)]
+#[class(base=CanvasLayer)]
+pub struct PlayerHUD {
+    control: OnReady<Gd<Control>>,
+    base: Base<CanvasLayer>,
+}
+
+#[godot_api]
+impl ICanvasLayer for PlayerHUD {
+    fn init(base: Base<CanvasLayer>) -> Self {
+        Self {
+            control: OnReady::from_node("Control"),
+            base,
+        }
+    }
+}
+
+#[godot_api]
+impl PlayerHUD {
+    pub fn update_hp_hud(&mut self, hp: u32, max_hp: u32) {
+        let mut hp_hud = self
+            .control
+            .get_node_as::<VBoxContainer>("VBoxContainer")
+            .get_node_as::<Label>("HP");
+        hp_hud.set_text(&format!("HP {}/{}", hp, max_hp));
+        hp_hud.show();
+    }
+
+    pub fn update_ammo_hud(&mut self, ammo: i64, clip: i64) {
+        let mut ammo_hud = self
+            .control
+            .get_node_as::<VBoxContainer>("VBoxContainer")
+            .get_node_as::<Label>("Ammo");
+        ammo_hud.set_text(&format!("AMMO {}/{}", ammo, clip));
+        ammo_hud.show();
+    }
+
+    pub fn update_damage_hud(&mut self, damage: i64) {
+        let mut damage_hud = self
+            .control
+            .get_node_as::<VBoxContainer>("VBoxContainer")
+            .get_node_as::<Label>("Damage");
+        damage_hud.set_text(&format!("DAMAGE {}", damage));
+        damage_hud.show();
+    }
+
+    pub fn update_penetrate_hud(&mut self, penetrate: u8) {
+        let mut penetrate_hud = self
+            .control
+            .get_node_as::<VBoxContainer>("VBoxContainer")
+            .get_node_as::<Label>("Penetrate");
+        penetrate_hud.set_text(&format!("PENETRATE {}", penetrate));
+        penetrate_hud.show();
     }
 }

@@ -2,6 +2,8 @@ use godot::builtin::GString;
 use godot::init::{ExtensionLibrary, gdextension};
 use godot::prelude::GodotConvert;
 
+pub mod entrance;
+
 pub mod world;
 
 pub mod player;
@@ -18,7 +20,7 @@ const BULLET_DAMAGE: i64 = 20;
 
 const MAX_AMMO: i64 = 30;
 
-const MAX_BULLET_HIT: u8 = 1;
+const MAX_BULLET_HIT: u8 = 2;
 
 const RELOAD_TIME: u32 = 3000;
 

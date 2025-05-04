@@ -6,7 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://c2qtrj3x75jew" path="res://asserts/player_walk.png" id="3_53o8o"]
 [ext_resource type="Texture2D" uid="uid://daykfevp7syil" path="res://asserts/player_gun_reload.png" id="3_g8j1n"]
 [ext_resource type="PackedScene" uid="uid://cigcujmruac6u" path="res://scenes/rust_weapon.tscn" id="4_0rh5x"]
-[ext_resource type="PackedScene" uid="uid://nofytueli5e4" path="res://scenes/hud.tscn" id="6_h4u8k"]
+[ext_resource type="PackedScene" uid="uid://6mpjo4ff6g2a" path="res://scenes/player_hud.tscn" id="7_g8j1n"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_h4u8k"]
 radius = 18.0
@@ -244,4 +244,4 @@ autoplay = "guard"
 
 [node name="RustWeapon" parent="Weapon" instance=ExtResource("4_0rh5x")]
 
-[node name="CanvasLayer" parent="." instance=ExtResource("6_h4u8k")]
+[node name="PlayerHUD" parent="." instance=ExtResource("7_g8j1n")]
