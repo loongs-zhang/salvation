@@ -3,7 +3,7 @@ use crate::{BULLET_DAMAGE, MAX_AMMO, MAX_BULLET_HIT, RELOAD_TIME};
 use godot::builtin::Vector2;
 use godot::classes::{INode2D, Node2D, PackedScene};
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
-use godot::prelude::{GodotClass, godot_api};
+use godot::register::{GodotClass, godot_api};
 use std::time::{Duration, Instant};
 
 #[derive(GodotClass)]

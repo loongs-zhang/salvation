@@ -2,7 +2,7 @@ use crate::zombie::RustZombie;
 use godot::builtin::{Vector2, real};
 use godot::classes::{Area2D, IArea2D, INode2D, Node2D, Object};
 use godot::obj::{Base, Gd, WithBaseField, WithUserSignals};
-use godot::prelude::{GodotClass, godot_api};
+use godot::register::{GodotClass, godot_api};
 
 #[derive(GodotClass)]
 #[class(base=Node2D)]

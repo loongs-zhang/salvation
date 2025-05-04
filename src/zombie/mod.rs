@@ -40,7 +40,7 @@ impl ICharacterBody2D for RustZombie {
             last_turn_time: Instant::now(),
             turn_cooldown: Duration::from_secs(5),
             state: ZombieState::Guard,
-            speed: 50.0,
+            speed: 20.0,
             collision_shape2d: OnReady::from_node("CollisionShape2D"),
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             base,
@@ -61,7 +61,7 @@ impl ICharacterBody2D for RustZombie {
     }
 
     fn physics_process(&mut self, _delta: f64) {
-        if ZombieState::Attack == self.state || ZombieState::Dead == self.state {
+        if ZombieState::Dead == self.state {
             return;
         }
         let zombie_position = self.base().get_global_position();
@@ -72,7 +72,17 @@ impl ICharacterBody2D for RustZombie {
         let to_player_dir = zombie_position.direction_to(player_position).normalized();
         let angle = current_zombie_dir.angle_to(to_player_dir).to_degrees();
         let mut character_body2d = self.base.to_gd();
-        if distance <= 200.0 && Self::is_face_to_face(angle) || self.can_rampage() {
+        if PlayerState::Dead == RustPlayer::get_state() {
+            //往玩家相反的方向移动一段距离
+            self.guard();
+            let from_player_dir = player_position.direction_to(zombie_position).normalized();
+            character_body2d.look_at(zombie_position + from_player_dir);
+            character_body2d.set_velocity(from_player_dir * self.speed);
+        } else if ZombieState::Attack == self.state {
+            // 给其他僵尸让开攻击的位置
+            character_body2d.look_at(player_position);
+            character_body2d.set_velocity(to_player_dir.orthogonal() * self.speed);
+        } else if distance <= 200.0 && Self::is_face_to_face(angle) || self.can_rampage() {
             // 跑向玩家
             self.run();
             character_body2d.set_velocity(to_player_dir * self.speed);
@@ -81,7 +91,9 @@ impl ICharacterBody2D for RustZombie {
             self.guard();
             let now = Instant::now();
             if now.duration_since(self.last_turn_time) >= self.turn_cooldown {
-                character_body2d.set_velocity(self.look_at_random_direction() * self.speed);
+                let direction = Self::random_direction();
+                character_body2d.look_at(zombie_position + direction);
+                character_body2d.set_velocity(direction * self.speed);
                 self.last_turn_time = now;
             }
         }
@@ -104,13 +116,9 @@ impl RustZombie {
         }
     }
 
-    pub fn look_at_random_direction(&mut self) -> Vector2 {
-        let zombie_position = self.base().get_global_position();
+    pub fn random_direction() -> Vector2 {
         let mut rng = rand::thread_rng();
-        let direction =
-            Vector2::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0)).normalized();
-        self.base_mut().look_at(zombie_position + direction);
-        direction
+        Vector2::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0)).normalized()
     }
 
     fn notify_animation(&mut self) {
@@ -175,6 +183,10 @@ impl RustZombie {
         let zombie_position = self.base().get_global_position();
         let player_position = RustPlayer::get_position();
         zombie_position.distance_to(player_position)
+    }
+
+    pub fn get_speed(&self) -> real {
+        self.speed
     }
 
     pub fn is_face_to_face(angle: real) -> bool {

@@ -1,6 +1,6 @@
 use godot::builtin::GString;
 use godot::init::{ExtensionLibrary, gdextension};
-use godot::prelude::GodotConvert;
+use godot::register::GodotConvert;
 
 pub mod entrance;
 
