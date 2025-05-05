@@ -105,6 +105,10 @@ impl RustWeapon {
                 .get_mouse_position()
     }
 
+    pub fn must_reload(&self) -> bool {
+        0 == self.ammo
+    }
+
     pub fn get_ammo(&self) -> i64 {
         self.ammo
     }

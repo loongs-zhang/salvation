@@ -35,7 +35,7 @@ const ZOMBIE_DAMAGE: i64 = 10;
 
 const ZOMBIE_MAX_HEALTH: u32 = 100;
 
-const ZOMBIE_RAMPAGE_TIME: u32 = 60_000;
+const ZOMBIE_RAMPAGE_TIME: u32 = 30_000;
 
 #[derive(GodotConvert, Default, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
 #[godot(via = GString)]

@@ -68,7 +68,11 @@ impl ICharacterBody2D for RustZombie {
     }
 
     fn physics_process(&mut self, _delta: f64) {
-        if ZombieState::Dead == self.state || ZombieState::Attack == self.state {
+        if ZombieState::Attack == self.state {
+            self.move_back();
+            return;
+        }
+        if ZombieState::Dead == self.state {
             return;
         }
         let zombie_position = self.base().get_global_position();
@@ -105,12 +109,12 @@ impl ICharacterBody2D for RustZombie {
             }
         }
         if PlayerState::Dead == RustPlayer::get_state() {
-            //玩家死亡时，僵尸往玩家相反的方向移动一段距离
-            self.guard();
-            let from_player_dir = player_position.direction_to(zombie_position).normalized();
-            character_body2d.look_at(zombie_position + from_player_dir);
-            character_body2d.set_velocity(from_player_dir * self.speed);
-        } else if distance <= 200.0 && Self::is_face_to_face(angle) || self.can_rampage() {
+            self.move_back();
+            return;
+        } else if distance <= 200.0 && Self::is_face_to_face(angle)
+            || self.can_rampage()
+            || distance >= 1200.0
+        {
             // 跑向玩家
             self.run();
             character_body2d.set_velocity(to_player_dir * self.speed);
@@ -218,6 +222,22 @@ impl RustZombie {
             .get_node_as::<RustLevel>("RustLevel")
             .bind_mut()
             .kill_confirmed();
+    }
+
+    pub fn move_back(&mut self) {
+        if PlayerState::Dead != RustPlayer::get_state() {
+            return;
+        }
+        //玩家死亡时，僵尸往玩家相反的方向移动一段距离
+        self.run();
+        let zombie_position = self.base().get_global_position();
+        let player_position = RustPlayer::get_position();
+        let from_player_dir = player_position.direction_to(zombie_position).normalized();
+        let speed = self.speed;
+        let mut zombie = self.base_mut();
+        zombie.look_at(zombie_position + from_player_dir);
+        zombie.set_velocity(from_player_dir * speed);
+        zombie.move_and_slide();
     }
 
     pub fn can_rampage(&self) -> bool {

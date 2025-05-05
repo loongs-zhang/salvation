@@ -186,11 +186,16 @@ impl RustPlayer {
         if PlayerState::Dead == self.state || PlayerState::Reload == self.state {
             return;
         }
+        let mut rust_weapon = self.get_rust_weapon();
+        if rust_weapon.bind().must_reload() {
+            // 没子弹时自动装填
+            self.reload();
+            return;
+        }
         self.animated_sprite2d.play_ex().name("guard").done();
         self.speed = 100.0;
         self.state = PlayerState::Shoot;
         STATE.store(self.state);
-        let mut rust_weapon = self.get_rust_weapon();
         rust_weapon
             .bind_mut()
             .fire(self.damage, self.max_hit_count, self.repel);
