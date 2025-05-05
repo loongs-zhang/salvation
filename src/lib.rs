@@ -4,6 +4,8 @@ use godot::register::GodotConvert;
 
 pub mod entrance;
 
+pub mod level;
+
 pub mod world;
 
 pub mod player;
@@ -18,7 +20,7 @@ pub mod zombie;
 const PLAYER_MAX_HEALTH: u32 = 100;
 
 // weapon
-const BULLET_DAMAGE: i64 = 2;
+const BULLET_DAMAGE: i64 = 20;
 
 const BULLET_REPEL: f32 = 15.0;
 
@@ -26,7 +28,7 @@ const MAX_AMMO: i64 = 30;
 
 const MAX_BULLET_HIT: u8 = 2;
 
-const RELOAD_TIME: u32 = 2000;
+const RELOAD_TIME: u32 = 1000;
 
 // zombie
 const ZOMBIE_DAMAGE: i64 = 10;

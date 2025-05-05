@@ -1,0 +1,41 @@
+[gd_scene load_steps=2 format=3 uid="uid://c4b5nrdy6rq1h"]
+
+[ext_resource type="PackedScene" uid="uid://5koe2fd6n3fc" path="res://scenes/rust_zombie.tscn" id="1_4leux"]
+
+[node name="RustLevel" type="RustLevel"]
+
+[node name="LevelHUD" type="CanvasLayer" parent="."]
+
+[node name="VBoxContainer" type="VBoxContainer" parent="LevelHUD"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -43.5
+offset_top = 10.0
+offset_right = 43.5
+offset_bottom = 40.0
+grow_horizontal = 2
+
+[node name="Level" type="Label" parent="LevelHUD/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.133333, 0.2, 0.133333, 1)
+theme_override_font_sizes/font_size = 24
+text = "LEVEL"
+horizontal_alignment = 1
+
+[node name="Rampage" type="Label" parent="LevelHUD/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
+text = "Rampage"
+horizontal_alignment = 1
+
+[node name="Killed" type="Label" parent="LevelHUD/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.74902, 0, 1)
+text = "Killed"
+horizontal_alignment = 1
+
+[node name="ZombieGenerator" type="ZombieGenerator" parent="."]
+zombie_scenes = Array[PackedScene]([ExtResource("1_4leux")])
+
+[node name="Timer" type="Timer" parent="ZombieGenerator"]

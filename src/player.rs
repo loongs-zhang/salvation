@@ -92,6 +92,8 @@ impl ICharacterBody2D for RustPlayer {
         let input = Input::singleton();
         if input.is_action_pressed("mouse_left") {
             self.shoot();
+        } else if input.is_action_pressed("shift") || input.is_action_pressed("mouse_right") {
+            self.run();
         }
         let dir = Vector2::new(
             input.get_axis("move_left", "move_right"),
@@ -114,8 +116,6 @@ impl ICharacterBody2D for RustPlayer {
     fn input(&mut self, event: Gd<InputEvent>) {
         if event.is_action_pressed("r") {
             self.reload();
-        } else if event.is_action_pressed("shift") || event.is_action_pressed("mouse_right") {
-            self.run();
         } else if event.is_action_released("shift")
             || event.is_action_released("mouse_left")
             || event.is_action_released("mouse_right")

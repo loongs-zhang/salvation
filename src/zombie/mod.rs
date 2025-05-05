@@ -1,5 +1,8 @@
+use crate::level::RustLevel;
 use crate::player::RustPlayer;
+use crate::world::RustWorld;
 use crate::zombie::animation::ZombieAnimation;
+use crate::zombie::attack::{ZombieAttackArea, ZombieDamageArea};
 use crate::{PlayerState, ZOMBIE_MAX_HEALTH, ZOMBIE_RAMPAGE_TIME, ZombieState};
 use godot::builtin::{Vector2, real};
 use godot::classes::{CharacterBody2D, CollisionShape2D, ICharacterBody2D};
@@ -27,6 +30,8 @@ pub struct RustZombie {
     speed: real,
     collision_shape2d: OnReady<Gd<CollisionShape2D>>,
     animated_sprite2d: OnReady<Gd<ZombieAnimation>>,
+    zombie_attack_area: OnReady<Gd<ZombieAttackArea>>,
+    zombie_damage_area: OnReady<Gd<ZombieDamageArea>>,
     base: Base<CharacterBody2D>,
 }
 
@@ -43,6 +48,8 @@ impl ICharacterBody2D for RustZombie {
             speed: 20.0,
             collision_shape2d: OnReady::from_node("CollisionShape2D"),
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
+            zombie_attack_area: OnReady::from_node("ZombieAttackArea"),
+            zombie_damage_area: OnReady::from_node("ZombieDamageArea"),
             base,
         }
     }
@@ -54,14 +61,14 @@ impl ICharacterBody2D for RustZombie {
             .change_zombie_state()
             .connect_self(ZombieAnimation::on_change_zombie_state);
         godot_print!(
-            "Zombie ready at position:{:?}, create time:{:?}",
+            "Zombie {:?} created at {:?}",
             self.base().get_global_position(),
             self.create_time
         );
     }
 
     fn physics_process(&mut self, _delta: f64) {
-        if ZombieState::Dead == self.state {
+        if ZombieState::Dead == self.state || ZombieState::Attack == self.state {
             return;
         }
         let zombie_position = self.base().get_global_position();
@@ -72,16 +79,37 @@ impl ICharacterBody2D for RustZombie {
         let to_player_dir = zombie_position.direction_to(player_position).normalized();
         let angle = current_zombie_dir.angle_to(to_player_dir).to_degrees();
         let mut character_body2d = self.base.to_gd();
+        //僵尸之间的体积碰撞检测
+        for i in 0..character_body2d.get_slide_collision_count() {
+            if let Some(collision) = character_body2d.get_slide_collision(i) {
+                // 发出排斥力的方向
+                let from = collision.get_normal();
+                if let Some(object) = collision.get_collider() {
+                    if object.is_class("RustZombie") {
+                        // 受到排斥的僵尸
+                        let mut to_zombie = object.cast::<Self>();
+                        if ZombieState::Run == to_zombie.bind().state {
+                            continue;
+                        }
+                        // 给其他僵尸让开位置
+                        let dir = from.orthogonal();
+                        let speed = to_zombie.bind().get_speed();
+                        to_zombie.look_at(player_position);
+                        to_zombie.set_velocity(dir * speed);
+                        to_zombie.move_and_slide();
+                        to_zombie.look_at(player_position);
+                        to_zombie.set_velocity((-from) * speed);
+                        to_zombie.move_and_slide();
+                    }
+                }
+            }
+        }
         if PlayerState::Dead == RustPlayer::get_state() {
-            //往玩家相反的方向移动一段距离
+            //玩家死亡时，僵尸往玩家相反的方向移动一段距离
             self.guard();
             let from_player_dir = player_position.direction_to(zombie_position).normalized();
             character_body2d.look_at(zombie_position + from_player_dir);
             character_body2d.set_velocity(from_player_dir * self.speed);
-        } else if ZombieState::Attack == self.state {
-            // 给其他僵尸让开攻击的位置
-            character_body2d.look_at(player_position);
-            character_body2d.set_velocity(to_player_dir.orthogonal() * self.speed);
         } else if distance <= 200.0 && Self::is_face_to_face(angle) || self.can_rampage() {
             // 跑向玩家
             self.run();
@@ -175,15 +203,30 @@ impl RustZombie {
         self.animated_sprite2d.play_ex().name("die").done();
         self.speed = 0.0;
         self.state = ZombieState::Dead;
+        // 释放资源
         self.collision_shape2d.queue_free();
+        self.zombie_attack_area.queue_free();
+        self.zombie_damage_area.queue_free();
         self.notify_animation();
+        // 击杀僵尸确认
+        self.base()
+            .get_tree()
+            .unwrap()
+            .get_root()
+            .unwrap()
+            .get_node_as::<RustWorld>("RustWorld")
+            .get_node_as::<RustLevel>("RustLevel")
+            .bind_mut()
+            .kill_confirmed();
     }
 
     pub fn can_rampage(&self) -> bool {
         if PlayerState::Dead == RustPlayer::get_state() {
             return false;
         }
-        Instant::now().duration_since(self.create_time).as_millis() as u32 >= self.rampage_time
+        RustLevel::can_rampage()
+            || Instant::now().duration_since(self.create_time).as_millis() as u32
+                >= self.rampage_time
     }
 
     pub fn get_distance(&self) -> real {

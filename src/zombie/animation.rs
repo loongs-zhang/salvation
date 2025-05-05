@@ -1,4 +1,5 @@
 use crate::player::RustPlayer;
+use crate::world::RustWorld;
 use crate::{PlayerState, ZOMBIE_DAMAGE, ZombieState};
 use godot::classes::{AnimatedSprite2D, IAnimatedSprite2D, Object};
 use godot::obj::{Base, Gd, WithBaseField, WithUserSignals};
@@ -80,9 +81,11 @@ impl ZombieAnimation {
     }
 
     fn get_rust_player(&mut self) -> Gd<RustPlayer> {
-        if let Some(tree) = self.base().get_parent() {
-            if let Some(tree) = tree.get_parent() {
-                return tree.get_node_as::<RustPlayer>("RustPlayer");
+        if let Some(tree) = self.base().get_tree() {
+            if let Some(root) = tree.get_root() {
+                return root
+                    .get_node_as::<RustWorld>("RustWorld")
+                    .get_node_as::<RustPlayer>("RustPlayer");
             }
         }
         panic!("RustPlayer not found");
