@@ -1,12 +1,10 @@
-use crate::ZOMBIE_RAMPAGE_TIME;
+use crate::LEVEL_RAMPAGE_TIME;
 use crate::player::RustPlayer;
 use crate::world::RustWorld;
 use crate::zombie::RustZombie;
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Array, Vector2, real};
-use godot::classes::{
-    CanvasLayer, Engine, INode2D, Label, Node2D, PackedScene, Timer, VBoxContainer,
-};
+use godot::classes::{CanvasLayer, Engine, INode, Label, Node, PackedScene, Timer, VBoxContainer};
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use rand::Rng;
@@ -15,7 +13,7 @@ use rand::prelude::ThreadRng;
 static RAMPAGE: AtomicCell<bool> = AtomicCell::new(false);
 
 #[derive(GodotClass)]
-#[class(base=Node2D)]
+#[class(base=Node)]
 pub struct RustLevel {
     #[export]
     level: u32,
@@ -26,17 +24,17 @@ pub struct RustLevel {
     left_rampage_time: u32,
     killed: u32,
     generator: OnReady<Gd<ZombieGenerator>>,
-    base: Base<Node2D>,
+    base: Base<Node>,
 }
 
 #[godot_api]
-impl INode2D for RustLevel {
-    fn init(base: Base<Node2D>) -> Self {
+impl INode for RustLevel {
+    fn init(base: Base<Node>) -> Self {
         Self {
             level: 1,
             grow_rate: 1.1,
-            rampage_time: ZOMBIE_RAMPAGE_TIME,
-            left_rampage_time: ZOMBIE_RAMPAGE_TIME,
+            rampage_time: LEVEL_RAMPAGE_TIME,
+            left_rampage_time: LEVEL_RAMPAGE_TIME,
             killed: 0,
             generator: OnReady::from_node("ZombieGenerator"),
             base,
@@ -45,8 +43,6 @@ impl INode2D for RustLevel {
 
     fn ready(&mut self) {
         self.update_level_hud();
-        self.update_rampage_hud();
-        self.update_progress_hud();
     }
 
     fn process(&mut self, delta: f64) {
@@ -54,6 +50,7 @@ impl INode2D for RustLevel {
             .left_rampage_time
             .saturating_sub((delta * 1000.0) as u32);
         self.update_rampage_hud();
+        self.update_progress_hud();
         self.update_fps_hud();
         RAMPAGE.store(self.left_rampage_time <= 0);
         self.level_up();
@@ -89,13 +86,14 @@ impl RustLevel {
     }
 
     pub fn update_progress_hud(&mut self) {
-        let total = self.generator.bind().total;
+        let refreshed = self.generator.bind().current;
+        let total = self.generator.bind().current_total;
         let mut label = self
             .base()
             .get_node_as::<CanvasLayer>("LevelHUD")
             .get_node_as::<VBoxContainer>("VBoxContainer")
             .get_node_as::<Label>("Killed");
-        label.set_text(&format!("KILLED {}/{}", self.killed, total));
+        label.set_text(&format!("KILLED {}/{}/{}", self.killed, refreshed, total));
         label.show();
     }
 
@@ -114,23 +112,23 @@ impl RustLevel {
         if self.killed < generator.total {
             return;
         }
+        let rate = self.grow_rate.powf(self.level as f32);
         self.level += 1;
         self.killed = 0;
-        self.rampage_time = (self.rampage_time as f32 / self.grow_rate) as u32;
-        self.left_rampage_time = self.rampage_time;
-        generator.level_up(self.grow_rate);
+        self.left_rampage_time = (self.rampage_time as f32 / rate) as u32;
+        generator.level_up(rate);
         drop(generator);
         self.update_level_hud();
         self.update_progress_hud();
     }
 
-    pub fn can_rampage() -> bool {
+    pub fn is_rampage() -> bool {
         RAMPAGE.load()
     }
 }
 
 #[derive(GodotClass)]
-#[class(base=Node2D)]
+#[class(base=Node)]
 pub struct ZombieGenerator {
     #[export]
     total: u32,
@@ -140,19 +138,23 @@ pub struct ZombieGenerator {
     refresh_time: f64,
     #[export]
     zombie_scenes: Array<Gd<PackedScene>>,
+    current_total: u32,
+    current_refresh_count: u32,
     current: u32,
-    base: Base<Node2D>,
+    base: Base<Node>,
 }
 
 #[godot_api]
-impl INode2D for ZombieGenerator {
-    fn init(base: Base<Node2D>) -> Self {
+impl INode for ZombieGenerator {
+    fn init(base: Base<Node>) -> Self {
         Self {
             total: 30,
             refresh_count: 3,
             refresh_time: 1.0,
             zombie_scenes: Array::new(),
             current: 0,
+            current_total: 30,
+            current_refresh_count: 3,
             base,
         }
     }
@@ -169,21 +171,19 @@ impl INode2D for ZombieGenerator {
 
 #[godot_api]
 impl ZombieGenerator {
-    pub fn level_up(&mut self, grow_rate: f32) {
-        if self.total <= self.current {
+    pub fn level_up(&mut self, rate: f32) {
+        if self.current_total <= self.current {
             self.current = 0;
-            self.total = ((self.total as f32 * grow_rate) as u32).min(120);
-            self.refresh_count = (self.refresh_count as f32 * grow_rate) as u32;
+            self.current_total = ((self.total as f32 * rate) as u32).min(120);
+            self.current_refresh_count = ((self.refresh_count as f32 * rate) as u32).min(120);
+            self.base().get_node_as::<Timer>("Timer").start();
         }
     }
 
     #[func]
     pub fn generate(&mut self) {
         let mut rng = rand::thread_rng();
-        for _ in 0..self.refresh_count {
-            if self.current >= self.total {
-                return;
-            }
+        for _ in 0..self.current_refresh_count {
             self.generate_zombie(
                 RustPlayer::get_position()
                     + Vector2::new(
@@ -191,7 +191,6 @@ impl ZombieGenerator {
                         Self::random_half_position(&mut rng),
                     ),
             );
-            self.current += 1;
         }
     }
 
@@ -204,6 +203,10 @@ impl ZombieGenerator {
     }
 
     pub fn generate_zombie(&mut self, position: Vector2) {
+        if self.current >= self.current_total {
+            self.base().get_node_as::<Timer>("Timer").stop();
+            return;
+        }
         let mut zombies = Vec::new();
         for zombie_scene in self.zombie_scenes.iter_shared() {
             if let Some(mut zombie) = zombie_scene.try_instantiate_as::<RustZombie>() {
@@ -216,6 +219,7 @@ impl ZombieGenerator {
                 let mut world = root.get_node_as::<RustWorld>("RustWorld");
                 for zombie in zombies {
                     world.add_child(&zombie);
+                    self.current += 1;
                 }
             }
         }

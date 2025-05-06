@@ -22,7 +22,7 @@ pub struct RustBullet {
 impl INode2D for RustBullet {
     fn init(base: Base<Self::Base>) -> Self {
         Self {
-            speed: 400.0,
+            speed: 1000.0,
             final_repel: BULLET_REPEL,
             final_damage: 0,
             final_max_hit_count: 0,

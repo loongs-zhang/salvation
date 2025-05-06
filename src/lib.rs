@@ -1,4 +1,4 @@
-use godot::builtin::GString;
+use godot::builtin::{GString, real};
 use godot::init::{ExtensionLibrary, gdextension};
 use godot::register::GodotConvert;
 
@@ -19,6 +19,8 @@ pub mod zombie;
 // player
 const PLAYER_MAX_HEALTH: u32 = 100;
 
+const PLAYER_MOVE_SPEED: real = 225.0;
+
 // weapon
 const BULLET_DAMAGE: i64 = 20;
 
@@ -30,12 +32,21 @@ const MAX_BULLET_HIT: u8 = 2;
 
 const RELOAD_TIME: u32 = 1000;
 
+//level
+const LEVEL_RAMPAGE_TIME: u32 = 30_000;
+
 // zombie
 const ZOMBIE_DAMAGE: i64 = 10;
 
+const ZOMBIE_PURSUIT_DISTANCE: f32 = 225.0;
+
+const ZOMBIE_MAX_DISTANCE: f32 = 1000.0;
+
+const ZOMBIE_MOVE_SPEED: real = 150.0;
+
 const ZOMBIE_MAX_HEALTH: u32 = 100;
 
-const ZOMBIE_RAMPAGE_TIME: u32 = 30_000;
+const ZOMBIE_RAMPAGE_TIME: u32 = 10_000;
 
 #[derive(GodotConvert, Default, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
 #[godot(via = GString)]

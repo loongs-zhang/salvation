@@ -1,5 +1,5 @@
 use crate::weapon::RustWeapon;
-use crate::{MAX_AMMO, PLAYER_MAX_HEALTH, PlayerState};
+use crate::{MAX_AMMO, PLAYER_MAX_HEALTH, PLAYER_MOVE_SPEED, PlayerState};
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
 use godot::classes::{
@@ -28,9 +28,11 @@ pub struct RustPlayer {
     repel: real,
     #[export]
     max_health: u32,
+    #[export]
+    speed: real,
     health: u32,
     state: PlayerState,
-    speed: real,
+    current_speed: real,
     animated_sprite2d: OnReady<Gd<AnimatedSprite2D>>,
     weapon: OnReady<Gd<Node2D>>,
     hud: OnReady<Gd<PlayerHUD>>,
@@ -47,7 +49,8 @@ impl ICharacterBody2D for RustPlayer {
             max_health: PLAYER_MAX_HEALTH,
             health: PLAYER_MAX_HEALTH,
             state: PlayerState::Born,
-            speed: 200.0,
+            speed: PLAYER_MOVE_SPEED,
+            current_speed: PLAYER_MOVE_SPEED,
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             weapon: OnReady::from_node("Weapon"),
             hud: OnReady::from_node("PlayerHUD"),
@@ -95,17 +98,19 @@ impl ICharacterBody2D for RustPlayer {
         } else if input.is_action_pressed("shift") || input.is_action_pressed("mouse_right") {
             self.run();
         }
-        let dir = Vector2::new(
+        let key_direction = Vector2::new(
             input.get_axis("move_left", "move_right"),
             input.get_axis("move_up", "move_down"),
         );
         match self.state {
-            PlayerState::Run => self.animated_sprite2d.look_at(player_position + dir),
+            PlayerState::Run => self
+                .animated_sprite2d
+                .look_at(player_position + key_direction),
             _ => self.animated_sprite2d.look_at(mouse_position),
         }
         let mut character_body2d = self.base.to_gd();
-        if dir != Vector2::ZERO {
-            character_body2d.set_velocity(dir.normalized() * self.speed);
+        if key_direction != Vector2::ZERO {
+            character_body2d.set_velocity(key_direction.normalized() * self.current_speed);
         } else {
             character_body2d.set_velocity(Vector2::ZERO);
             self.guard();
@@ -150,7 +155,7 @@ impl RustPlayer {
             return;
         }
         self.animated_sprite2d.play_ex().name("guard").done();
-        self.speed = 200.0;
+        self.current_speed = self.speed;
         self.state = PlayerState::Born;
         self.health = self.max_health;
         STATE.store(self.state);
@@ -165,7 +170,7 @@ impl RustPlayer {
             return;
         }
         self.animated_sprite2d.play_ex().name("guard").done();
-        self.speed = 200.0;
+        self.current_speed = self.speed;
         self.state = PlayerState::Guard;
         STATE.store(self.state);
     }
@@ -175,7 +180,7 @@ impl RustPlayer {
             return;
         }
         self.animated_sprite2d.play_ex().name("run").done();
-        self.speed = 300.0;
+        self.current_speed = self.speed * 1.5;
         self.state = PlayerState::Run;
         STATE.store(self.state);
         //打断换弹
@@ -193,7 +198,7 @@ impl RustPlayer {
             return;
         }
         self.animated_sprite2d.play_ex().name("guard").done();
-        self.speed = 100.0;
+        self.current_speed = self.speed * 0.5;
         self.state = PlayerState::Shoot;
         STATE.store(self.state);
         rust_weapon
@@ -209,7 +214,7 @@ impl RustPlayer {
             return;
         }
         self.animated_sprite2d.play_ex().name("reload").done();
-        self.speed = 125.0;
+        self.current_speed = self.speed * 0.75;
         self.state = PlayerState::Reload;
         STATE.store(self.state);
     }
@@ -231,7 +236,7 @@ impl RustPlayer {
             return;
         }
         self.animated_sprite2d.play_ex().name("hit").done();
-        self.speed = 100.0;
+        self.current_speed = self.speed * 0.5;
         self.state = PlayerState::Hit;
         STATE.store(self.state);
     }
@@ -241,7 +246,7 @@ impl RustPlayer {
             return;
         }
         self.animated_sprite2d.play_ex().name("die").done();
-        self.speed = 0.0;
+        self.current_speed = 0.0;
         self.state = PlayerState::Dead;
         STATE.store(self.state);
         if let Some(mut tree) = self.base().get_tree() {

@@ -1,0 +1,43 @@
+[gd_scene format=3 uid="uid://dcjy2vqmnudni"]
+
+[node name="LevelHUD" type="CanvasLayer"]
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -43.5
+offset_top = 10.0
+offset_right = 43.5
+offset_bottom = 40.0
+grow_horizontal = 2
+
+[node name="Level" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.133333, 0.2, 0.133333, 1)
+theme_override_font_sizes/font_size = 24
+text = "LEVEL"
+horizontal_alignment = 1
+
+[node name="Rampage" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
+text = "Rampage"
+horizontal_alignment = 1
+
+[node name="Killed" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.74902, 0, 1)
+text = "Killed"
+horizontal_alignment = 1
+
+[node name="FPS" type="Label" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -50.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = 30.0
+grow_horizontal = 0
+text = "FPS"
