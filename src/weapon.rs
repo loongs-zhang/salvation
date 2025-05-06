@@ -41,7 +41,7 @@ impl INode2D for RustWeapon {
             clip: MAX_AMMO,
             repel: BULLET_REPEL,
             max_hit_count: MAX_BULLET_HIT,
-            fire_cooldown: 200,
+            fire_cooldown: 100,
             reload_time: RELOAD_TIME,
             ammo: MAX_AMMO,
             last_shot_time: Instant::now(),

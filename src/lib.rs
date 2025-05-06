@@ -24,7 +24,7 @@ const PLAYER_MOVE_SPEED: real = 225.0;
 // weapon
 const BULLET_DAMAGE: i64 = 20;
 
-const BULLET_REPEL: f32 = 15.0;
+const BULLET_REPEL: real = 15.0;
 
 const MAX_AMMO: i64 = 30;
 
@@ -33,14 +33,20 @@ const MAX_BULLET_HIT: u8 = 2;
 const RELOAD_TIME: u32 = 1000;
 
 //level
-const LEVEL_RAMPAGE_TIME: u32 = 30_000;
+const LEVEL_RAMPAGE_TIME: u32 = 120_000;
 
 // zombie
+const ZOMBIE_MAX_SCREEN_COUNT: u32 = 160;
+
+const ZOMBIE_MIN_REFRESH_BATCH: u32 = 40;
+
+const ZOMBIE_MAX_BODY_COUNT: u32 = 80;
+
 const ZOMBIE_DAMAGE: i64 = 10;
 
-const ZOMBIE_PURSUIT_DISTANCE: f32 = 225.0;
+const ZOMBIE_PURSUIT_DISTANCE: real = 225.0;
 
-const ZOMBIE_MAX_DISTANCE: f32 = 1000.0;
+const ZOMBIE_MAX_DISTANCE: real = 1000.0;
 
 const ZOMBIE_MOVE_SPEED: real = 150.0;
 

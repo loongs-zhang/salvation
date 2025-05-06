@@ -77,7 +77,7 @@ impl ICharacterBody2D for RustPlayer {
         );
     }
 
-    fn process(&mut self, delta: f64) {
+    fn physics_process(&mut self, delta: f64) {
         if PlayerState::Dead == self.state {
             return;
         }

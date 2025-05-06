@@ -5,7 +5,7 @@ use crate::zombie::animation::ZombieAnimation;
 use crate::zombie::attack::{ZombieAttackArea, ZombieDamageArea};
 use crate::zombie::hit::ZombieHit;
 use crate::{
-    PlayerState, ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH, ZOMBIE_MOVE_SPEED,
+    PlayerState, ZOMBIE_MAX_BODY_COUNT, ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH, ZOMBIE_MOVE_SPEED,
     ZOMBIE_PURSUIT_DISTANCE, ZOMBIE_RAMPAGE_TIME, ZombieState,
 };
 use godot::builtin::{Vector2, real};
@@ -15,6 +15,7 @@ use godot::classes::{
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use rand::Rng;
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{Duration, Instant};
 
 pub mod attack;
@@ -22,6 +23,8 @@ pub mod attack;
 pub mod animation;
 
 pub mod hit;
+
+static BODY_COUNT: AtomicU32 = AtomicU32::new(0);
 
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
@@ -76,12 +79,19 @@ impl ICharacterBody2D for RustZombie {
             .connect_self(ZombieAnimation::on_change_zombie_state);
     }
 
-    fn physics_process(&mut self, _delta: f64) {
+    fn process(&mut self, _delta: f64) {
+        if ZombieState::Dead == self.state {
+            if BODY_COUNT.load(Ordering::Acquire) >= ZOMBIE_MAX_BODY_COUNT {
+                self.base_mut().queue_free();
+                BODY_COUNT.fetch_sub(1, Ordering::Release);
+            }
+            return;
+        }
         if PlayerState::Dead == RustPlayer::get_state() {
             self.move_back();
             return;
         }
-        if ZombieState::Dead == self.state || ZombieState::Attack == self.state {
+        if ZombieState::Attack == self.state {
             return;
         }
         let zombie_position = self.base().get_global_position();
@@ -240,6 +250,7 @@ impl RustZombie {
             .get_node_as::<RustLevel>("RustLevel")
             .bind_mut()
             .kill_confirmed();
+        BODY_COUNT.fetch_add(1, Ordering::Release);
     }
 
     pub fn move_back(&mut self) {

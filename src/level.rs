@@ -1,8 +1,7 @@
-use crate::LEVEL_RAMPAGE_TIME;
 use crate::player::RustPlayer;
 use crate::world::RustWorld;
 use crate::zombie::RustZombie;
-use crossbeam_utils::atomic::AtomicCell;
+use crate::{LEVEL_RAMPAGE_TIME, ZOMBIE_MAX_SCREEN_COUNT, ZOMBIE_MIN_REFRESH_BATCH};
 use godot::builtin::{Array, Vector2, real};
 use godot::classes::{
     AudioStreamPlayer2D, CanvasLayer, Engine, INode, Label, Node, PackedScene, Timer, VBoxContainer,
@@ -11,8 +10,11 @@ use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use rand::Rng;
 use rand::prelude::ThreadRng;
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
-static RAMPAGE: AtomicCell<bool> = AtomicCell::new(false);
+static RAMPAGE: AtomicBool = AtomicBool::new(false);
+
+static KILL_COUNT: AtomicU32 = AtomicU32::new(0);
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -35,7 +37,7 @@ pub struct RustLevel {
 impl INode for RustLevel {
     fn init(base: Base<Node>) -> Self {
         Self {
-            level: 1,
+            level: 0,
             grow_rate: 1.1,
             rampage_time: LEVEL_RAMPAGE_TIME,
             left_rampage_time: LEVEL_RAMPAGE_TIME,
@@ -48,25 +50,28 @@ impl INode for RustLevel {
     }
 
     fn ready(&mut self) {
-        self.update_level_hud();
-        self.play_bgm();
+        self.level_up();
     }
 
     fn process(&mut self, delta: f64) {
+        KILL_COUNT.store(self.killed, Ordering::Release);
         self.left_rampage_time = self
             .left_rampage_time
             .saturating_sub((delta * 1000.0) as u32);
         self.update_rampage_hud();
+        self.update_refresh_hud();
         self.update_progress_hud();
         self.update_fps_hud();
         if self.left_rampage_time <= 0 {
-            RAMPAGE.store(true);
+            RAMPAGE.store(true, Ordering::Release);
             self.play_rampage_bgm();
         } else {
-            RAMPAGE.store(false);
+            RAMPAGE.store(false, Ordering::Release);
             self.play_bgm();
         }
-        self.level_up();
+        if self.killed >= self.generator.bind().current_total {
+            self.level_up();
+        }
     }
 }
 
@@ -98,6 +103,21 @@ impl RustLevel {
         label.show();
     }
 
+    pub fn update_refresh_hud(&mut self) {
+        let refresh_count = self.generator.bind().current_refresh_count;
+        let wait_time = self.generator.get_node_as::<Timer>("Timer").get_wait_time();
+        let mut label = self
+            .base()
+            .get_node_as::<CanvasLayer>("LevelHUD")
+            .get_node_as::<VBoxContainer>("VBoxContainer")
+            .get_node_as::<Label>("Refresh");
+        label.set_text(&format!(
+            "REFRESH {} ZOMBIES IN {:.0}s",
+            refresh_count, wait_time
+        ));
+        label.show();
+    }
+
     pub fn update_progress_hud(&mut self) {
         let refreshed = self.generator.bind().current;
         let total = self.generator.bind().current_total;
@@ -122,9 +142,6 @@ impl RustLevel {
 
     pub fn level_up(&mut self) {
         let mut generator = self.generator.bind_mut();
-        if self.killed < generator.total {
-            return;
-        }
         let rate = self.grow_rate.powf(self.level as f32);
         self.level += 1;
         self.killed = 0;
@@ -132,6 +149,7 @@ impl RustLevel {
         generator.level_up(rate);
         drop(generator);
         self.update_level_hud();
+        self.update_refresh_hud();
         self.update_progress_hud();
     }
 
@@ -152,7 +170,11 @@ impl RustLevel {
     }
 
     pub fn is_rampage() -> bool {
-        RAMPAGE.load()
+        RAMPAGE.load(Ordering::Acquire)
+    }
+
+    pub fn get_kill_count() -> u32 {
+        KILL_COUNT.load(Ordering::Acquire)
     }
 }
 
@@ -170,6 +192,7 @@ pub struct ZombieGenerator {
     current_total: u32,
     current_refresh_count: u32,
     current: u32,
+    refresh_barrier: u32,
     base: Base<Node>,
 }
 
@@ -179,11 +202,12 @@ impl INode for ZombieGenerator {
         Self {
             total: 30,
             refresh_count: 3,
-            refresh_time: 1.0,
+            refresh_time: 3.0,
             zombie_scenes: Array::new(),
             current: 0,
             current_total: 30,
             current_refresh_count: 3,
+            refresh_barrier: ZOMBIE_MIN_REFRESH_BATCH,
             base,
         }
     }
@@ -201,18 +225,26 @@ impl INode for ZombieGenerator {
 #[godot_api]
 impl ZombieGenerator {
     pub fn level_up(&mut self, rate: f32) {
-        if self.current_total <= self.current {
-            self.current = 0;
-            self.current_total = ((self.total as f32 * rate) as u32).min(120);
-            self.current_refresh_count = ((self.refresh_count as f32 * rate) as u32).min(120);
-            self.base().get_node_as::<Timer>("Timer").start();
-        }
+        self.current = 0;
+        self.refresh_barrier = ZOMBIE_MIN_REFRESH_BATCH;
+        self.current_total = (self.total as f32 * rate) as u32;
+        self.current_refresh_count = (self.refresh_count as f32 * rate) as u32;
+        self.base().get_node_as::<Timer>("Timer").start();
     }
 
     #[func]
     pub fn generate(&mut self) {
+        //todo 性能优化，如果刷出来的僵尸数量超过160，清理掉距离最远的一批僵尸，然后继续刷新
         let mut rng = rand::thread_rng();
         for _ in 0..self.current_refresh_count {
+            let kill_count = RustLevel::get_kill_count();
+            if 0 < kill_count
+                && kill_count < self.refresh_barrier
+                && self.current_refresh_count > ZOMBIE_MAX_SCREEN_COUNT
+                || self.current.saturating_sub(kill_count) >= ZOMBIE_MAX_SCREEN_COUNT
+            {
+                break;
+            }
             self.generate_zombie(
                 RustPlayer::get_position()
                     + Vector2::new(
@@ -220,6 +252,9 @@ impl ZombieGenerator {
                         Self::random_half_position(&mut rng),
                     ),
             );
+        }
+        while RustLevel::get_kill_count() >= self.refresh_barrier {
+            self.refresh_barrier += ZOMBIE_MIN_REFRESH_BATCH;
         }
     }
 
