@@ -217,13 +217,14 @@ impl RustPlayer {
         self.current_speed = self.speed * 0.75;
         self.state = PlayerState::Reload;
         STATE.store(self.state);
+        self.get_rust_weapon().bind_mut().reload();
     }
 
     #[func]
     pub fn reloaded(&mut self) {
         self.state = PlayerState::Guard;
         let mut rust_weapon = self.get_rust_weapon();
-        let clip = rust_weapon.bind_mut().reload();
+        let clip = rust_weapon.bind_mut().reloaded();
         self.hud
             .bind_mut()
             .update_ammo_hud(rust_weapon.bind().get_ammo(), clip);

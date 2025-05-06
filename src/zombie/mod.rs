@@ -9,7 +9,9 @@ use crate::{
     ZOMBIE_PURSUIT_DISTANCE, ZOMBIE_RAMPAGE_TIME, ZombieState,
 };
 use godot::builtin::{Vector2, real};
-use godot::classes::{CharacterBody2D, CollisionShape2D, ICharacterBody2D, PackedScene};
+use godot::classes::{
+    AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, ICharacterBody2D, PackedScene,
+};
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use rand::Rng;
@@ -40,6 +42,7 @@ pub struct RustZombie {
     zombie_attack_area: OnReady<Gd<ZombieAttackArea>>,
     zombie_damage_area: OnReady<Gd<ZombieDamageArea>>,
     hit_scene: OnReady<Gd<PackedScene>>,
+    hit_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     base: Base<CharacterBody2D>,
 }
 
@@ -60,6 +63,7 @@ impl ICharacterBody2D for RustZombie {
             zombie_attack_area: OnReady::from_node("ZombieAttackArea"),
             zombie_damage_area: OnReady::from_node("ZombieDamageArea"),
             hit_scene: OnReady::from_loaded("res://scenes/zombie_hit.tscn"),
+            hit_audio: OnReady::from_node("HitAudio"),
             base,
         }
     }
@@ -152,6 +156,7 @@ impl RustZombie {
                 }
             }
         }
+        self.hit_audio.play();
         let health = self.health;
         self.health = if hit_val > 0 {
             health.saturating_sub(hit_val as u32)

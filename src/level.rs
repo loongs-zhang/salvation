@@ -4,7 +4,9 @@ use crate::world::RustWorld;
 use crate::zombie::RustZombie;
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Array, Vector2, real};
-use godot::classes::{CanvasLayer, Engine, INode, Label, Node, PackedScene, Timer, VBoxContainer};
+use godot::classes::{
+    AudioStreamPlayer2D, CanvasLayer, Engine, INode, Label, Node, PackedScene, Timer, VBoxContainer,
+};
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use rand::Rng;
@@ -24,6 +26,8 @@ pub struct RustLevel {
     left_rampage_time: u32,
     killed: u32,
     generator: OnReady<Gd<ZombieGenerator>>,
+    bgm: OnReady<Gd<AudioStreamPlayer2D>>,
+    rampage_bgm: OnReady<Gd<AudioStreamPlayer2D>>,
     base: Base<Node>,
 }
 
@@ -37,12 +41,15 @@ impl INode for RustLevel {
             left_rampage_time: LEVEL_RAMPAGE_TIME,
             killed: 0,
             generator: OnReady::from_node("ZombieGenerator"),
+            bgm: OnReady::from_node("Bgm"),
+            rampage_bgm: OnReady::from_node("RampageBgm"),
             base,
         }
     }
 
     fn ready(&mut self) {
         self.update_level_hud();
+        self.play_bgm();
     }
 
     fn process(&mut self, delta: f64) {
@@ -52,7 +59,13 @@ impl INode for RustLevel {
         self.update_rampage_hud();
         self.update_progress_hud();
         self.update_fps_hud();
-        RAMPAGE.store(self.left_rampage_time <= 0);
+        if self.left_rampage_time <= 0 {
+            RAMPAGE.store(true);
+            self.play_rampage_bgm();
+        } else {
+            RAMPAGE.store(false);
+            self.play_bgm();
+        }
         self.level_up();
     }
 }
@@ -120,6 +133,22 @@ impl RustLevel {
         drop(generator);
         self.update_level_hud();
         self.update_progress_hud();
+    }
+
+    pub fn play_bgm(&mut self) {
+        if self.bgm.is_playing() {
+            return;
+        }
+        self.rampage_bgm.stop();
+        self.bgm.play();
+    }
+
+    pub fn play_rampage_bgm(&mut self) {
+        if self.rampage_bgm.is_playing() {
+            return;
+        }
+        self.bgm.stop();
+        self.rampage_bgm.play();
     }
 
     pub fn is_rampage() -> bool {

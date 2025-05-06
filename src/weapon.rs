@@ -1,7 +1,7 @@
 use crate::bullet::RustBullet;
 use crate::{BULLET_DAMAGE, BULLET_REPEL, MAX_AMMO, MAX_BULLET_HIT, RELOAD_TIME};
 use godot::builtin::{Vector2, real};
-use godot::classes::{INode2D, Node2D, PackedScene};
+use godot::classes::{AudioStreamPlayer2D, GpuParticles2D, INode2D, Node2D, PackedScene};
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use std::ops::Add;
@@ -26,6 +26,10 @@ pub struct RustWeapon {
     last_shot_time: Instant,
     bullet_scene: OnReady<Gd<PackedScene>>,
     bullet_point: OnReady<Gd<Node2D>>,
+    fire_flash: OnReady<Gd<GpuParticles2D>>,
+    fire_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    reload_start_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    reload_end_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     base: Base<Node2D>,
 }
 
@@ -43,6 +47,10 @@ impl INode2D for RustWeapon {
             last_shot_time: Instant::now(),
             bullet_scene: OnReady::from_loaded("res://scenes/rust_bullet.tscn"),
             bullet_point: OnReady::from_node("BulletPoint"),
+            fire_flash: OnReady::from_node("GpuParticles2D"),
+            fire_audio: OnReady::from_node("FireAudio"),
+            reload_start_audio: OnReady::from_node("ReloadStartAudio"),
+            reload_end_audio: OnReady::from_node("ReloadEndAudio"),
             base,
         }
     }
@@ -81,6 +89,8 @@ impl RustWeapon {
             if let Some(tree) = self.base().get_tree() {
                 if let Some(mut root) = tree.get_root() {
                     root.add_child(&bullet);
+                    self.fire_flash.restart();
+                    self.fire_audio.play();
                     self.last_shot_time = now;
                     self.ammo -= 1;
                 }
@@ -88,10 +98,18 @@ impl RustWeapon {
         }
     }
 
-    pub fn reload(&mut self) -> i64 {
+    pub fn reload(&mut self) {
+        if self.clip == self.ammo {
+            return;
+        }
+        self.reload_start_audio.play();
+    }
+
+    pub fn reloaded(&mut self) -> i64 {
         if self.clip == self.ammo {
             return self.clip;
         }
+        self.reload_end_audio.play();
         self.ammo = self.clip;
         self.ammo
     }

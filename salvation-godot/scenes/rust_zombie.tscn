@@ -1,6 +1,7 @@
-[gd_scene load_steps=35 format=3 uid="uid://5koe2fd6n3fc"]
+[gd_scene load_steps=36 format=3 uid="uid://5koe2fd6n3fc"]
 
 [ext_resource type="Texture2D" uid="uid://dqjhelwwr6uaw" path="res://asserts/zombie.png" id="1_4lcne"]
+[ext_resource type="AudioStream" uid="uid://njdju0k63sw1" path="res://asserts/zombie_hit.mp3" id="2_xgxvb"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_xgxvb"]
 radius = 18.0
@@ -266,3 +267,6 @@ visibility_layer = 2
 light_mask = 0
 visibility_layer = 2
 shape = SubResource("CircleShape2D_ojx4y")
+
+[node name="HitAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("2_xgxvb")

@@ -1,6 +1,6 @@
 use crate::world::RustWorld;
 use godot::classes::{
-    Button, ColorRect, Control, IButton, IControl, Object, PackedScene, VBoxContainer,
+    AudioStreamPlayer2D, Button, ColorRect, Control, IControl, PackedScene, VBoxContainer,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::prelude::ToGodot;
@@ -9,58 +9,57 @@ use godot::register::{GodotClass, godot_api};
 #[derive(GodotClass)]
 #[class(base=Control)]
 pub struct RustEntrance {
+    world_scene: OnReady<Gd<PackedScene>>,
+    bgm: OnReady<Gd<AudioStreamPlayer2D>>,
     base: Base<Control>,
 }
 
 #[godot_api]
 impl IControl for RustEntrance {
     fn init(base: Base<Control>) -> Self {
-        Self { base }
-    }
-
-    fn ready(&mut self) {
-        let container = self.base().get_node_as::<VBoxContainer>("VBoxContainer");
-        container
-            .get_node_as::<EndlessMode>("EndlessMode")
-            .signals()
-            .pressed()
-            .connect_self(EndlessMode::on_endless_mode_pressed);
-        container
-            .get_node_as::<ExitGame>("ExitGame")
-            .signals()
-            .pressed()
-            .connect_self(ExitGame::on_exit_game_pressed);
-    }
-}
-
-#[derive(GodotClass)]
-#[class(base=Button)]
-pub struct EndlessMode {
-    world_scene: OnReady<Gd<PackedScene>>,
-    base: Base<Button>,
-}
-
-#[godot_api]
-impl IButton for EndlessMode {
-    fn init(base: Base<Button>) -> Self {
         Self {
             world_scene: OnReady::from_loaded("res://scenes/rust_world.tscn"),
+            bgm: OnReady::from_node("Bgm"),
             base,
         }
     }
+
+    fn ready(&mut self) {
+        let gd = self.to_gd();
+        let container = self.base().get_node_as::<VBoxContainer>("VBoxContainer");
+        container
+            .get_node_as::<Button>("EndlessMode")
+            .signals()
+            .pressed()
+            .connect_obj(&gd, Self::on_endless_mode_pressed);
+        container
+            .get_node_as::<Button>("ExitGame")
+            .signals()
+            .pressed()
+            .connect_obj(&gd, Self::on_exit_game_pressed);
+        self.play_bgm();
+        self.bgm
+            .signals()
+            .finished()
+            .connect_obj(&gd, Self::play_bgm);
+    }
 }
 
 #[godot_api]
-impl EndlessMode {
-    #[signal]
-    pub fn sig();
+impl RustEntrance {
+    #[func]
+    pub fn play_bgm(&mut self) {
+        self.bgm.play();
+    }
 
     #[func]
     pub fn on_endless_mode_pressed(&mut self) {
-        self.base_mut().set_visible(false);
-        let container = self.base().get_parent().expect("VBoxContainer not found");
+        let container = self.base().get_node_as::<VBoxContainer>("VBoxContainer");
         container
-            .get_node_as::<ExitGame>("ExitGame")
+            .get_node_as::<Button>("EndlessMode")
+            .set_visible(false);
+        container
+            .get_node_as::<Button>("ExitGame")
             .set_visible(false);
         let color_rect = container
             .get_parent()
@@ -79,6 +78,7 @@ impl EndlessMode {
 
     #[func]
     pub fn change_scene(&mut self) {
+        self.bgm.stop();
         if let Some(world) = self.world_scene.try_instantiate_as::<RustWorld>() {
             if let Some(tree) = self.base().get_tree() {
                 if let Some(mut root) = tree.get_root() {
@@ -87,25 +87,6 @@ impl EndlessMode {
             }
         }
     }
-}
-
-#[derive(GodotClass)]
-#[class(base=Button)]
-pub struct ExitGame {
-    base: Base<Button>,
-}
-
-#[godot_api]
-impl IButton for ExitGame {
-    fn init(base: Base<Button>) -> Self {
-        Self { base }
-    }
-}
-
-#[godot_api]
-impl ExitGame {
-    #[signal]
-    pub fn sig();
 
     #[func]
     pub fn on_exit_game_pressed(&mut self) {

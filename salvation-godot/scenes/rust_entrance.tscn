@@ -1,4 +1,6 @@
-[gd_scene format=3 uid="uid://b45bpbabiv23r"]
+[gd_scene load_steps=2 format=3 uid="uid://b45bpbabiv23r"]
+
+[ext_resource type="AudioStream" uid="uid://bgldv3ngaepgh" path="res://asserts/Horizon.mp3" id="1_uh0c4"]
 
 [node name="RustEntrance" type="RustEntrance"]
 anchors_preset = 15
@@ -69,10 +71,13 @@ offset_bottom = -50.0
 grow_vertical = 0
 theme_override_constants/separation = 8
 
-[node name="EndlessMode" type="EndlessMode" parent="VBoxContainer"]
+[node name="EndlessMode" type="Button" parent="VBoxContainer"]
 layout_mode = 2
 text = "Endless"
 
-[node name="ExitGame" type="ExitGame" parent="VBoxContainer"]
+[node name="ExitGame" type="Button" parent="VBoxContainer"]
 layout_mode = 2
 text = "Exit"
+
+[node name="Bgm" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("1_uh0c4")
