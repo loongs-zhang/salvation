@@ -3,12 +3,13 @@ use crate::{MAX_AMMO, PLAYER_MAX_HEALTH, PLAYER_MOVE_SPEED, PlayerState};
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
 use godot::classes::{
-    AnimatedSprite2D, CanvasLayer, CharacterBody2D, Control, ICanvasLayer, ICharacterBody2D, Input,
-    InputEvent, Label, Node2D, VBoxContainer,
+    AnimatedSprite2D, AudioStreamPlayer2D, CanvasLayer, CharacterBody2D, Control, ICanvasLayer,
+    ICharacterBody2D, Input, InputEvent, Label, Node2D, VBoxContainer,
 };
 use godot::global::godot_print;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
+use rand::Rng;
 use std::ops::Add;
 
 static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
@@ -36,6 +37,11 @@ pub struct RustPlayer {
     animated_sprite2d: OnReady<Gd<AnimatedSprite2D>>,
     weapon: OnReady<Gd<Node2D>>,
     hud: OnReady<Gd<PlayerHUD>>,
+    run_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    hurt_audio1: OnReady<Gd<AudioStreamPlayer2D>>,
+    hurt_audio2: OnReady<Gd<AudioStreamPlayer2D>>,
+    scream_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    die_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     base: Base<CharacterBody2D>,
 }
 
@@ -54,6 +60,11 @@ impl ICharacterBody2D for RustPlayer {
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             weapon: OnReady::from_node("Weapon"),
             hud: OnReady::from_node("PlayerHUD"),
+            run_audio: OnReady::from_node("RunAudio"),
+            hurt_audio1: OnReady::from_node("HurtAudio1"),
+            hurt_audio2: OnReady::from_node("HurtAudio2"),
+            scream_audio: OnReady::from_node("ScreamAudio"),
+            die_audio: OnReady::from_node("DieAudio"),
             base,
         }
     }
@@ -140,11 +151,12 @@ impl RustPlayer {
         } else {
             health.saturating_add(-hit_val as u32)
         };
-        self.hit();
         self.hud
             .bind_mut()
             .update_hp_hud(self.health, self.max_health);
-        if 0 == self.health {
+        if 0 != self.health {
+            self.hit();
+        } else {
             self.die();
         }
     }
@@ -185,6 +197,9 @@ impl RustPlayer {
         STATE.store(self.state);
         //打断换弹
         RELOADING.store(0.0);
+        if !self.run_audio.is_playing() {
+            self.run_audio.play();
+        }
     }
 
     pub fn shoot(&mut self) {
@@ -240,6 +255,14 @@ impl RustPlayer {
         self.current_speed = self.speed * 0.5;
         self.state = PlayerState::Hit;
         STATE.store(self.state);
+        if Self::random_bool() {
+            self.hurt_audio1.play();
+        } else {
+            self.hurt_audio2.play();
+        }
+        if !self.scream_audio.is_playing() {
+            self.scream_audio.play();
+        }
     }
 
     pub fn die(&mut self) {
@@ -250,6 +273,7 @@ impl RustPlayer {
         self.current_speed = 0.0;
         self.state = PlayerState::Dead;
         STATE.store(self.state);
+        self.die_audio.play();
         if let Some(mut tree) = self.base().get_tree() {
             if let Some(mut timer) = tree.create_timer(3.0) {
                 timer.connect("timeout", &self.base().callable("born"));
@@ -268,6 +292,10 @@ impl RustPlayer {
 
     pub fn get_rust_weapon(&mut self) -> Gd<RustWeapon> {
         self.weapon.get_node_as::<RustWeapon>("RustWeapon")
+    }
+
+    pub fn random_bool() -> bool {
+        rand::thread_rng().gen_range(-1.0..1.0) >= 0.0
     }
 
     pub fn get_position() -> Vector2 {

@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3 uid="uid://d2ryhlh122dqg"]
+[gd_scene load_steps=37 format=3 uid="uid://d2ryhlh122dqg"]
 
 [ext_resource type="Texture2D" uid="uid://b0dlxb302gr4n" path="res://asserts/player_idle.png" id="1_iwbmd"]
 [ext_resource type="Texture2D" uid="uid://cxaowrd50063m" path="res://asserts/player_run.png" id="2_0rh5x"]
@@ -7,6 +7,11 @@
 [ext_resource type="Texture2D" uid="uid://daykfevp7syil" path="res://asserts/player_gun_reload.png" id="3_g8j1n"]
 [ext_resource type="PackedScene" uid="uid://cigcujmruac6u" path="res://scenes/rust_weapon.tscn" id="4_0rh5x"]
 [ext_resource type="PackedScene" uid="uid://6mpjo4ff6g2a" path="res://scenes/player_hud.tscn" id="7_g8j1n"]
+[ext_resource type="AudioStream" uid="uid://c1qwqajbvuf48" path="res://asserts/player_run.mp3" id="8_e5vhl"]
+[ext_resource type="AudioStream" uid="uid://nhog4x5tx37w" path="res://asserts/player_hurt1.mp3" id="9_dmfm0"]
+[ext_resource type="AudioStream" uid="uid://c7xpa0nihpraj" path="res://asserts/player_hurt2.mp3" id="10_dlpix"]
+[ext_resource type="AudioStream" uid="uid://c43jvjyaof7o8" path="res://asserts/player_scream.mp3" id="11_0hc44"]
+[ext_resource type="AudioStream" uid="uid://c8yxswjo1mok4" path="res://asserts/player_die.mp3" id="12_x4rvw"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_h4u8k"]
 radius = 18.0
@@ -245,3 +250,18 @@ autoplay = "guard"
 [node name="RustWeapon" parent="Weapon" instance=ExtResource("4_0rh5x")]
 
 [node name="PlayerHUD" parent="." instance=ExtResource("7_g8j1n")]
+
+[node name="RunAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("8_e5vhl")
+
+[node name="HurtAudio1" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("9_dmfm0")
+
+[node name="HurtAudio2" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("10_dlpix")
+
+[node name="ScreamAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("11_0hc44")
+
+[node name="DieAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("12_x4rvw")

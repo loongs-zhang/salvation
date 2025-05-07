@@ -73,6 +73,8 @@ pub enum ZombieState {
     #[default]
     Guard,
     Run,
+    Rampage,
+    Hit,
     Attack,
     Dead,
 }

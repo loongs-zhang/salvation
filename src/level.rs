@@ -62,7 +62,7 @@ impl INode for RustLevel {
         self.update_refresh_hud();
         self.update_progress_hud();
         self.update_fps_hud();
-        if self.left_rampage_time <= 0 {
+        if 0 == self.left_rampage_time {
             RAMPAGE.store(true, Ordering::Release);
             self.play_rampage_bgm();
         } else {
@@ -240,7 +240,7 @@ impl ZombieGenerator {
             let kill_count = RustLevel::get_kill_count();
             if 0 < kill_count
                 && kill_count < self.refresh_barrier
-                && self.current_refresh_count > ZOMBIE_MAX_SCREEN_COUNT
+                && self.current_refresh_count > ZOMBIE_MIN_REFRESH_BATCH
                 || self.current.saturating_sub(kill_count) >= ZOMBIE_MAX_SCREEN_COUNT
             {
                 break;

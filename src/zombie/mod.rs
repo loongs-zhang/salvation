@@ -46,6 +46,13 @@ pub struct RustZombie {
     zombie_damage_area: OnReady<Gd<ZombieDamageArea>>,
     hit_scene: OnReady<Gd<PackedScene>>,
     hit_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    scream_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    guard_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    run_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    rampage_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    attack_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    attack_scream_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    die_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     base: Base<CharacterBody2D>,
 }
 
@@ -67,6 +74,13 @@ impl ICharacterBody2D for RustZombie {
             zombie_damage_area: OnReady::from_node("ZombieDamageArea"),
             hit_scene: OnReady::from_loaded("res://scenes/zombie_hit.tscn"),
             hit_audio: OnReady::from_node("HitAudio"),
+            guard_audio: OnReady::from_node("GuardAudio"),
+            scream_audio: OnReady::from_node("ScreamAudio"),
+            run_audio: OnReady::from_node("RunAudio"),
+            rampage_audio: OnReady::from_node("RampageAudio"),
+            attack_audio: OnReady::from_node("AttackAudio"),
+            attack_scream_audio: OnReady::from_node("AttackScreamAudio"),
+            die_audio: OnReady::from_node("DieAudio"),
             base,
         }
     }
@@ -77,6 +91,7 @@ impl ICharacterBody2D for RustZombie {
             .signals()
             .change_zombie_state()
             .connect_self(ZombieAnimation::on_change_zombie_state);
+        self.guard();
     }
 
     fn process(&mut self, _delta: f64) {
@@ -108,7 +123,9 @@ impl ICharacterBody2D for RustZombie {
                     if object.is_class("RustZombie") {
                         // 受到排斥的僵尸
                         let mut to_zombie = object.cast::<Self>();
-                        if ZombieState::Run == to_zombie.bind().state {
+                        if ZombieState::Run == to_zombie.bind().state
+                            || ZombieState::Rampage == to_zombie.bind().state
+                        {
                             continue;
                         }
                         // 给其他僵尸让开位置
@@ -130,12 +147,12 @@ impl ICharacterBody2D for RustZombie {
             || distance >= ZOMBIE_MAX_DISTANCE
         {
             // 跑向玩家
-            self.run();
+            self.rampage();
             self.base_mut().look_at(player_position);
             character_body2d.set_velocity(to_player_dir * self.current_speed);
         } else {
             // 无目的移动
-            if self.is_rampage() {
+            if self.is_rampage_run() {
                 self.run();
             } else {
                 self.guard();
@@ -166,7 +183,6 @@ impl RustZombie {
                 }
             }
         }
-        self.hit_audio.play();
         let health = self.health;
         self.health = if hit_val > 0 {
             health.saturating_sub(hit_val as u32)
@@ -179,7 +195,9 @@ impl RustZombie {
         base_mut.look_at(zombie_position - direction);
         base_mut.set_global_position(new_position);
         drop(base_mut);
-        if 0 == self.health {
+        if 0 != self.health {
+            self.hit();
+        } else {
             self.die();
         }
     }
@@ -204,6 +222,9 @@ impl RustZombie {
         self.animated_sprite2d.play_ex().name("guard").done();
         self.current_speed = self.speed * 0.2;
         self.state = ZombieState::Guard;
+        if !self.guard_audio.is_playing() {
+            self.guard_audio.play();
+        }
         self.notify_animation();
     }
 
@@ -214,6 +235,34 @@ impl RustZombie {
         self.animated_sprite2d.play_ex().name("run").done();
         self.current_speed = self.speed * 1.75;
         self.state = ZombieState::Run;
+        if !self.run_audio.is_playing() {
+            self.run_audio.play();
+        }
+        self.notify_animation();
+    }
+
+    pub fn hit(&mut self) {
+        if ZombieState::Dead == self.state {
+            return;
+        }
+        self.animated_sprite2d.play_ex().name("guard").done();
+        self.current_speed = self.speed * 0.1;
+        self.state = ZombieState::Hit;
+        self.hit_audio.play();
+        self.scream_audio.play();
+        self.notify_animation();
+    }
+
+    pub fn rampage(&mut self) {
+        if ZombieState::Dead == self.state {
+            return;
+        }
+        self.animated_sprite2d.play_ex().name("run").done();
+        self.current_speed = self.speed * 1.75;
+        self.state = ZombieState::Rampage;
+        if !self.rampage_audio.is_playing() {
+            self.rampage_audio.play();
+        }
         self.notify_animation();
     }
 
@@ -225,6 +274,10 @@ impl RustZombie {
         self.animated_sprite2d.play_ex().name("attack").done();
         self.current_speed = self.speed * 0.5;
         self.state = ZombieState::Attack;
+        self.attack_audio.play();
+        if !self.attack_scream_audio.is_playing() {
+            self.attack_scream_audio.play();
+        }
         self.notify_animation();
     }
 
@@ -235,6 +288,7 @@ impl RustZombie {
         self.animated_sprite2d.play_ex().name("die").done();
         self.current_speed = 0.0;
         self.state = ZombieState::Dead;
+        self.die_audio.play();
         // 释放资源
         self.collision_shape2d.queue_free();
         self.zombie_attack_area.queue_free();
@@ -267,7 +321,7 @@ impl RustZombie {
         zombie.move_and_slide();
     }
 
-    pub fn is_rampage(&self) -> bool {
+    pub fn is_rampage_run(&self) -> bool {
         if PlayerState::Dead == RustPlayer::get_state() {
             return false;
         }
