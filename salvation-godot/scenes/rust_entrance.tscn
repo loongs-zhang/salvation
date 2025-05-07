@@ -82,4 +82,4 @@ text = "Exit"
 
 [node name="Bgm" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("1_uh0c4")
-volume_db = 12.0
+volume_db = 8.0

@@ -1,4 +1,5 @@
 use crate::weapon::RustWeapon;
+use crate::world::RustWorld;
 use crate::{MAX_AMMO, PLAYER_MAX_HEALTH, PLAYER_MOVE_SPEED, PlayerState};
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
@@ -11,7 +12,6 @@ use godot::classes::{
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use rand::Rng;
-use std::ops::Add;
 
 static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
@@ -22,19 +22,25 @@ static RELOADING: AtomicCell<f64> = AtomicCell::new(0.0);
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
 pub struct RustPlayer {
+    // 玩家伤害
     #[export]
     damage: i64,
+    // 玩家射程
     #[export]
     distance: real,
+    // 玩家穿透
     #[export]
-    max_hit_count: u8,
+    penetrate: u8,
+    // 玩家击退
     #[export]
     repel: real,
+    // 玩家最大生命值
     #[export]
-    max_health: u32,
+    health: u32,
+    // 玩家移动速度
     #[export]
     speed: real,
-    health: u32,
+    current_health: u32,
     state: PlayerState,
     current_speed: real,
     animated_sprite2d: OnReady<Gd<AnimatedSprite2D>>,
@@ -54,10 +60,10 @@ impl ICharacterBody2D for RustPlayer {
         Self {
             damage: 0,
             distance: 0.0,
-            max_hit_count: 0,
+            penetrate: 0,
             repel: 0.0,
-            max_health: PLAYER_MAX_HEALTH,
             health: PLAYER_MAX_HEALTH,
+            current_health: PLAYER_MAX_HEALTH,
             state: PlayerState::Born,
             speed: PLAYER_MOVE_SPEED,
             current_speed: PLAYER_MOVE_SPEED,
@@ -78,19 +84,19 @@ impl ICharacterBody2D for RustPlayer {
             .set_physics_interpolation_mode(PhysicsInterpolationMode::ON);
         let rust_weapon = self.weapon.get_node_as::<RustWeapon>("RustWeapon");
         let mut hud = self.hud.bind_mut();
-        hud.update_hp_hud(self.health, self.max_health);
+        hud.update_hp_hud(self.current_health, self.health);
         hud.update_ammo_hud(rust_weapon.bind().get_ammo(), MAX_AMMO);
         hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
-        hud.update_distance_hud(self.distance.add(rust_weapon.bind().get_distance()));
-        hud.update_repel_hud(self.repel.add(rust_weapon.bind().get_repel()));
+        hud.update_distance_hud(self.distance + rust_weapon.bind().get_distance());
+        hud.update_repel_hud(self.repel + rust_weapon.bind().get_repel());
         hud.update_penetrate_hud(
-            self.max_hit_count
-                .saturating_add(rust_weapon.bind().get_max_hit_count()),
+            self.penetrate
+                .saturating_add(rust_weapon.bind().get_penetrate()),
         );
     }
 
     fn physics_process(&mut self, delta: f64) {
-        if PlayerState::Dead == self.state || PlayerState::Paused == self.state {
+        if PlayerState::Dead == self.state || RustWorld::is_paused() {
             return;
         }
         if PlayerState::Reload == self.state {
@@ -136,14 +142,14 @@ impl ICharacterBody2D for RustPlayer {
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
-        if event.is_action_pressed("esc") {
-            self.pause();
-        } else if event.is_action_pressed("r") {
+        if RustWorld::is_paused() {
+            return;
+        }
+        if event.is_action_pressed("r") {
             self.reload();
-        } else if (event.is_action_released("shift")
+        } else if event.is_action_released("shift")
             || event.is_action_released("mouse_left")
-            || event.is_action_released("mouse_right"))
-            && PlayerState::Paused != self.state
+            || event.is_action_released("mouse_right")
         {
             self.guard();
         }
@@ -154,16 +160,16 @@ impl ICharacterBody2D for RustPlayer {
 impl RustPlayer {
     #[func]
     pub fn on_hit(&mut self, hit_val: i64) {
-        let health = self.health;
-        self.health = if hit_val > 0 {
+        let health = self.current_health;
+        self.current_health = if hit_val > 0 {
             health.saturating_sub(hit_val as u32)
         } else {
             health.saturating_add(-hit_val as u32)
         };
         self.hud
             .bind_mut()
-            .update_hp_hud(self.health, self.max_health);
-        if 0 != self.health {
+            .update_hp_hud(self.current_health, self.health);
+        if 0 != self.current_health {
             self.hit();
         } else {
             self.die();
@@ -178,11 +184,11 @@ impl RustPlayer {
         self.animated_sprite2d.play_ex().name("guard").done();
         self.current_speed = self.speed;
         self.state = PlayerState::Born;
-        self.health = self.max_health;
+        self.current_health = self.health;
         STATE.store(self.state);
         self.hud
             .bind_mut()
-            .update_hp_hud(self.health, self.max_health);
+            .update_hp_hud(self.current_health, self.health);
     }
 
     #[func]
@@ -197,7 +203,7 @@ impl RustPlayer {
     }
 
     pub fn run(&mut self) {
-        if PlayerState::Dead == self.state || PlayerState::Paused == self.state {
+        if PlayerState::Dead == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("run").done();
@@ -212,10 +218,7 @@ impl RustPlayer {
     }
 
     pub fn shoot(&mut self) {
-        if PlayerState::Dead == self.state
-            || PlayerState::Paused == self.state
-            || PlayerState::Reload == self.state
-        {
+        if PlayerState::Dead == self.state || PlayerState::Reload == self.state {
             return;
         }
         let mut rust_weapon = self.get_rust_weapon();
@@ -230,29 +233,25 @@ impl RustPlayer {
         STATE.store(self.state);
         rust_weapon
             .bind_mut()
-            .fire(self.damage, self.distance, self.max_hit_count, self.repel);
+            .fire(self.damage, self.distance, self.penetrate, self.repel);
         self.hud
             .bind_mut()
             .update_ammo_hud(rust_weapon.bind().get_ammo(), rust_weapon.bind().get_clip());
     }
 
     pub fn reload(&mut self) {
-        if PlayerState::Dead == self.state
-            || PlayerState::Paused == self.state
-            || MAX_AMMO == self.get_rust_weapon().bind().get_ammo()
-        {
+        if PlayerState::Dead == self.state || !self.get_rust_weapon().bind_mut().reload() {
             return;
         }
         self.animated_sprite2d.play_ex().name("reload").done();
         self.current_speed = self.speed * 0.75;
         self.state = PlayerState::Reload;
         STATE.store(self.state);
-        self.get_rust_weapon().bind_mut().reload();
     }
 
     #[func]
     pub fn reloaded(&mut self) {
-        if PlayerState::Dead == self.state || PlayerState::Paused == self.state {
+        if PlayerState::Dead == self.state {
             return;
         }
         self.state = PlayerState::Guard;
@@ -266,7 +265,7 @@ impl RustPlayer {
     }
 
     pub fn hit(&mut self) {
-        if PlayerState::Dead == self.state || PlayerState::Paused == self.state {
+        if PlayerState::Dead == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("hit").done();
@@ -284,7 +283,7 @@ impl RustPlayer {
     }
 
     pub fn die(&mut self) {
-        if PlayerState::Dead == self.state || PlayerState::Paused == self.state {
+        if PlayerState::Dead == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("die").done();
@@ -292,21 +291,12 @@ impl RustPlayer {
         self.state = PlayerState::Dead;
         STATE.store(self.state);
         self.die_audio.play();
+        // todo 支持并检查生命数
         if let Some(mut tree) = self.base().get_tree() {
             if let Some(mut timer) = tree.create_timer(3.0) {
                 timer.connect("timeout", &self.base().callable("born"));
             }
         }
-    }
-
-    pub fn pause(&mut self) {
-        if PlayerState::Paused == self.state {
-            self.guard();
-            return;
-        }
-        self.current_speed = 0.0;
-        self.state = PlayerState::Paused;
-        STATE.store(self.state);
     }
 
     pub fn get_mouse_position(&self) -> Vector2 {

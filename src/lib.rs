@@ -22,6 +22,8 @@ const PLAYER_MAX_HEALTH: u32 = 100;
 const PLAYER_MOVE_SPEED: real = 225.0;
 
 // weapon
+const WEAPON_FIRE_COOLDOWN: real = 0.1;
+
 const BULLET_DAMAGE: i64 = 20;
 
 const BULLET_DISTANCE: real = 800.0;
@@ -48,7 +50,7 @@ const ZOMBIE_DAMAGE: i64 = 10;
 
 const ZOMBIE_PURSUIT_DISTANCE: real = 225.0;
 
-const ZOMBIE_MAX_DISTANCE: real = 1000.0;
+const ZOMBIE_MAX_DISTANCE: real = 1600.0;
 
 const ZOMBIE_MOVE_SPEED: real = 150.0;
 
@@ -69,7 +71,6 @@ pub enum PlayerState {
     Reload,
     Hit,
     Dead,
-    Paused,
 }
 
 #[derive(GodotConvert, Default, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
@@ -82,7 +83,6 @@ pub enum ZombieState {
     Hit,
     Attack,
     Dead,
-    Paused,
 }
 
 struct Salvation;

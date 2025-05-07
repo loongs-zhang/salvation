@@ -9,8 +9,6 @@ use godot::classes::{
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
-use rand::Rng;
-use rand::prelude::ThreadRng;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
 static RAMPAGE: AtomicBool = AtomicBool::new(false);
@@ -30,7 +28,6 @@ pub struct RustLevel {
     rampage_time: real,
     left_rampage_time: real,
     killed: u32,
-    paused: bool,
     hud: OnReady<Gd<CanvasLayer>>,
     generator: OnReady<Gd<ZombieGenerator>>,
     bgm: OnReady<Gd<AudioStreamPlayer2D>>,
@@ -47,7 +44,6 @@ impl INode for RustLevel {
             rampage_time: LEVEL_RAMPAGE_TIME,
             left_rampage_time: LEVEL_RAMPAGE_TIME,
             killed: 0,
-            paused: false,
             hud: OnReady::from_node("LevelHUD"),
             generator: OnReady::from_node("ZombieGenerator"),
             bgm: OnReady::from_node("Bgm"),
@@ -61,7 +57,7 @@ impl INode for RustLevel {
     }
 
     fn process(&mut self, delta: f64) {
-        if self.paused {
+        if RustWorld::is_paused() {
             return;
         }
         KILL_COUNT.store(self.killed, Ordering::Release);
@@ -85,16 +81,6 @@ impl INode for RustLevel {
             self.level_up();
         }
     }
-
-    fn input(&mut self, event: Gd<InputEvent>) {
-        if event.is_action_pressed("esc") {
-            if self.paused {
-                self.paused = false;
-            } else {
-                self.paused = true;
-            }
-        }
-    }
 }
 
 #[godot_api]
@@ -103,6 +89,7 @@ impl RustLevel {
     pub fn kill_confirmed(&mut self) {
         self.killed += 1;
         self.update_progress_hud();
+        // todo 玩家击杀总数及复活次数
     }
 
     pub fn update_level_hud(&mut self) {
@@ -113,7 +100,7 @@ impl RustLevel {
 
     pub fn update_rampage_hud(&mut self) {
         let mut label = self.get_container().get_node_as::<Label>("Rampage");
-        label.set_text(&format!("RAMPAGE {:.1} s", self.left_rampage_time));
+        label.set_text(&format!("ZOMBIE RAMPAGE {:.1} s", self.left_rampage_time));
         label.show();
     }
 
@@ -131,8 +118,8 @@ impl RustLevel {
     pub fn update_progress_hud(&mut self) {
         let refreshed = self.generator.bind().current;
         let total = self.generator.bind().current_total;
-        let mut label = self.get_container().get_node_as::<Label>("Killed");
-        label.set_text(&format!("KILLED {}/{}/{}", self.killed, refreshed, total));
+        let mut label = self.get_container().get_node_as::<Label>("Progress");
+        label.set_text(&format!("PROGRESS {}/{}/{}", self.killed, refreshed, total));
         label.show();
     }
 
@@ -259,7 +246,6 @@ impl ZombieGenerator {
 
     #[func]
     pub fn generate(&mut self) {
-        let mut rng = rand::thread_rng();
         for _ in 0..self.current_refresh_count {
             let kill_count = RustLevel::get_kill_count();
             if 0 < kill_count
@@ -269,24 +255,10 @@ impl ZombieGenerator {
             {
                 break;
             }
-            self.generate_zombie(
-                RustPlayer::get_position()
-                    + Vector2::new(
-                        Self::random_half_position(&mut rng),
-                        Self::random_half_position(&mut rng),
-                    ),
-            );
+            self.generate_zombie(RustPlayer::get_position() + RustWorld::random_position());
         }
         while RustLevel::get_kill_count() >= self.refresh_barrier {
             self.refresh_barrier += ZOMBIE_MIN_REFRESH_BATCH;
-        }
-    }
-
-    pub fn random_half_position(rng: &mut ThreadRng) -> real {
-        if rng.gen_range(-1.0..1.0) >= 0.0 {
-            rng.gen_range(250.0..500.0)
-        } else {
-            rng.gen_range(-500.0..-250.0)
         }
     }
 

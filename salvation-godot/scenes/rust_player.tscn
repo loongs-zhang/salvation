@@ -265,4 +265,3 @@ stream = ExtResource("11_0hc44")
 
 [node name="DieAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("12_x4rvw")
-volume_db = 12.0

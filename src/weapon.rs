@@ -1,31 +1,37 @@
 use crate::bullet::RustBullet;
-use crate::{BULLET_DAMAGE, BULLET_DISTANCE, BULLET_REPEL, MAX_AMMO, MAX_BULLET_HIT, RELOAD_TIME};
+use crate::{
+    BULLET_DAMAGE, BULLET_DISTANCE, BULLET_REPEL, MAX_AMMO, MAX_BULLET_HIT, RELOAD_TIME,
+    WEAPON_FIRE_COOLDOWN,
+};
 use godot::builtin::{Vector2, real};
 use godot::classes::{AudioStreamPlayer2D, GpuParticles2D, INode2D, Node2D, PackedScene};
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
-use std::ops::Add;
-use std::time::{Duration, Instant};
 
 #[derive(GodotClass)]
 #[class(base=Node2D)]
 pub struct RustWeapon {
+    //武器伤害
     #[export]
     damage: i64,
+    //武器射程
     #[export]
     distance: real,
+    //武器弹夹容量
     #[export]
     clip: i64,
+    //武器击退
     #[export]
     repel: real,
+    //武器穿透
     #[export]
-    max_hit_count: u8,
+    penetrate: u8,
     #[export]
-    fire_cooldown: u32,
+    fire_cooldown: real,
     #[export]
     reload_time: u32,
     ammo: i64,
-    last_shot_time: Instant,
+    current_fire_cooldown: real,
     bullet_scene: OnReady<Gd<PackedScene>>,
     bullet_point: OnReady<Gd<Node2D>>,
     fire_flash: OnReady<Gd<GpuParticles2D>>,
@@ -43,11 +49,11 @@ impl INode2D for RustWeapon {
             distance: BULLET_DISTANCE,
             clip: MAX_AMMO,
             repel: BULLET_REPEL,
-            max_hit_count: MAX_BULLET_HIT,
-            fire_cooldown: 100,
+            penetrate: MAX_BULLET_HIT,
+            fire_cooldown: WEAPON_FIRE_COOLDOWN,
             reload_time: RELOAD_TIME,
             ammo: MAX_AMMO,
-            last_shot_time: Instant::now(),
+            current_fire_cooldown: WEAPON_FIRE_COOLDOWN,
             bullet_scene: OnReady::from_loaded("res://scenes/rust_bullet.tscn"),
             bullet_point: OnReady::from_node("BulletPoint"),
             fire_flash: OnReady::from_node("GpuParticles2D"),
@@ -58,8 +64,8 @@ impl INode2D for RustWeapon {
         }
     }
 
-    fn ready(&mut self) {
-        self.last_shot_time -= Duration::from_millis(self.fire_cooldown as u64);
+    fn process(&mut self, delta: f64) {
+        self.current_fire_cooldown -= delta as real;
     }
 }
 
@@ -69,16 +75,10 @@ impl RustWeapon {
         &mut self,
         player_damage: i64,
         player_distance: real,
-        player_max_hit_count: u8,
+        player_penetrate: u8,
         player_repel: real,
     ) {
-        if 0 == self.ammo {
-            return;
-        }
-        let now = Instant::now();
-        if now.duration_since(self.last_shot_time)
-            < Duration::from_millis(self.fire_cooldown as u64)
-        {
+        if 0 == self.ammo || self.current_fire_cooldown > 0.0 {
             return;
         }
         if let Some(mut bullet) = self.bullet_scene.try_instantiate_as::<RustBullet>() {
@@ -91,10 +91,10 @@ impl RustWeapon {
             bullet.set_global_position(bullet_point);
             let mut gd_mut = bullet.bind_mut();
             gd_mut.set_bullet_point(bullet_point);
-            gd_mut.set_final_distance(player_distance.add(self.distance));
+            gd_mut.set_final_distance(player_distance + self.distance);
             gd_mut.set_final_damage(player_damage.saturating_add(self.damage));
-            gd_mut.set_final_max_hit_count(player_max_hit_count.saturating_add(self.max_hit_count));
-            gd_mut.set_final_repel(player_repel.add(self.repel));
+            gd_mut.set_final_max_hit_count(player_penetrate.saturating_add(self.penetrate));
+            gd_mut.set_final_repel(player_repel + self.repel);
             gd_mut.set_direction(direction);
             drop(gd_mut);
             if let Some(tree) = self.base().get_tree() {
@@ -102,18 +102,19 @@ impl RustWeapon {
                     root.add_child(&bullet);
                     self.fire_flash.restart();
                     self.fire_audio.play();
-                    self.last_shot_time = now;
+                    self.current_fire_cooldown = self.fire_cooldown;
                     self.ammo -= 1;
                 }
             }
         }
     }
 
-    pub fn reload(&mut self) {
+    pub fn reload(&mut self) -> bool {
         if self.clip == self.ammo {
-            return;
+            return false;
         }
         self.reload_start_audio.play();
+        true
     }
 
     pub fn reloaded(&mut self) -> i64 {

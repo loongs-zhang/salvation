@@ -21,6 +21,5 @@ attenuation = 1e-05
 
 [node name="RampageBgm" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("4_ww368")
-volume_db = 8.0
 max_distance = 4096.0
 attenuation = 1.23939e-05

@@ -1,12 +1,16 @@
 use crate::entrance::RustEntrance;
 use crate::player::RustPlayer;
-use godot::builtin::{Array, Vector2i, array};
+use godot::builtin::{Array, Vector2, Vector2i, array, real};
 use godot::classes::fast_noise_lite::NoiseType;
-use godot::classes::{AudioStreamPlayer2D, FastNoiseLite, INode2D, Node2D, TileMapLayer};
+use godot::classes::{
+    AudioStreamPlayer2D, FastNoiseLite, INode2D, InputEvent, Node2D, TileMapLayer,
+};
 use godot::global::godot_print;
 use godot::obj::{Base, Gd, NewGd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
+use rand::Rng;
 use std::collections::HashSet;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
 
 const SOIL_TERRAIN_SET: i32 = 0;
@@ -14,7 +18,8 @@ const SAND_TERRAIN_SET: i32 = 1;
 const GLASS_TERRAIN_SET: i32 = 2;
 const SOURCE_ID: i32 = 0;
 
-// Deriving GodotClass makes the class available to Godot.
+static PAUSED: AtomicBool = AtomicBool::new(false);
+
 #[derive(GodotClass)]
 #[class(base=Node2D)]
 pub struct RustWorld {
@@ -48,6 +53,16 @@ impl INode2D for RustWorld {
             .get_node_as::<RustEntrance>("RustEntrance")
             .get_node_as::<AudioStreamPlayer2D>("Bgm")
             .stop();
+    }
+
+    fn input(&mut self, event: Gd<InputEvent>) {
+        if event.is_action_pressed("esc") {
+            if PAUSED.load(Ordering::Acquire) {
+                PAUSED.store(false, Ordering::Release);
+            } else {
+                PAUSED.store(true, Ordering::Release);
+            }
+        }
     }
 }
 
@@ -126,5 +141,22 @@ impl RustWorld {
             glass_array.len(),
             Instant::now().duration_since(now).as_millis()
         );
+    }
+
+    pub fn random_position() -> Vector2 {
+        Vector2::new(Self::random_half_position(), Self::random_half_position())
+    }
+
+    fn random_half_position() -> real {
+        let mut rng = rand::thread_rng();
+        if rng.gen_range(-1.0..1.0) >= 0.0 {
+            rng.gen_range(250.0..500.0)
+        } else {
+            rng.gen_range(-500.0..-250.0)
+        }
+    }
+
+    pub fn is_paused() -> bool {
+        PAUSED.load(Ordering::Acquire)
     }
 }

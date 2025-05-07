@@ -12,7 +12,7 @@ use crate::{
 use godot::builtin::{Vector2, real};
 use godot::classes::{
     AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, GpuParticles2D, ICharacterBody2D,
-    InputEvent, PackedScene,
+    PackedScene,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -102,7 +102,7 @@ impl ICharacterBody2D for RustZombie {
     }
 
     fn process(&mut self, delta: f64) {
-        if ZombieState::Dead == self.state || ZombieState::Paused == self.state {
+        if ZombieState::Dead == self.state || RustWorld::is_paused() {
             if BODY_COUNT.load(Ordering::Acquire) >= ZOMBIE_MAX_BODY_COUNT {
                 self.base_mut().queue_free();
                 BODY_COUNT.fetch_sub(1, Ordering::Release);
@@ -155,11 +155,10 @@ impl ICharacterBody2D for RustZombie {
                 }
             }
         }
-        if self.is_alarmed()
-            || RustLevel::is_rampage()
+        if distance >= ZOMBIE_MAX_DISTANCE {
             //解决刷新僵尸导致的体积碰撞问题
-            || distance >= ZOMBIE_MAX_DISTANCE
-        {
+            self.flash();
+        } else if self.is_alarmed() || RustLevel::is_rampage() {
             // 跑向玩家
             self.rampage();
             self.base_mut().look_at(player_position);
@@ -180,12 +179,6 @@ impl ICharacterBody2D for RustZombie {
             }
         }
         character_body2d.move_and_slide();
-    }
-
-    fn input(&mut self, event: Gd<InputEvent>) {
-        if event.is_action_pressed("esc") {
-            self.pause();
-        }
     }
 }
 
@@ -243,13 +236,18 @@ impl RustZombie {
         self.current_speed = self.speed * 0.2;
         self.state = ZombieState::Guard;
         if !self.guard_audio.is_playing() {
+            if RustLevel::get_live_count() >= ZOMBIE_MIN_REFRESH_BATCH {
+                self.guard_audio.set_volume_db(-30.0);
+            } else {
+                self.guard_audio.set_volume_db(-20.0);
+            }
             self.guard_audio.play();
         }
         self.notify_animation();
     }
 
     pub fn run(&mut self) {
-        if ZombieState::Dead == self.state || ZombieState::Paused == self.state {
+        if ZombieState::Dead == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("run").done();
@@ -262,7 +260,7 @@ impl RustZombie {
     }
 
     pub fn hit(&mut self, direction: Vector2, hit_position: Vector2) {
-        if ZombieState::Dead == self.state || ZombieState::Paused == self.state {
+        if ZombieState::Dead == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("guard").done();
@@ -277,7 +275,7 @@ impl RustZombie {
     }
 
     pub fn rampage(&mut self) {
-        if ZombieState::Dead == self.state || ZombieState::Paused == self.state {
+        if ZombieState::Dead == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("run").done();
@@ -285,7 +283,7 @@ impl RustZombie {
         self.state = ZombieState::Rampage;
         if !self.rampage_audio.is_playing() {
             if RustLevel::get_live_count() >= ZOMBIE_MIN_REFRESH_BATCH {
-                self.rampage_audio.set_volume_db(-25.0);
+                self.rampage_audio.set_volume_db(-40.0);
             } else {
                 self.rampage_audio.set_volume_db(-10.0);
             }
@@ -295,7 +293,7 @@ impl RustZombie {
     }
 
     pub fn attack(&mut self) {
-        if ZombieState::Dead == self.state || ZombieState::Paused == self.state {
+        if ZombieState::Dead == self.state {
             return;
         }
         self.base_mut().look_at(RustPlayer::get_position());
@@ -310,7 +308,7 @@ impl RustZombie {
     }
 
     pub fn die(&mut self) {
-        if ZombieState::Dead == self.state || ZombieState::Paused == self.state {
+        if ZombieState::Dead == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("die").done();
@@ -336,14 +334,22 @@ impl RustZombie {
         BODY_COUNT.fetch_add(1, Ordering::Release);
     }
 
-    pub fn pause(&mut self) {
-        if ZombieState::Paused == self.state {
-            self.guard();
-            return;
+    pub fn flash(&mut self) {
+        let player_position = RustPlayer::get_position();
+        self.base_mut().look_at(-player_position);
+        self.base_mut().set_global_position(
+            player_position
+                + Vector2::new(Self::random_half_position(), Self::random_half_position()),
+        );
+    }
+
+    fn random_half_position() -> real {
+        let mut rng = rand::thread_rng();
+        if rng.gen_range(-1.0..1.0) >= 0.0 {
+            rng.gen_range(900.0..1100.0)
+        } else {
+            rng.gen_range(-1100.0..-900.0)
         }
-        self.current_speed = 0.0;
-        self.state = ZombieState::Paused;
-        self.notify_animation();
     }
 
     pub fn move_back(&mut self) {

@@ -31,10 +31,10 @@ theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
 text = "Rampage"
 horizontal_alignment = 1
 
-[node name="Killed" type="Label" parent="VBoxContainer"]
+[node name="Progress" type="Label" parent="VBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.74902, 0, 1)
-text = "Killed"
+text = "Progress"
 horizontal_alignment = 1
 
 [node name="FPS" type="Label" parent="."]
