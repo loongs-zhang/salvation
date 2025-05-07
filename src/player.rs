@@ -106,7 +106,12 @@ impl ICharacterBody2D for RustPlayer {
         let input = Input::singleton();
         if input.is_action_pressed("mouse_left") {
             self.shoot();
-        } else if input.is_action_pressed("shift") || input.is_action_pressed("mouse_right") {
+        } else if (input.is_action_pressed("shift") || input.is_action_pressed("mouse_right"))
+            && (input.is_action_pressed("move_left")
+                || input.is_action_pressed("move_right")
+                || input.is_action_pressed("move_up")
+                || input.is_action_pressed("move_down"))
+        {
             self.run();
         }
         let key_direction = Vector2::new(

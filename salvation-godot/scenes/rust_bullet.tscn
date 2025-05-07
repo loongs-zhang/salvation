@@ -1,4 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://dncxlinats2qc"]
+[gd_scene load_steps=3 format=3 uid="uid://dncxlinats2qc"]
+
+[ext_resource type="AudioStream" uid="uid://canubcm5o8m65" path="res://asserts/bullet_hit.mp3" id="1_nf83k"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h1aey"]
 size = Vector2(8.2, 3.2)
@@ -26,3 +28,9 @@ position = Vector2(0.1, -0.4)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
 shape = SubResource("RectangleShape2D_h1aey")
+
+[node name="HitAudio" type="AudioStreamPlayer2D" parent="Area2D"]
+stream = ExtResource("1_nf83k")
+volume_db = 12.0
+max_distance = 4096.0
+attenuation = 1e-05

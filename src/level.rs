@@ -234,7 +234,7 @@ impl ZombieGenerator {
 
     #[func]
     pub fn generate(&mut self) {
-        //todo 性能优化，如果刷出来的僵尸数量超过160，清理掉距离最远的一批僵尸，然后继续刷新
+        //todo 性能优化，如果刷出来的僵尸数量超过120，距离最远的一批僵尸直接瞬移
         let mut rng = rand::thread_rng();
         for _ in 0..self.current_refresh_count {
             let kill_count = RustLevel::get_kill_count();

@@ -10,7 +10,8 @@ use crate::{
 };
 use godot::builtin::{Vector2, real};
 use godot::classes::{
-    AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, ICharacterBody2D, PackedScene,
+    AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, GpuParticles2D, ICharacterBody2D,
+    PackedScene,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -46,6 +47,7 @@ pub struct RustZombie {
     zombie_damage_area: OnReady<Gd<ZombieDamageArea>>,
     hit_scene: OnReady<Gd<PackedScene>>,
     hit_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    blood_flash: OnReady<Gd<GpuParticles2D>>,
     scream_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     guard_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     run_audio: OnReady<Gd<AudioStreamPlayer2D>>,
@@ -74,6 +76,7 @@ impl ICharacterBody2D for RustZombie {
             zombie_damage_area: OnReady::from_node("ZombieDamageArea"),
             hit_scene: OnReady::from_loaded("res://scenes/zombie_hit.tscn"),
             hit_audio: OnReady::from_node("HitAudio"),
+            blood_flash: OnReady::from_node("GpuParticles2D"),
             guard_audio: OnReady::from_node("GuardAudio"),
             scream_audio: OnReady::from_node("ScreamAudio"),
             run_audio: OnReady::from_node("RunAudio"),
@@ -172,7 +175,7 @@ impl ICharacterBody2D for RustZombie {
 #[godot_api]
 impl RustZombie {
     #[func]
-    pub fn on_hit(&mut self, hit_val: i64, direction: Vector2, repel: real) {
+    pub fn on_hit(&mut self, hit_val: i64, direction: Vector2, repel: real, hit_position: Vector2) {
         let zombie_position = self.base().get_global_position();
         if let Some(mut hit_label) = self.hit_scene.try_instantiate_as::<ZombieHit>() {
             hit_label.set_global_position(zombie_position);
@@ -196,7 +199,7 @@ impl RustZombie {
         base_mut.set_global_position(new_position);
         drop(base_mut);
         if 0 != self.health {
-            self.hit();
+            self.hit(direction, hit_position);
         } else {
             self.die();
         }
@@ -241,13 +244,16 @@ impl RustZombie {
         self.notify_animation();
     }
 
-    pub fn hit(&mut self) {
+    pub fn hit(&mut self, direction: Vector2, hit_position: Vector2) {
         if ZombieState::Dead == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("guard").done();
         self.current_speed = self.speed * 0.1;
         self.state = ZombieState::Hit;
+        self.blood_flash.set_global_position(hit_position);
+        self.blood_flash.look_at(hit_position - direction);
+        self.blood_flash.restart();
         self.hit_audio.play();
         self.scream_audio.play();
         self.notify_animation();
@@ -290,6 +296,7 @@ impl RustZombie {
         self.state = ZombieState::Dead;
         self.die_audio.play();
         // 释放资源
+        self.base_mut().set_z_index(0);
         self.collision_shape2d.queue_free();
         self.zombie_attack_area.queue_free();
         self.zombie_damage_area.queue_free();

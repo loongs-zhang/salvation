@@ -54,7 +54,6 @@ amount = 16
 lifetime = 0.2
 one_shot = true
 explosiveness = 1.0
-fixed_fps = 60
 local_coords = true
 process_material = SubResource("ParticleProcessMaterial_ait51")
 
