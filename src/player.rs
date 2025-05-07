@@ -2,10 +2,11 @@ use crate::weapon::RustWeapon;
 use crate::{MAX_AMMO, PLAYER_MAX_HEALTH, PLAYER_MOVE_SPEED, PlayerState};
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
+use godot::classes::input::MouseMode;
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
     AnimatedSprite2D, AudioStreamPlayer2D, CanvasLayer, CharacterBody2D, Control, ICanvasLayer,
-    ICharacterBody2D, Input, InputEvent, Label, Node2D, VBoxContainer,
+    ICharacterBody2D, Input, InputEvent, Label, Node2D, TextureRect, VBoxContainer,
 };
 use godot::global::godot_print;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
@@ -318,6 +319,7 @@ impl RustPlayer {
 #[derive(GodotClass)]
 #[class(base=CanvasLayer)]
 pub struct PlayerHUD {
+    cross_hair: OnReady<Gd<TextureRect>>,
     control: OnReady<Gd<Control>>,
     base: Base<CanvasLayer>,
 }
@@ -326,9 +328,22 @@ pub struct PlayerHUD {
 impl ICanvasLayer for PlayerHUD {
     fn init(base: Base<CanvasLayer>) -> Self {
         Self {
+            cross_hair: OnReady::from_node("CrossHair"),
             control: OnReady::from_node("Control"),
             base,
         }
+    }
+
+    fn ready(&mut self) {
+        Input::singleton().set_mouse_mode(MouseMode::HIDDEN);
+    }
+
+    fn process(&mut self, _delta: f64) {
+        let viewport = self.base().get_viewport().unwrap();
+        let affine_inverse = self.base().get_transform().affine_inverse();
+        let mouse_position =
+            affine_inverse * viewport.get_mouse_position() - self.cross_hair.get_size() / 2.0;
+        self.cross_hair.set_position(mouse_position);
     }
 }
 

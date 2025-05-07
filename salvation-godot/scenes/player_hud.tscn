@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://6mpjo4ff6g2a"]
+[gd_scene load_steps=4 format=3 uid="uid://6mpjo4ff6g2a"]
 
 [ext_resource type="FontFile" uid="uid://b341brf04jvyw" path="res://asserts/Xolonium-Regular.ttf" id="1_mlvnn"]
+[ext_resource type="Texture2D" uid="uid://dtg5lpvjetes1" path="res://asserts/cross_hair.png" id="2_iraov"]
 
 [sub_resource type="Theme" id="Theme_g8j1n"]
 default_font = ExtResource("1_mlvnn")
@@ -47,3 +48,21 @@ text = "REPEL"
 layout_mode = 2
 theme = SubResource("Theme_g8j1n")
 text = "PENETRATE"
+
+[node name="CrossHair" type="TextureRect" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -16.0
+offset_right = 16.0
+offset_bottom = 16.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(2, 2)
+pivot_offset = Vector2(16, 16)
+texture = ExtResource("2_iraov")
+expand_mode = 1
+stretch_mode = 6

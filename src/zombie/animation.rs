@@ -1,7 +1,6 @@
 use crate::player::RustPlayer;
 use crate::world::RustWorld;
 use crate::{PlayerState, ZOMBIE_DAMAGE, ZombieState};
-use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{AnimatedSprite2D, IAnimatedSprite2D, Object};
 use godot::obj::{Base, Gd, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
@@ -27,8 +26,6 @@ impl IAnimatedSprite2D for ZombieAnimation {
     }
 
     fn ready(&mut self) {
-        self.base_mut()
-            .set_physics_interpolation_mode(PhysicsInterpolationMode::ON);
         self.signals()
             .frame_changed()
             .connect_self(Self::on_animated_sprite_2d_frame_changed);
