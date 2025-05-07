@@ -5,8 +5,9 @@ use crate::zombie::animation::ZombieAnimation;
 use crate::zombie::attack::{ZombieAttackArea, ZombieDamageArea};
 use crate::zombie::hit::ZombieHit;
 use crate::{
-    PlayerState, ZOMBIE_MAX_BODY_COUNT, ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH, ZOMBIE_MOVE_SPEED,
-    ZOMBIE_PURSUIT_DISTANCE, ZOMBIE_RAMPAGE_TIME, ZombieState,
+    PlayerState, ZOMBIE_ALARM_TIME, ZOMBIE_MAX_BODY_COUNT, ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH,
+    ZOMBIE_MIN_REFRESH_BATCH, ZOMBIE_MOVE_SPEED, ZOMBIE_PURSUIT_DISTANCE, ZOMBIE_RAMPAGE_TIME,
+    ZombieState,
 };
 use godot::builtin::{Vector2, real};
 use godot::classes::{
@@ -35,8 +36,10 @@ pub struct RustZombie {
     #[export]
     speed: real,
     #[export]
-    rampage_time: u32,
-    create_time: Instant,
+    rampage_time: real,
+    #[export]
+    alarm_time: real,
+    current_alarm_time: real,
     last_turn_time: Instant,
     turn_cooldown: Duration,
     state: ZombieState,
@@ -65,7 +68,8 @@ impl ICharacterBody2D for RustZombie {
             speed: ZOMBIE_MOVE_SPEED,
             health: ZOMBIE_MAX_HEALTH,
             rampage_time: ZOMBIE_RAMPAGE_TIME,
-            create_time: Instant::now(),
+            alarm_time: ZOMBIE_ALARM_TIME,
+            current_alarm_time: 0.0,
             last_turn_time: Instant::now(),
             turn_cooldown: Duration::from_secs(5),
             state: ZombieState::Guard,
@@ -97,7 +101,7 @@ impl ICharacterBody2D for RustZombie {
         self.guard();
     }
 
-    fn process(&mut self, _delta: f64) {
+    fn process(&mut self, delta: f64) {
         if ZombieState::Dead == self.state {
             if BODY_COUNT.load(Ordering::Acquire) >= ZOMBIE_MAX_BODY_COUNT {
                 self.base_mut().queue_free();
@@ -112,9 +116,16 @@ impl ICharacterBody2D for RustZombie {
         if ZombieState::Attack == self.state {
             return;
         }
+        self.rampage_time = (self.rampage_time - delta as real).max(0.0);
         let zombie_position = self.base().get_global_position();
         let player_position = RustPlayer::get_position();
         let distance = zombie_position.distance_to(player_position);
+        if distance <= ZOMBIE_PURSUIT_DISTANCE && self.is_face_to_user() {
+            self.current_alarm_time =
+                (self.current_alarm_time + delta as real).min(self.alarm_time);
+        } else {
+            self.current_alarm_time = (self.current_alarm_time - delta as real).max(0.0);
+        }
         let to_player_dir = zombie_position.direction_to(player_position).normalized();
         let mut character_body2d = self.base.to_gd();
         //僵尸之间的体积碰撞检测
@@ -144,7 +155,7 @@ impl ICharacterBody2D for RustZombie {
                 }
             }
         }
-        if distance <= ZOMBIE_PURSUIT_DISTANCE && self.is_face_to_user()
+        if self.is_alarmed()
             || RustLevel::is_rampage()
             //解决刷新僵尸导致的体积碰撞问题
             || distance >= ZOMBIE_MAX_DISTANCE
@@ -267,6 +278,11 @@ impl RustZombie {
         self.current_speed = self.speed * 1.75;
         self.state = ZombieState::Rampage;
         if !self.rampage_audio.is_playing() {
+            if RustLevel::get_live_count() >= ZOMBIE_MIN_REFRESH_BATCH {
+                self.rampage_audio.set_volume_db(-25.0);
+            } else {
+                self.rampage_audio.set_volume_db(-10.0);
+            }
             self.rampage_audio.play();
         }
         self.notify_animation();
@@ -328,11 +344,16 @@ impl RustZombie {
         zombie.move_and_slide();
     }
 
+    // 看到玩家不会马上狂暴，而是累计时间条，类似刺客信条
+    pub fn is_alarmed(&self) -> bool {
+        self.current_alarm_time >= self.alarm_time
+    }
+
     pub fn is_rampage_run(&self) -> bool {
         if PlayerState::Dead == RustPlayer::get_state() {
             return false;
         }
-        Instant::now().duration_since(self.create_time).as_millis() as u32 >= self.rampage_time
+        self.rampage_time <= 0.0
     }
 
     pub fn get_distance(&self) -> real {

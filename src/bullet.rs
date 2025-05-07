@@ -1,6 +1,7 @@
 use crate::BULLET_REPEL;
 use crate::zombie::RustZombie;
 use godot::builtin::{Vector2, real};
+use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{Area2D, AudioStreamPlayer2D, IArea2D, INode2D, Node2D, Object};
 use godot::obj::{Base, Gd, OnReady, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
@@ -33,6 +34,8 @@ impl INode2D for RustBullet {
     }
 
     fn ready(&mut self) {
+        self.base_mut()
+            .set_physics_interpolation_mode(PhysicsInterpolationMode::ON);
         let mouse_position = self.get_mouse_position();
         self.base_mut().look_at(mouse_position);
     }

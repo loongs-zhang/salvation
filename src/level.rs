@@ -16,16 +16,18 @@ static RAMPAGE: AtomicBool = AtomicBool::new(false);
 
 static KILL_COUNT: AtomicU32 = AtomicU32::new(0);
 
+static LIVE_COUNT: AtomicU32 = AtomicU32::new(0);
+
 #[derive(GodotClass)]
 #[class(base=Node)]
 pub struct RustLevel {
     #[export]
     level: u32,
     #[export]
-    grow_rate: f32,
+    grow_rate: real,
     #[export]
-    rampage_time: u32,
-    left_rampage_time: u32,
+    rampage_time: real,
+    left_rampage_time: real,
     killed: u32,
     generator: OnReady<Gd<ZombieGenerator>>,
     bgm: OnReady<Gd<AudioStreamPlayer2D>>,
@@ -55,14 +57,16 @@ impl INode for RustLevel {
 
     fn process(&mut self, delta: f64) {
         KILL_COUNT.store(self.killed, Ordering::Release);
-        self.left_rampage_time = self
-            .left_rampage_time
-            .saturating_sub((delta * 1000.0) as u32);
+        LIVE_COUNT.store(
+            self.generator.bind().current.saturating_sub(self.killed),
+            Ordering::Release,
+        );
+        self.left_rampage_time = (self.left_rampage_time - delta as real).max(0.0);
         self.update_rampage_hud();
         self.update_refresh_hud();
         self.update_progress_hud();
         self.update_fps_hud();
-        if 0 == self.left_rampage_time {
+        if 0.0 == self.left_rampage_time {
             RAMPAGE.store(true, Ordering::Release);
             self.play_rampage_bgm();
         } else {
@@ -99,7 +103,7 @@ impl RustLevel {
             .get_node_as::<CanvasLayer>("LevelHUD")
             .get_node_as::<VBoxContainer>("VBoxContainer")
             .get_node_as::<Label>("Rampage");
-        label.set_text(&format!("RAMPAGE {} ms", self.left_rampage_time));
+        label.set_text(&format!("RAMPAGE {:.1} s", self.left_rampage_time));
         label.show();
     }
 
@@ -145,7 +149,7 @@ impl RustLevel {
         let rate = self.grow_rate.powf(self.level as f32);
         self.level += 1;
         self.killed = 0;
-        self.left_rampage_time = (self.rampage_time as f32 / rate) as u32;
+        self.left_rampage_time = self.rampage_time / rate;
         generator.level_up(rate);
         drop(generator);
         self.update_level_hud();
@@ -175,6 +179,10 @@ impl RustLevel {
 
     pub fn get_kill_count() -> u32 {
         KILL_COUNT.load(Ordering::Acquire)
+    }
+
+    pub fn get_live_count() -> u32 {
+        LIVE_COUNT.load(Ordering::Acquire)
     }
 }
 

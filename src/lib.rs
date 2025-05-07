@@ -33,7 +33,7 @@ const MAX_BULLET_HIT: u8 = 2;
 const RELOAD_TIME: u32 = 1000;
 
 //level
-const LEVEL_RAMPAGE_TIME: u32 = 120_000;
+const LEVEL_RAMPAGE_TIME: real = 120.0;
 
 // zombie
 const ZOMBIE_MAX_SCREEN_COUNT: u32 = 160;
@@ -52,7 +52,9 @@ const ZOMBIE_MOVE_SPEED: real = 150.0;
 
 const ZOMBIE_MAX_HEALTH: u32 = 100;
 
-const ZOMBIE_RAMPAGE_TIME: u32 = 30_000;
+const ZOMBIE_ALARM_TIME: real = 1.0;
+
+const ZOMBIE_RAMPAGE_TIME: real = 30.0;
 
 #[derive(GodotConvert, Default, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
 #[godot(via = GString)]

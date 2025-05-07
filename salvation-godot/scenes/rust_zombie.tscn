@@ -333,7 +333,7 @@ max_distance = 500.0
 
 [node name="RampageAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("6_72vyj")
-volume_db = -28.0
+volume_db = -10.0
 max_distance = 4096.0
 attenuation = 1e-05
 

@@ -2,6 +2,7 @@ use crate::weapon::RustWeapon;
 use crate::{MAX_AMMO, PLAYER_MAX_HEALTH, PLAYER_MOVE_SPEED, PlayerState};
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
+use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
     AnimatedSprite2D, AudioStreamPlayer2D, CanvasLayer, CharacterBody2D, Control, ICanvasLayer,
     ICharacterBody2D, Input, InputEvent, Label, Node2D, VBoxContainer,
@@ -70,6 +71,8 @@ impl ICharacterBody2D for RustPlayer {
     }
 
     fn ready(&mut self) {
+        self.base_mut()
+            .set_physics_interpolation_mode(PhysicsInterpolationMode::ON);
         godot_print!(
             "Player ready with damage:{} max_hit_count:{} health:{}",
             self.damage,
