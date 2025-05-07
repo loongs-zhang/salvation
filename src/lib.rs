@@ -67,6 +67,7 @@ pub enum PlayerState {
     Reload,
     Hit,
     Dead,
+    Paused,
 }
 
 #[derive(GodotConvert, Default, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
@@ -79,6 +80,7 @@ pub enum ZombieState {
     Hit,
     Attack,
     Dead,
+    Paused,
 }
 
 struct Salvation;

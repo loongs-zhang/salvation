@@ -12,7 +12,7 @@ use crate::{
 use godot::builtin::{Vector2, real};
 use godot::classes::{
     AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, GpuParticles2D, ICharacterBody2D,
-    PackedScene,
+    InputEvent, PackedScene,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -102,7 +102,7 @@ impl ICharacterBody2D for RustZombie {
     }
 
     fn process(&mut self, delta: f64) {
-        if ZombieState::Dead == self.state {
+        if ZombieState::Dead == self.state || ZombieState::Paused == self.state {
             if BODY_COUNT.load(Ordering::Acquire) >= ZOMBIE_MAX_BODY_COUNT {
                 self.base_mut().queue_free();
                 BODY_COUNT.fetch_sub(1, Ordering::Release);
@@ -181,6 +181,12 @@ impl ICharacterBody2D for RustZombie {
         }
         character_body2d.move_and_slide();
     }
+
+    fn input(&mut self, event: Gd<InputEvent>) {
+        if event.is_action_pressed("esc") {
+            self.pause();
+        }
+    }
 }
 
 #[godot_api]
@@ -243,7 +249,7 @@ impl RustZombie {
     }
 
     pub fn run(&mut self) {
-        if ZombieState::Dead == self.state {
+        if ZombieState::Dead == self.state || ZombieState::Paused == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("run").done();
@@ -256,7 +262,7 @@ impl RustZombie {
     }
 
     pub fn hit(&mut self, direction: Vector2, hit_position: Vector2) {
-        if ZombieState::Dead == self.state {
+        if ZombieState::Dead == self.state || ZombieState::Paused == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("guard").done();
@@ -271,7 +277,7 @@ impl RustZombie {
     }
 
     pub fn rampage(&mut self) {
-        if ZombieState::Dead == self.state {
+        if ZombieState::Dead == self.state || ZombieState::Paused == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("run").done();
@@ -289,7 +295,7 @@ impl RustZombie {
     }
 
     pub fn attack(&mut self) {
-        if ZombieState::Dead == self.state {
+        if ZombieState::Dead == self.state || ZombieState::Paused == self.state {
             return;
         }
         self.base_mut().look_at(RustPlayer::get_position());
@@ -304,7 +310,7 @@ impl RustZombie {
     }
 
     pub fn die(&mut self) {
-        if ZombieState::Dead == self.state {
+        if ZombieState::Dead == self.state || ZombieState::Paused == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("die").done();
@@ -328,6 +334,16 @@ impl RustZombie {
             .bind_mut()
             .kill_confirmed();
         BODY_COUNT.fetch_add(1, Ordering::Release);
+    }
+
+    pub fn pause(&mut self) {
+        if ZombieState::Paused == self.state {
+            self.guard();
+            return;
+        }
+        self.current_speed = 0.0;
+        self.state = ZombieState::Paused;
+        self.notify_animation();
     }
 
     pub fn move_back(&mut self) {

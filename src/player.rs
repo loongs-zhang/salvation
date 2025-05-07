@@ -93,7 +93,7 @@ impl ICharacterBody2D for RustPlayer {
     }
 
     fn physics_process(&mut self, delta: f64) {
-        if PlayerState::Dead == self.state {
+        if PlayerState::Dead == self.state || PlayerState::Paused == self.state {
             return;
         }
         if PlayerState::Reload == self.state {
@@ -139,11 +139,14 @@ impl ICharacterBody2D for RustPlayer {
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
-        if event.is_action_pressed("r") {
+        if event.is_action_pressed("esc") {
+            self.pause();
+        } else if event.is_action_pressed("r") {
             self.reload();
-        } else if event.is_action_released("shift")
+        } else if (event.is_action_released("shift")
             || event.is_action_released("mouse_left")
-            || event.is_action_released("mouse_right")
+            || event.is_action_released("mouse_right"))
+            && PlayerState::Paused != self.state
         {
             self.guard();
         }
@@ -197,7 +200,7 @@ impl RustPlayer {
     }
 
     pub fn run(&mut self) {
-        if PlayerState::Dead == self.state {
+        if PlayerState::Dead == self.state || PlayerState::Paused == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("run").done();
@@ -212,7 +215,10 @@ impl RustPlayer {
     }
 
     pub fn shoot(&mut self) {
-        if PlayerState::Dead == self.state || PlayerState::Reload == self.state {
+        if PlayerState::Dead == self.state
+            || PlayerState::Paused == self.state
+            || PlayerState::Reload == self.state
+        {
             return;
         }
         let mut rust_weapon = self.get_rust_weapon();
@@ -234,7 +240,10 @@ impl RustPlayer {
     }
 
     pub fn reload(&mut self) {
-        if PlayerState::Dead == self.state || MAX_AMMO == self.get_rust_weapon().bind().get_ammo() {
+        if PlayerState::Dead == self.state
+            || PlayerState::Paused == self.state
+            || MAX_AMMO == self.get_rust_weapon().bind().get_ammo()
+        {
             return;
         }
         self.animated_sprite2d.play_ex().name("reload").done();
@@ -246,6 +255,9 @@ impl RustPlayer {
 
     #[func]
     pub fn reloaded(&mut self) {
+        if PlayerState::Dead == self.state || PlayerState::Paused == self.state {
+            return;
+        }
         self.state = PlayerState::Guard;
         let mut rust_weapon = self.get_rust_weapon();
         let clip = rust_weapon.bind_mut().reloaded();
@@ -257,7 +269,7 @@ impl RustPlayer {
     }
 
     pub fn hit(&mut self) {
-        if PlayerState::Dead == self.state {
+        if PlayerState::Dead == self.state || PlayerState::Paused == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("hit").done();
@@ -275,7 +287,7 @@ impl RustPlayer {
     }
 
     pub fn die(&mut self) {
-        if PlayerState::Dead == self.state {
+        if PlayerState::Dead == self.state || PlayerState::Paused == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("die").done();
@@ -288,6 +300,16 @@ impl RustPlayer {
                 timer.connect("timeout", &self.base().callable("born"));
             }
         }
+    }
+
+    pub fn pause(&mut self) {
+        if PlayerState::Paused == self.state {
+            self.guard();
+            return;
+        }
+        self.current_speed = 0.0;
+        self.state = PlayerState::Paused;
+        STATE.store(self.state);
     }
 
     pub fn get_mouse_position(&self) -> Vector2 {

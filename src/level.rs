@@ -4,7 +4,8 @@ use crate::zombie::RustZombie;
 use crate::{LEVEL_RAMPAGE_TIME, ZOMBIE_MAX_SCREEN_COUNT, ZOMBIE_MIN_REFRESH_BATCH};
 use godot::builtin::{Array, Vector2, real};
 use godot::classes::{
-    AudioStreamPlayer2D, CanvasLayer, Engine, INode, Label, Node, PackedScene, Timer, VBoxContainer,
+    AudioStreamPlayer2D, CanvasLayer, Engine, INode, InputEvent, Label, Node, PackedScene, Timer,
+    VBoxContainer,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -56,6 +57,10 @@ impl INode for RustLevel {
     }
 
     fn process(&mut self, delta: f64) {
+        let timer = self.generator.get_node_as::<Timer>("Timer");
+        if timer.is_stopped() {
+            return;
+        }
         KILL_COUNT.store(self.killed, Ordering::Release);
         LIVE_COUNT.store(
             self.generator.bind().current.saturating_sub(self.killed),
@@ -227,6 +232,18 @@ impl INode for ZombieGenerator {
         timer.set_one_shot(false);
         timer.set_autostart(true);
         timer.start();
+    }
+
+    fn input(&mut self, event: Gd<InputEvent>) {
+        if event.is_action_pressed("esc") {
+            let mut timer = self.base().get_node_as::<Timer>("Timer");
+            if timer.is_stopped() {
+                self.generate();
+                timer.start();
+            } else {
+                timer.stop();
+            }
+        }
     }
 }
 
