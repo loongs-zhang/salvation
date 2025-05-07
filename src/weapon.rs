@@ -1,5 +1,5 @@
 use crate::bullet::RustBullet;
-use crate::{BULLET_DAMAGE, BULLET_REPEL, MAX_AMMO, MAX_BULLET_HIT, RELOAD_TIME};
+use crate::{BULLET_DAMAGE, BULLET_DISTANCE, BULLET_REPEL, MAX_AMMO, MAX_BULLET_HIT, RELOAD_TIME};
 use godot::builtin::{Vector2, real};
 use godot::classes::{AudioStreamPlayer2D, GpuParticles2D, INode2D, Node2D, PackedScene};
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
@@ -12,6 +12,8 @@ use std::time::{Duration, Instant};
 pub struct RustWeapon {
     #[export]
     damage: i64,
+    #[export]
+    distance: real,
     #[export]
     clip: i64,
     #[export]
@@ -38,6 +40,7 @@ impl INode2D for RustWeapon {
     fn init(base: Base<Self::Base>) -> Self {
         Self {
             damage: BULLET_DAMAGE,
+            distance: BULLET_DISTANCE,
             clip: MAX_AMMO,
             repel: BULLET_REPEL,
             max_hit_count: MAX_BULLET_HIT,
@@ -62,7 +65,13 @@ impl INode2D for RustWeapon {
 
 #[godot_api]
 impl RustWeapon {
-    pub fn fire(&mut self, player_damage: i64, player_max_hit_count: u8, player_repel: real) {
+    pub fn fire(
+        &mut self,
+        player_damage: i64,
+        player_distance: real,
+        player_max_hit_count: u8,
+        player_repel: real,
+    ) {
         if 0 == self.ammo {
             return;
         }
@@ -81,6 +90,8 @@ impl RustWeapon {
                 .normalized();
             bullet.set_global_position(bullet_point);
             let mut gd_mut = bullet.bind_mut();
+            gd_mut.set_bullet_point(bullet_point);
+            gd_mut.set_final_distance(player_distance.add(self.distance));
             gd_mut.set_final_damage(player_damage.saturating_add(self.damage));
             gd_mut.set_final_max_hit_count(player_max_hit_count.saturating_add(self.max_hit_count));
             gd_mut.set_final_repel(player_repel.add(self.repel));

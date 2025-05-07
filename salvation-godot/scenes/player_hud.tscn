@@ -39,6 +39,11 @@ layout_mode = 2
 theme = SubResource("Theme_g8j1n")
 text = "DAMAGE"
 
+[node name="Distance" type="Label" parent="Control/VBoxContainer"]
+layout_mode = 2
+theme = SubResource("Theme_g8j1n")
+text = "DISTANCE"
+
 [node name="Repel" type="Label" parent="Control/VBoxContainer"]
 layout_mode = 2
 theme = SubResource("Theme_g8j1n")

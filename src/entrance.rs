@@ -78,7 +78,6 @@ impl RustEntrance {
 
     #[func]
     pub fn change_scene(&mut self) {
-        self.bgm.stop();
         if let Some(world) = self.world_scene.try_instantiate_as::<RustWorld>() {
             if let Some(tree) = self.base().get_tree() {
                 if let Some(mut root) = tree.get_root() {

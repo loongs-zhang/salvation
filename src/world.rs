@@ -1,9 +1,10 @@
+use crate::entrance::RustEntrance;
 use crate::player::RustPlayer;
 use godot::builtin::{Array, Vector2i, array};
 use godot::classes::fast_noise_lite::NoiseType;
-use godot::classes::{FastNoiseLite, INode2D, Node2D, TileMapLayer};
+use godot::classes::{AudioStreamPlayer2D, FastNoiseLite, INode2D, Node2D, TileMapLayer};
 use godot::global::godot_print;
-use godot::obj::{Base, Gd, NewGd, OnReady};
+use godot::obj::{Base, Gd, NewGd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use std::collections::HashSet;
 use std::time::Instant;
@@ -38,6 +39,15 @@ impl INode2D for RustWorld {
 
     fn ready(&mut self) {
         self.generate_world(100);
+        // stop BGM after world generated
+        self.base()
+            .get_tree()
+            .unwrap()
+            .get_root()
+            .unwrap()
+            .get_node_as::<RustEntrance>("RustEntrance")
+            .get_node_as::<AudioStreamPlayer2D>("Bgm")
+            .stop();
     }
 }
 

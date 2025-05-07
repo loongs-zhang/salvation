@@ -30,6 +30,8 @@ pub struct RustLevel {
     rampage_time: real,
     left_rampage_time: real,
     killed: u32,
+    paused: bool,
+    hud: OnReady<Gd<CanvasLayer>>,
     generator: OnReady<Gd<ZombieGenerator>>,
     bgm: OnReady<Gd<AudioStreamPlayer2D>>,
     rampage_bgm: OnReady<Gd<AudioStreamPlayer2D>>,
@@ -45,6 +47,8 @@ impl INode for RustLevel {
             rampage_time: LEVEL_RAMPAGE_TIME,
             left_rampage_time: LEVEL_RAMPAGE_TIME,
             killed: 0,
+            paused: false,
+            hud: OnReady::from_node("LevelHUD"),
             generator: OnReady::from_node("ZombieGenerator"),
             bgm: OnReady::from_node("Bgm"),
             rampage_bgm: OnReady::from_node("RampageBgm"),
@@ -57,8 +61,7 @@ impl INode for RustLevel {
     }
 
     fn process(&mut self, delta: f64) {
-        let timer = self.generator.get_node_as::<Timer>("Timer");
-        if timer.is_stopped() {
+        if self.paused {
             return;
         }
         KILL_COUNT.store(self.killed, Ordering::Release);
@@ -82,6 +85,16 @@ impl INode for RustLevel {
             self.level_up();
         }
     }
+
+    fn input(&mut self, event: Gd<InputEvent>) {
+        if event.is_action_pressed("esc") {
+            if self.paused {
+                self.paused = false;
+            } else {
+                self.paused = true;
+            }
+        }
+    }
 }
 
 #[godot_api]
@@ -93,21 +106,13 @@ impl RustLevel {
     }
 
     pub fn update_level_hud(&mut self) {
-        let mut label = self
-            .base()
-            .get_node_as::<CanvasLayer>("LevelHUD")
-            .get_node_as::<VBoxContainer>("VBoxContainer")
-            .get_node_as::<Label>("Level");
+        let mut label = self.get_container().get_node_as::<Label>("Level");
         label.set_text(&format!("LEVEL {}", self.level));
         label.show();
     }
 
     pub fn update_rampage_hud(&mut self) {
-        let mut label = self
-            .base()
-            .get_node_as::<CanvasLayer>("LevelHUD")
-            .get_node_as::<VBoxContainer>("VBoxContainer")
-            .get_node_as::<Label>("Rampage");
+        let mut label = self.get_container().get_node_as::<Label>("Rampage");
         label.set_text(&format!("RAMPAGE {:.1} s", self.left_rampage_time));
         label.show();
     }
@@ -115,11 +120,7 @@ impl RustLevel {
     pub fn update_refresh_hud(&mut self) {
         let refresh_count = self.generator.bind().current_refresh_count;
         let wait_time = self.generator.get_node_as::<Timer>("Timer").get_wait_time();
-        let mut label = self
-            .base()
-            .get_node_as::<CanvasLayer>("LevelHUD")
-            .get_node_as::<VBoxContainer>("VBoxContainer")
-            .get_node_as::<Label>("Refresh");
+        let mut label = self.get_container().get_node_as::<Label>("Refresh");
         label.set_text(&format!(
             "REFRESH {} ZOMBIES IN {:.0}s",
             refresh_count, wait_time
@@ -130,22 +131,21 @@ impl RustLevel {
     pub fn update_progress_hud(&mut self) {
         let refreshed = self.generator.bind().current;
         let total = self.generator.bind().current_total;
-        let mut label = self
-            .base()
-            .get_node_as::<CanvasLayer>("LevelHUD")
-            .get_node_as::<VBoxContainer>("VBoxContainer")
-            .get_node_as::<Label>("Killed");
+        let mut label = self.get_container().get_node_as::<Label>("Killed");
         label.set_text(&format!("KILLED {}/{}/{}", self.killed, refreshed, total));
         label.show();
     }
 
+    fn get_container(&mut self) -> Gd<VBoxContainer> {
+        self.hud.get_node_as::<VBoxContainer>("VBoxContainer")
+    }
+
     pub fn update_fps_hud(&mut self) {
-        let engine = Engine::singleton();
-        let mut label = self
-            .base()
-            .get_node_as::<CanvasLayer>("LevelHUD")
-            .get_node_as::<Label>("FPS");
-        label.set_text(&format!("FPS {}", engine.get_frames_per_second(),));
+        let mut label = self.hud.get_node_as::<Label>("FPS");
+        label.set_text(&format!(
+            "FPS {}",
+            Engine::singleton().get_frames_per_second(),
+        ));
         label.show();
     }
 
@@ -259,7 +259,6 @@ impl ZombieGenerator {
 
     #[func]
     pub fn generate(&mut self) {
-        //todo 性能优化，如果刷出来的僵尸数量超过120，距离最远的一批僵尸直接瞬移
         let mut rng = rand::thread_rng();
         for _ in 0..self.current_refresh_count {
             let kill_count = RustLevel::get_kill_count();

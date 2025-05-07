@@ -8,7 +8,6 @@ use godot::classes::{
     AnimatedSprite2D, AudioStreamPlayer2D, CanvasLayer, CharacterBody2D, Control, ICanvasLayer,
     ICharacterBody2D, Input, InputEvent, Label, Node2D, TextureRect, VBoxContainer,
 };
-use godot::global::godot_print;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use rand::Rng;
@@ -25,6 +24,8 @@ static RELOADING: AtomicCell<f64> = AtomicCell::new(0.0);
 pub struct RustPlayer {
     #[export]
     damage: i64,
+    #[export]
+    distance: real,
     #[export]
     max_hit_count: u8,
     #[export]
@@ -52,6 +53,7 @@ impl ICharacterBody2D for RustPlayer {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
             damage: 0,
+            distance: 0.0,
             max_hit_count: 0,
             repel: 0.0,
             max_health: PLAYER_MAX_HEALTH,
@@ -74,17 +76,12 @@ impl ICharacterBody2D for RustPlayer {
     fn ready(&mut self) {
         self.base_mut()
             .set_physics_interpolation_mode(PhysicsInterpolationMode::ON);
-        godot_print!(
-            "Player ready with damage:{} max_hit_count:{} health:{}",
-            self.damage,
-            self.max_hit_count,
-            self.health
-        );
         let rust_weapon = self.weapon.get_node_as::<RustWeapon>("RustWeapon");
         let mut hud = self.hud.bind_mut();
         hud.update_hp_hud(self.health, self.max_health);
         hud.update_ammo_hud(rust_weapon.bind().get_ammo(), MAX_AMMO);
         hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
+        hud.update_distance_hud(self.distance.add(rust_weapon.bind().get_distance()));
         hud.update_repel_hud(self.repel.add(rust_weapon.bind().get_repel()));
         hud.update_penetrate_hud(
             self.max_hit_count
@@ -233,7 +230,7 @@ impl RustPlayer {
         STATE.store(self.state);
         rust_weapon
             .bind_mut()
-            .fire(self.damage, self.max_hit_count, self.repel);
+            .fire(self.damage, self.distance, self.max_hit_count, self.repel);
         self.hud
             .bind_mut()
             .update_ammo_hud(rust_weapon.bind().get_ammo(), rust_weapon.bind().get_clip());
@@ -372,47 +369,42 @@ impl ICanvasLayer for PlayerHUD {
 #[godot_api]
 impl PlayerHUD {
     pub fn update_hp_hud(&mut self, hp: u32, max_hp: u32) {
-        let mut hp_hud = self
-            .control
-            .get_node_as::<VBoxContainer>("VBoxContainer")
-            .get_node_as::<Label>("HP");
+        let mut hp_hud = self.get_container().get_node_as::<Label>("HP");
         hp_hud.set_text(&format!("HP {}/{}", hp, max_hp));
         hp_hud.show();
     }
 
     pub fn update_ammo_hud(&mut self, ammo: i64, clip: i64) {
-        let mut ammo_hud = self
-            .control
-            .get_node_as::<VBoxContainer>("VBoxContainer")
-            .get_node_as::<Label>("Ammo");
+        let mut ammo_hud = self.get_container().get_node_as::<Label>("Ammo");
         ammo_hud.set_text(&format!("AMMO {}/{}", ammo, clip));
         ammo_hud.show();
     }
 
     pub fn update_damage_hud(&mut self, damage: i64) {
-        let mut damage_hud = self
-            .control
-            .get_node_as::<VBoxContainer>("VBoxContainer")
-            .get_node_as::<Label>("Damage");
+        let mut damage_hud = self.get_container().get_node_as::<Label>("Damage");
         damage_hud.set_text(&format!("DAMAGE {}", damage));
         damage_hud.show();
     }
 
+    pub fn update_distance_hud(&mut self, distance: real) {
+        let mut damage_hud = self.get_container().get_node_as::<Label>("Distance");
+        damage_hud.set_text(&format!("DISTANCE {:.0}", distance));
+        damage_hud.show();
+    }
+
     pub fn update_penetrate_hud(&mut self, penetrate: u8) {
-        let mut penetrate_hud = self
-            .control
-            .get_node_as::<VBoxContainer>("VBoxContainer")
-            .get_node_as::<Label>("Penetrate");
+        let mut penetrate_hud = self.get_container().get_node_as::<Label>("Penetrate");
         penetrate_hud.set_text(&format!("PENETRATE {}", penetrate));
         penetrate_hud.show();
     }
 
     pub fn update_repel_hud(&mut self, repel: real) {
-        let mut repel_hud = self
-            .control
-            .get_node_as::<VBoxContainer>("VBoxContainer")
-            .get_node_as::<Label>("Repel");
+        let mut repel_hud = self.get_container().get_node_as::<Label>("Repel");
         repel_hud.set_text(&format!("REPEL {}", repel));
         repel_hud.show();
+    }
+
+    fn get_container(&mut self) -> Gd<VBoxContainer> {
+        self.control.get_node_as::<VBoxContainer>("VBoxContainer")
     }
 }

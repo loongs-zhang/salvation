@@ -24,6 +24,8 @@ const PLAYER_MOVE_SPEED: real = 225.0;
 // weapon
 const BULLET_DAMAGE: i64 = 20;
 
+const BULLET_DISTANCE: real = 800.0;
+
 const BULLET_REPEL: real = 15.0;
 
 const MAX_AMMO: i64 = 30;
