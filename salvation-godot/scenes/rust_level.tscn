@@ -2,8 +2,8 @@
 
 [ext_resource type="PackedScene" uid="uid://5koe2fd6n3fc" path="res://scenes/rust_zombie.tscn" id="1_4leux"]
 [ext_resource type="PackedScene" uid="uid://dcjy2vqmnudni" path="res://scenes/level_hud.tscn" id="1_oapea"]
-[ext_resource type="AudioStream" uid="uid://8etktu33tqh5" path="res://asserts/ScenarioNormal.mp3" id="3_re1am"]
-[ext_resource type="AudioStream" uid="uid://cxxnymmats7cv" path="res://asserts/ForWhomTheBellTolls.mp3" id="4_ww368"]
+[ext_resource type="AudioStream" uid="uid://bcjknreh3qu5p" path="res://asserts/bgm/ScenarioNormal.mp3" id="3_re1am"]
+[ext_resource type="AudioStream" uid="uid://wp5pnkv1rtuq" path="res://asserts/bgm/ForWhomTheBellTolls.mp3" id="4_ww368"]
 
 [node name="RustLevel" type="RustLevel"]
 
@@ -21,5 +21,6 @@ attenuation = 1e-05
 
 [node name="RampageBgm" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("4_ww368")
+volume_db = 4.0
 max_distance = 4096.0
 attenuation = 1.23939e-05

@@ -291,10 +291,13 @@ impl RustZombie {
         self.current_speed = self.speed * 1.75;
         self.state = ZombieState::Rampage;
         if !self.rampage_audio.is_playing() && self.rampage_audio.is_inside_tree() {
-            if RustLevel::get_live_count() >= ZOMBIE_MIN_REFRESH_BATCH {
+            let live_count = RustLevel::get_live_count();
+            if live_count >= ZOMBIE_MIN_REFRESH_BATCH {
                 self.rampage_audio.set_volume_db(-40.0);
+            } else if live_count >= ZOMBIE_MIN_REFRESH_BATCH / 2 {
+                self.rampage_audio.set_volume_db(-25.0);
             } else {
-                self.rampage_audio.set_volume_db(-10.0);
+                self.rampage_audio.set_volume_db(-12.0);
             }
             self.rampage_audio.play();
         }

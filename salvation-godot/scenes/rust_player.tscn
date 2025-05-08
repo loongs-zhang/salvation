@@ -1,17 +1,17 @@
 [gd_scene load_steps=42 format=3 uid="uid://d2ryhlh122dqg"]
 
-[ext_resource type="Texture2D" uid="uid://b0dlxb302gr4n" path="res://asserts/player_idle.png" id="1_iwbmd"]
-[ext_resource type="Texture2D" uid="uid://cxaowrd50063m" path="res://asserts/player_run.png" id="2_0rh5x"]
-[ext_resource type="Texture2D" uid="uid://dqjhelwwr6uaw" path="res://asserts/zombie.png" id="2_53o8o"]
-[ext_resource type="Texture2D" uid="uid://c2qtrj3x75jew" path="res://asserts/player_walk.png" id="3_53o8o"]
-[ext_resource type="Texture2D" uid="uid://daykfevp7syil" path="res://asserts/player_gun_reload.png" id="3_g8j1n"]
+[ext_resource type="Texture2D" uid="uid://djwl20ov5nkd0" path="res://asserts/player/player_idle.png" id="1_iwbmd"]
+[ext_resource type="Texture2D" uid="uid://bq0y2ulgigjad" path="res://asserts/player/player_run.png" id="2_0rh5x"]
+[ext_resource type="Texture2D" uid="uid://b0iko5y4ocllp" path="res://asserts/zombie/zombie.png" id="2_53o8o"]
+[ext_resource type="Texture2D" uid="uid://pru0s55kya2h" path="res://asserts/player/player_walk.png" id="3_53o8o"]
+[ext_resource type="Texture2D" uid="uid://uu1lv6ptvvnc" path="res://asserts/player/player_gun_reload.png" id="3_g8j1n"]
 [ext_resource type="PackedScene" uid="uid://cigcujmruac6u" path="res://scenes/rust_weapon.tscn" id="4_0rh5x"]
 [ext_resource type="PackedScene" uid="uid://6mpjo4ff6g2a" path="res://scenes/player_hud.tscn" id="7_g8j1n"]
-[ext_resource type="AudioStream" uid="uid://c1qwqajbvuf48" path="res://asserts/player_run.mp3" id="8_e5vhl"]
-[ext_resource type="AudioStream" uid="uid://nhog4x5tx37w" path="res://asserts/player_hurt1.mp3" id="9_dmfm0"]
-[ext_resource type="AudioStream" uid="uid://c7xpa0nihpraj" path="res://asserts/player_hurt2.mp3" id="10_dlpix"]
-[ext_resource type="AudioStream" uid="uid://c43jvjyaof7o8" path="res://asserts/player_scream.mp3" id="11_0hc44"]
-[ext_resource type="AudioStream" uid="uid://c8yxswjo1mok4" path="res://asserts/player_die.mp3" id="12_x4rvw"]
+[ext_resource type="AudioStream" uid="uid://bqojecsepa052" path="res://asserts/player/player_run.mp3" id="8_e5vhl"]
+[ext_resource type="AudioStream" uid="uid://b4po574gfc5ve" path="res://asserts/player/player_hurt1.mp3" id="9_dmfm0"]
+[ext_resource type="AudioStream" uid="uid://qj8khluetyfp" path="res://asserts/player/player_hurt2.mp3" id="10_dlpix"]
+[ext_resource type="AudioStream" uid="uid://0ekvxa03a6kp" path="res://asserts/player/player_scream.mp3" id="11_0hc44"]
+[ext_resource type="AudioStream" uid="uid://dyrcax511s6ld" path="res://asserts/player/player_die.mp3" id="12_x4rvw"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_h4u8k"]
 radius = 18.0
@@ -158,6 +158,9 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_h4u8k")
+}, {
+"duration": 1.0,
+"texture": ExtResource("1_iwbmd")
 }],
 "loop": false,
 "name": &"hit",
@@ -268,7 +271,7 @@ shape = SubResource("CircleShape2D_h4u8k")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_g8j1n")
-animation = &"walk"
+animation = &"hit"
 autoplay = "guard"
 
 [node name="Camera2D" type="Camera2D" parent="."]

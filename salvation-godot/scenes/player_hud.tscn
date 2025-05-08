@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://6mpjo4ff6g2a"]
 
-[ext_resource type="FontFile" uid="uid://b341brf04jvyw" path="res://asserts/Xolonium-Regular.ttf" id="1_mlvnn"]
-[ext_resource type="Texture2D" uid="uid://dtg5lpvjetes1" path="res://asserts/cross_hair.png" id="2_iraov"]
+[ext_resource type="FontFile" uid="uid://cly6s32f5pm4p" path="res://asserts/Xolonium-Regular.ttf" id="1_mlvnn"]
+[ext_resource type="Texture2D" uid="uid://bhyejkni4ak6t" path="res://asserts/player/cross_hair.png" id="2_iraov"]
 
 [sub_resource type="Theme" id="Theme_g8j1n"]
 default_font = ExtResource("1_mlvnn")
