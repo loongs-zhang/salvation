@@ -202,11 +202,16 @@ impl RustZombie {
         } else {
             health.saturating_add(-hit_val as u32)
         };
+        let speed = self.current_speed;
         let moved = direction * repel;
         let new_position = zombie_position + moved;
         let mut base_mut = self.base_mut();
         base_mut.look_at(zombie_position - direction);
+        base_mut.set_velocity(-direction * speed);
+        //僵尸被击退
         base_mut.set_global_position(new_position);
+        //僵尸往被攻击的方向移动
+        base_mut.move_and_slide();
         drop(base_mut);
         if 0 != self.health {
             self.hit(direction, hit_position);
@@ -235,7 +240,7 @@ impl RustZombie {
         self.animated_sprite2d.play_ex().name("guard").done();
         self.current_speed = self.speed * 0.2;
         self.state = ZombieState::Guard;
-        if !self.guard_audio.is_playing() {
+        if !self.guard_audio.is_playing() && self.guard_audio.is_inside_tree() {
             if RustLevel::get_live_count() >= ZOMBIE_MIN_REFRESH_BATCH {
                 self.guard_audio.set_volume_db(-30.0);
             } else {
@@ -253,7 +258,7 @@ impl RustZombie {
         self.animated_sprite2d.play_ex().name("run").done();
         self.current_speed = self.speed * 1.75;
         self.state = ZombieState::Run;
-        if !self.run_audio.is_playing() {
+        if !self.run_audio.is_playing() && self.run_audio.is_inside_tree() {
             self.run_audio.play();
         }
         self.notify_animation();
@@ -269,8 +274,12 @@ impl RustZombie {
         self.blood_flash.set_global_position(hit_position);
         self.blood_flash.look_at(hit_position - direction);
         self.blood_flash.restart();
-        self.hit_audio.play();
-        self.scream_audio.play();
+        if self.hit_audio.is_inside_tree() {
+            self.hit_audio.play();
+        }
+        if self.scream_audio.is_inside_tree() {
+            self.scream_audio.play();
+        }
         self.notify_animation();
     }
 
@@ -281,7 +290,7 @@ impl RustZombie {
         self.animated_sprite2d.play_ex().name("run").done();
         self.current_speed = self.speed * 1.75;
         self.state = ZombieState::Rampage;
-        if !self.rampage_audio.is_playing() {
+        if !self.rampage_audio.is_playing() && self.rampage_audio.is_inside_tree() {
             if RustLevel::get_live_count() >= ZOMBIE_MIN_REFRESH_BATCH {
                 self.rampage_audio.set_volume_db(-40.0);
             } else {
@@ -300,8 +309,10 @@ impl RustZombie {
         self.animated_sprite2d.play_ex().name("attack").done();
         self.current_speed = self.speed * 0.5;
         self.state = ZombieState::Attack;
-        self.attack_audio.play();
-        if !self.attack_scream_audio.is_playing() {
+        if self.attack_audio.is_inside_tree() {
+            self.attack_audio.play();
+        }
+        if !self.attack_scream_audio.is_playing() && self.attack_scream_audio.is_inside_tree() {
             self.attack_scream_audio.play();
         }
         self.notify_animation();
@@ -314,7 +325,9 @@ impl RustZombie {
         self.animated_sprite2d.play_ex().name("die").done();
         self.current_speed = 0.0;
         self.state = ZombieState::Dead;
-        self.die_audio.play();
+        if self.die_audio.is_inside_tree() {
+            self.die_audio.play();
+        }
         // 释放资源
         self.base_mut().set_z_index(0);
         self.collision_shape2d.queue_free();

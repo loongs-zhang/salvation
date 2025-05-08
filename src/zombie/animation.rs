@@ -76,7 +76,10 @@ impl ZombieAnimation {
             && HURT_FRAME.contains(&base.get_frame())
         {
             // 伤害玩家
-            self.get_rust_player().bind_mut().on_hit(ZOMBIE_DAMAGE);
+            let position = self.base().get_global_position();
+            self.get_rust_player()
+                .bind_mut()
+                .on_hit(ZOMBIE_DAMAGE, position);
         }
     }
 

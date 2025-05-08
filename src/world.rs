@@ -3,10 +3,11 @@ use crate::player::RustPlayer;
 use godot::builtin::{Array, Vector2, Vector2i, array, real};
 use godot::classes::fast_noise_lite::NoiseType;
 use godot::classes::{
-    AudioStreamPlayer2D, FastNoiseLite, INode2D, InputEvent, Node2D, TileMapLayer,
+    Button, CanvasLayer, Control, FastNoiseLite, HBoxContainer, INode2D, InputEvent, Node2D,
+    Object, PackedScene, TileMapLayer,
 };
 use godot::global::godot_print;
-use godot::obj::{Base, Gd, NewGd, OnReady, WithBaseField};
+use godot::obj::{Base, Gd, NewGd, OnReady, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
 use rand::Rng;
 use std::collections::HashSet;
@@ -23,8 +24,10 @@ static PAUSED: AtomicBool = AtomicBool::new(false);
 #[derive(GodotClass)]
 #[class(base=Node2D)]
 pub struct RustWorld {
+    entrance_scene: OnReady<Gd<PackedScene>>,
     tile_map_layer: OnReady<Gd<TileMapLayer>>,
     rust_player: OnReady<Gd<RustPlayer>>,
+    game_over: OnReady<Gd<CanvasLayer>>,
     generated: HashSet<Vector2i>,
     base: Base<Node2D>,
 }
@@ -35,14 +38,34 @@ impl INode2D for RustWorld {
         // We could also initialize those manually inside ready(), but OnReady automatically defers initialization.
         // Alternatively to init(), you can use #[init(...)] on the struct fields.
         Self {
+            entrance_scene: OnReady::from_loaded("res://scenes/rust_entrance.tscn"),
             tile_map_layer: OnReady::from_node("TileMapLayer"),
             rust_player: OnReady::from_node("RustPlayer"),
+            game_over: OnReady::from_node("CanvasLayer"),
             generated: HashSet::new(),
             base,
         }
     }
 
     fn ready(&mut self) {
+        let gd = self.to_gd();
+        let container = self
+            .game_over
+            .get_node_as::<Control>("Control")
+            .get_node_as::<HBoxContainer>("HBoxContainer");
+        container
+            .get_node_as::<Button>("Exit")
+            .signals()
+            .pressed()
+            .connect_obj(&gd, Self::on_exit_pressed);
+        container
+            .get_node_as::<Button>("Continue")
+            .signals()
+            .pressed()
+            .connect_obj(&gd, Self::on_continue_pressed);
+        self.signals()
+            .player_dead()
+            .connect_self(Self::on_player_dead);
         self.generate_world(100);
         // stop BGM after world generated
         self.base()
@@ -51,23 +74,44 @@ impl INode2D for RustWorld {
             .get_root()
             .unwrap()
             .get_node_as::<RustEntrance>("RustEntrance")
-            .get_node_as::<AudioStreamPlayer2D>("Bgm")
-            .stop();
+            .queue_free();
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
         if event.is_action_pressed("esc") {
-            if PAUSED.load(Ordering::Acquire) {
-                PAUSED.store(false, Ordering::Release);
-            } else {
-                PAUSED.store(true, Ordering::Release);
-            }
+            Self::pause();
         }
     }
 }
 
 #[godot_api]
 impl RustWorld {
+    #[signal]
+    pub fn player_dead();
+
+    #[func]
+    pub fn on_player_dead(&mut self) {
+        self.game_over.set_visible(true);
+    }
+
+    #[func]
+    pub fn on_exit_pressed(&mut self) {
+        if let Some(world) = self.entrance_scene.try_instantiate_as::<RustEntrance>() {
+            if let Some(tree) = self.base().get_tree() {
+                if let Some(mut root) = tree.get_root() {
+                    root.add_child(&world);
+                    self.base_mut().queue_free();
+                }
+            }
+        }
+    }
+
+    #[func]
+    pub fn on_continue_pressed(&mut self) {
+        self.game_over.set_visible(false);
+        self.rust_player.bind_mut().reborn();
+    }
+
     #[func]
     pub fn generate(&mut self) {
         self.generate_world(20);
@@ -153,6 +197,14 @@ impl RustWorld {
             rng.gen_range(250.0..500.0)
         } else {
             rng.gen_range(-500.0..-250.0)
+        }
+    }
+
+    pub fn pause() {
+        if PAUSED.load(Ordering::Acquire) {
+            PAUSED.store(false, Ordering::Release);
+        } else {
+            PAUSED.store(true, Ordering::Release);
         }
     }
 

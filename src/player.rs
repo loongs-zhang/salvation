@@ -1,13 +1,13 @@
 use crate::weapon::RustWeapon;
 use crate::world::RustWorld;
-use crate::{MAX_AMMO, PLAYER_MAX_HEALTH, PLAYER_MOVE_SPEED, PlayerState};
+use crate::{MAX_AMMO, PLAYER_MAX_HEALTH, PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState};
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
 use godot::classes::input::MouseMode;
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
-    AnimatedSprite2D, AudioStreamPlayer2D, CanvasLayer, CharacterBody2D, Control, ICanvasLayer,
-    ICharacterBody2D, Input, InputEvent, Label, Node2D, TextureRect, VBoxContainer,
+    AnimatedSprite2D, AudioStreamPlayer2D, CanvasLayer, CharacterBody2D, Control, GpuParticles2D,
+    ICanvasLayer, ICharacterBody2D, Input, InputEvent, Label, Node2D, TextureRect, VBoxContainer,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -22,6 +22,9 @@ static RELOADING: AtomicCell<f64> = AtomicCell::new(0.0);
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
 pub struct RustPlayer {
+    // 玩家穿透
+    #[export]
+    lives: u32,
     // 玩家伤害
     #[export]
     damage: i64,
@@ -40,11 +43,13 @@ pub struct RustPlayer {
     // 玩家移动速度
     #[export]
     speed: real,
+    current_lives: u32,
     current_health: u32,
     state: PlayerState,
     current_speed: real,
     animated_sprite2d: OnReady<Gd<AnimatedSprite2D>>,
     weapon: OnReady<Gd<Node2D>>,
+    blood_flash: OnReady<Gd<GpuParticles2D>>,
     hud: OnReady<Gd<PlayerHUD>>,
     run_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     hurt_audio1: OnReady<Gd<AudioStreamPlayer2D>>,
@@ -58,6 +63,7 @@ pub struct RustPlayer {
 impl ICharacterBody2D for RustPlayer {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
+            lives: PLAYER_MAX_LIVES,
             damage: 0,
             distance: 0.0,
             penetrate: 0,
@@ -66,9 +72,11 @@ impl ICharacterBody2D for RustPlayer {
             current_health: PLAYER_MAX_HEALTH,
             state: PlayerState::Born,
             speed: PLAYER_MOVE_SPEED,
+            current_lives: PLAYER_MAX_LIVES,
             current_speed: PLAYER_MOVE_SPEED,
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             weapon: OnReady::from_node("Weapon"),
+            blood_flash: OnReady::from_node("GpuParticles2D"),
             hud: OnReady::from_node("PlayerHUD"),
             run_audio: OnReady::from_node("RunAudio"),
             hurt_audio1: OnReady::from_node("HurtAudio1"),
@@ -84,6 +92,7 @@ impl ICharacterBody2D for RustPlayer {
             .set_physics_interpolation_mode(PhysicsInterpolationMode::ON);
         let rust_weapon = self.weapon.get_node_as::<RustWeapon>("RustWeapon");
         let mut hud = self.hud.bind_mut();
+        hud.update_lives_hud(self.current_lives, self.lives);
         hud.update_hp_hud(self.current_health, self.health);
         hud.update_ammo_hud(rust_weapon.bind().get_ammo(), MAX_AMMO);
         hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
@@ -159,7 +168,7 @@ impl ICharacterBody2D for RustPlayer {
 #[godot_api]
 impl RustPlayer {
     #[func]
-    pub fn on_hit(&mut self, hit_val: i64) {
+    pub fn on_hit(&mut self, hit_val: i64, hit_position: Vector2) {
         let health = self.current_health;
         self.current_health = if hit_val > 0 {
             health.saturating_sub(hit_val as u32)
@@ -170,22 +179,34 @@ impl RustPlayer {
             .bind_mut()
             .update_hp_hud(self.current_health, self.health);
         if 0 != self.current_health {
-            self.hit();
+            self.hit(hit_position);
         } else {
             self.die();
         }
     }
 
+    pub fn reborn(&mut self) {
+        self.current_lives = self.lives;
+        self.hud
+            .bind_mut()
+            .update_lives_hud(self.current_lives, self.lives);
+        self.born();
+    }
+
     #[func]
     pub fn born(&mut self) {
-        if PlayerState::Dead != self.state {
+        if PlayerState::Dead != self.state || 0 == self.current_lives {
             return;
         }
+        self.current_lives -= 1;
         self.animated_sprite2d.play_ex().name("guard").done();
         self.current_speed = self.speed;
         self.state = PlayerState::Born;
         self.current_health = self.health;
         STATE.store(self.state);
+        self.hud
+            .bind_mut()
+            .update_lives_hud(self.current_lives, self.lives);
         self.hud
             .bind_mut()
             .update_hp_hud(self.current_health, self.health);
@@ -264,13 +285,19 @@ impl RustPlayer {
         RELOADING.store(0.0);
     }
 
-    pub fn hit(&mut self) {
+    pub fn hit(&mut self, hit_position: Vector2) {
         if PlayerState::Dead == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("hit").done();
         self.current_speed = self.speed * 0.5;
         self.state = PlayerState::Hit;
+        let player_position = self.base().get_global_position();
+        self.blood_flash.set_global_position(
+            player_position + player_position.direction_to(hit_position).normalized() * 18.0,
+        );
+        self.blood_flash.look_at(hit_position);
+        self.blood_flash.restart();
         STATE.store(self.state);
         if Self::random_bool() {
             self.hurt_audio1.play();
@@ -291,7 +318,17 @@ impl RustPlayer {
         self.state = PlayerState::Dead;
         STATE.store(self.state);
         self.die_audio.play();
-        // todo 支持并检查生命数
+        if 0 == self.current_lives {
+            if let Some(tree) = self.base().get_tree() {
+                if let Some(root) = tree.get_root() {
+                    root.get_node_as::<RustWorld>("RustWorld")
+                        .signals()
+                        .player_dead()
+                        .emit();
+                }
+            }
+            return;
+        }
         if let Some(mut tree) = self.base().get_tree() {
             if let Some(mut timer) = tree.create_timer(3.0) {
                 timer.connect("timeout", &self.base().callable("born"));
@@ -354,10 +391,20 @@ impl ICanvasLayer for PlayerHUD {
             affine_inverse * viewport.get_mouse_position() - self.cross_hair.get_size() / 2.0;
         self.cross_hair.set_position(mouse_position);
     }
+
+    fn exit_tree(&mut self) {
+        Input::singleton().set_mouse_mode(MouseMode::VISIBLE);
+    }
 }
 
 #[godot_api]
 impl PlayerHUD {
+    pub fn update_lives_hud(&mut self, lives: u32, max_lives: u32) {
+        let mut hp_hud = self.get_container().get_node_as::<Label>("Lives");
+        hp_hud.set_text(&format!("LIVES {}/{}", lives, max_lives));
+        hp_hud.show();
+    }
+
     pub fn update_hp_hud(&mut self, hp: u32, max_hp: u32) {
         let mut hp_hud = self.get_container().get_node_as::<Label>("HP");
         hp_hud.set_text(&format!("HP {}/{}", hp, max_hp));
