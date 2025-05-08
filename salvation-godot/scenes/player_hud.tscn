@@ -59,6 +59,28 @@ layout_mode = 2
 theme = SubResource("Theme_g8j1n")
 text = "PENETRATE"
 
+[node name="HBoxContainer" type="HBoxContainer" parent="Control"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -64.5
+offset_top = 10.0
+offset_right = 64.5
+offset_bottom = 30.0
+grow_horizontal = 2
+theme_override_constants/separation = 8
+
+[node name="Killed" type="Label" parent="Control/HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
+text = "KILLED"
+
+[node name="Score" type="Label" parent="Control/HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.74902, 0, 1)
+text = "SCORE"
+
 [node name="CrossHair" type="TextureRect" parent="."]
 anchors_preset = 8
 anchor_left = 0.5

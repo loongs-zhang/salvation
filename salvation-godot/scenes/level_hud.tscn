@@ -7,9 +7,9 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -43.5
-offset_top = 10.0
+offset_top = 30.0
 offset_right = 43.5
-offset_bottom = 40.0
+offset_bottom = 132.0
 grow_horizontal = 2
 
 [node name="Level" type="Label" parent="VBoxContainer"]
@@ -21,7 +21,7 @@ horizontal_alignment = 1
 
 [node name="Refresh" type="Label" parent="VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
+theme_override_colors/font_color = Color(0.133333, 0.2, 0.133333, 1)
 text = "Refresh"
 horizontal_alignment = 1
 

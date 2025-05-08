@@ -1,3 +1,4 @@
+use crate::player::RustPlayer;
 use crate::zombie::RustZombie;
 use godot::builtin::{Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
@@ -145,13 +146,17 @@ impl BulletDamageArea {
                 .get_parent()
                 .expect("RustBullet not found")
                 .cast::<RustBullet>();
+            let damage = rust_bullet.bind().final_damage;
             rust_bullet.bind_mut().on_hit();
             body.cast::<RustZombie>().bind_mut().on_hit(
-                rust_bullet.bind().final_damage,
+                damage,
                 rust_bullet.bind().direction,
                 rust_bullet.bind().final_repel,
                 rust_bullet.get_global_position(),
             );
+            if damage > 0 {
+                RustPlayer::add_score(damage as u64);
+            }
         }
     }
 }

@@ -7,17 +7,23 @@ use godot::classes::input::MouseMode;
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
     AnimatedSprite2D, AudioStreamPlayer2D, CanvasLayer, CharacterBody2D, Control, GpuParticles2D,
-    ICanvasLayer, ICharacterBody2D, Input, InputEvent, Label, Node2D, TextureRect, VBoxContainer,
+    HBoxContainer, ICanvasLayer, ICharacterBody2D, Input, InputEvent, Label, Node2D, TextureRect,
+    VBoxContainer,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use rand::Rng;
+use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
 static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
 static STATE: AtomicCell<PlayerState> = AtomicCell::new(PlayerState::Born);
 
 static RELOADING: AtomicCell<f64> = AtomicCell::new(0.0);
+
+static KILL_COUNT: AtomicU32 = AtomicU32::new(0);
+
+static SCORE: AtomicU64 = AtomicU64::new(0);
 
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
@@ -102,6 +108,8 @@ impl ICharacterBody2D for RustPlayer {
             self.penetrate
                 .saturating_add(rust_weapon.bind().get_penetrate()),
         );
+        hud.update_killed_hud();
+        hud.update_score_hud();
     }
 
     fn physics_process(&mut self, delta: f64) {
@@ -150,6 +158,12 @@ impl ICharacterBody2D for RustPlayer {
         character_body2d.move_and_slide();
     }
 
+    fn process(&mut self, _delta: f64) {
+        let mut hud = self.hud.bind_mut();
+        hud.update_killed_hud();
+        hud.update_score_hud();
+    }
+
     fn input(&mut self, event: Gd<InputEvent>) {
         if RustWorld::is_paused() {
             return;
@@ -186,7 +200,7 @@ impl RustPlayer {
     }
 
     pub fn reborn(&mut self) {
-        self.current_lives = self.lives;
+        self.current_lives = self.lives.saturating_add(1);
         self.hud
             .bind_mut()
             .update_lives_hud(self.current_lives, self.lives);
@@ -353,6 +367,14 @@ impl RustPlayer {
         rand::thread_rng().gen_range(-1.0..1.0) >= 0.0
     }
 
+    pub fn add_kill_count() {
+        KILL_COUNT.fetch_add(1, Ordering::Release);
+    }
+
+    pub fn add_score(score: u64) {
+        SCORE.fetch_add(score, Ordering::Release);
+    }
+
     pub fn get_position() -> Vector2 {
         POSITION.load()
     }
@@ -400,48 +422,64 @@ impl ICanvasLayer for PlayerHUD {
 #[godot_api]
 impl PlayerHUD {
     pub fn update_lives_hud(&mut self, lives: u32, max_lives: u32) {
-        let mut hp_hud = self.get_container().get_node_as::<Label>("Lives");
+        let mut hp_hud = self.get_vcontainer().get_node_as::<Label>("Lives");
         hp_hud.set_text(&format!("LIVES {}/{}", lives, max_lives));
         hp_hud.show();
     }
 
     pub fn update_hp_hud(&mut self, hp: u32, max_hp: u32) {
-        let mut hp_hud = self.get_container().get_node_as::<Label>("HP");
+        let mut hp_hud = self.get_vcontainer().get_node_as::<Label>("HP");
         hp_hud.set_text(&format!("HP {}/{}", hp, max_hp));
         hp_hud.show();
     }
 
     pub fn update_ammo_hud(&mut self, ammo: i64, clip: i64) {
-        let mut ammo_hud = self.get_container().get_node_as::<Label>("Ammo");
+        let mut ammo_hud = self.get_vcontainer().get_node_as::<Label>("Ammo");
         ammo_hud.set_text(&format!("AMMO {}/{}", ammo, clip));
         ammo_hud.show();
     }
 
     pub fn update_damage_hud(&mut self, damage: i64) {
-        let mut damage_hud = self.get_container().get_node_as::<Label>("Damage");
+        let mut damage_hud = self.get_vcontainer().get_node_as::<Label>("Damage");
         damage_hud.set_text(&format!("DAMAGE {}", damage));
         damage_hud.show();
     }
 
     pub fn update_distance_hud(&mut self, distance: real) {
-        let mut damage_hud = self.get_container().get_node_as::<Label>("Distance");
+        let mut damage_hud = self.get_vcontainer().get_node_as::<Label>("Distance");
         damage_hud.set_text(&format!("DISTANCE {:.0}", distance));
         damage_hud.show();
     }
 
     pub fn update_penetrate_hud(&mut self, penetrate: u8) {
-        let mut penetrate_hud = self.get_container().get_node_as::<Label>("Penetrate");
+        let mut penetrate_hud = self.get_vcontainer().get_node_as::<Label>("Penetrate");
         penetrate_hud.set_text(&format!("PENETRATE {}", penetrate));
         penetrate_hud.show();
     }
 
     pub fn update_repel_hud(&mut self, repel: real) {
-        let mut repel_hud = self.get_container().get_node_as::<Label>("Repel");
+        let mut repel_hud = self.get_vcontainer().get_node_as::<Label>("Repel");
         repel_hud.set_text(&format!("REPEL {}", repel));
         repel_hud.show();
     }
 
-    fn get_container(&mut self) -> Gd<VBoxContainer> {
+    pub fn update_killed_hud(&mut self) {
+        let mut repel_hud = self.get_hcontainer().get_node_as::<Label>("Killed");
+        repel_hud.set_text(&format!("KILLED {}", KILL_COUNT.load(Ordering::Acquire)));
+        repel_hud.show();
+    }
+
+    pub fn update_score_hud(&mut self) {
+        let mut repel_hud = self.get_hcontainer().get_node_as::<Label>("Score");
+        repel_hud.set_text(&format!("SCORE {}", SCORE.load(Ordering::Acquire)));
+        repel_hud.show();
+    }
+
+    fn get_vcontainer(&mut self) -> Gd<VBoxContainer> {
         self.control.get_node_as::<VBoxContainer>("VBoxContainer")
+    }
+
+    fn get_hcontainer(&mut self) -> Gd<HBoxContainer> {
+        self.control.get_node_as::<HBoxContainer>("HBoxContainer")
     }
 }

@@ -89,7 +89,7 @@ impl RustLevel {
     pub fn kill_confirmed(&mut self) {
         self.killed += 1;
         self.update_progress_hud();
-        // todo 玩家击杀总数
+        RustPlayer::add_kill_count();
     }
 
     pub fn update_level_hud(&mut self) {

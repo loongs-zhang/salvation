@@ -17,7 +17,7 @@ pub mod bullet;
 pub mod zombie;
 
 // player
-const PLAYER_MAX_LIVES: u32 = 1;
+const PLAYER_MAX_LIVES: u32 = 3;
 
 const PLAYER_MAX_HEALTH: u32 = 100;
 
@@ -58,7 +58,7 @@ const ZOMBIE_MOVE_SPEED: real = 150.0;
 
 const ZOMBIE_MAX_HEALTH: u32 = 100;
 
-const ZOMBIE_ALARM_TIME: real = 1.0;
+const ZOMBIE_ALARM_TIME: real = 1.5;
 
 const ZOMBIE_RAMPAGE_TIME: real = 30.0;
 
