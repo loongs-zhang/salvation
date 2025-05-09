@@ -21,6 +21,8 @@ const PLAYER_MAX_LIVES: u32 = 3;
 
 const PLAYER_MAX_HEALTH: u32 = 100;
 
+const PLAYER_LEVEL_UP_BARRIER: u64 = 2000;
+
 const PLAYER_MOVE_SPEED: real = 225.0;
 
 // weapon
@@ -73,6 +75,18 @@ pub enum PlayerState {
     Reload,
     Hit,
     Dead,
+}
+
+#[derive(GodotConvert, Default, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
+#[godot(via = GString)]
+pub enum PlayerUpgrade {
+    #[default]
+    Health,
+    Penetrate,
+    Damage,
+    Repel,
+    Lives,
+    Distance,
 }
 
 #[derive(GodotConvert, Default, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]

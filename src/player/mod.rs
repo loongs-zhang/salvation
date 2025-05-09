@@ -1,19 +1,26 @@
+use crate::player::hud::PlayerHUD;
+use crate::player::level_up::PlayerLevelUp;
 use crate::weapon::RustWeapon;
 use crate::world::RustWorld;
-use crate::{MAX_AMMO, PLAYER_MAX_HEALTH, PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState};
+use crate::{
+    MAX_AMMO, PLAYER_LEVEL_UP_BARRIER, PLAYER_MAX_HEALTH, PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED,
+    PlayerState, PlayerUpgrade,
+};
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
-use godot::classes::input::MouseMode;
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
-    AnimatedSprite2D, AudioStreamPlayer2D, CanvasLayer, CharacterBody2D, Control, GpuParticles2D,
-    HBoxContainer, ICanvasLayer, ICharacterBody2D, Input, InputEvent, Label, Node2D, TextureRect,
-    VBoxContainer,
+    AnimatedSprite2D, AudioStreamPlayer2D, CharacterBody2D, GpuParticles2D, ICharacterBody2D,
+    Input, InputEvent, Node2D, PackedScene,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use rand::Rng;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
+
+pub mod hud;
+
+pub mod level_up;
 
 static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
@@ -62,6 +69,7 @@ pub struct RustPlayer {
     hurt_audio2: OnReady<Gd<AudioStreamPlayer2D>>,
     scream_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     die_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    level_up_scene: OnReady<Gd<PackedScene>>,
     base: Base<CharacterBody2D>,
 }
 
@@ -89,6 +97,7 @@ impl ICharacterBody2D for RustPlayer {
             hurt_audio2: OnReady::from_node("HurtAudio2"),
             scream_audio: OnReady::from_node("ScreamAudio"),
             die_audio: OnReady::from_node("DieAudio"),
+            level_up_scene: OnReady::from_loaded("res://scenes/player_level_up.tscn"),
             base,
         }
     }
@@ -159,6 +168,7 @@ impl ICharacterBody2D for RustPlayer {
     }
 
     fn process(&mut self, _delta: f64) {
+        self.level_up();
         let mut hud = self.hud.bind_mut();
         hud.update_killed_hud();
         hud.update_score_hud();
@@ -350,6 +360,73 @@ impl RustPlayer {
         }
     }
 
+    pub fn level_up(&mut self) {
+        let score = Self::get_score();
+        if 0 == score || 0 != score % PLAYER_LEVEL_UP_BARRIER {
+            return;
+        }
+        //防止重复触发升级
+        let damage = self
+            .damage
+            .saturating_add(self.get_rust_weapon().bind().get_damage());
+        RustPlayer::add_score(damage as u64);
+        let what;
+        let random = rand::thread_rng().gen_range(0..100);
+        if random >= 98 {
+            //2%奖励穿透力
+            self.penetrate = self.penetrate.saturating_add(1);
+            let new_penetrate = self.penetrate + self.get_rust_weapon().bind().get_penetrate();
+            self.hud.bind_mut().update_penetrate_hud(new_penetrate);
+            what = PlayerUpgrade::Penetrate;
+        } else if random >= 94 {
+            //4%奖励伤害
+            self.damage = self.damage.saturating_add(2);
+            let new_damage = self
+                .damage
+                .saturating_add(self.get_rust_weapon().bind().get_damage());
+            self.hud.bind_mut().update_damage_hud(new_damage);
+            what = PlayerUpgrade::Damage;
+        } else if random >= 85 {
+            //9%奖励击退力
+            self.repel += 1.0;
+            let new_repel = self.repel + self.get_rust_weapon().bind().get_repel();
+            self.hud.bind_mut().update_repel_hud(new_repel);
+            what = PlayerUpgrade::Repel;
+        } else if random >= 75 {
+            //10%奖励生命数
+            self.lives = self.lives.saturating_add(1);
+            self.current_lives = self.current_lives.saturating_add(1);
+            self.hud
+                .bind_mut()
+                .update_lives_hud(self.current_lives, self.lives);
+            what = PlayerUpgrade::Lives;
+        } else if random >= 60 {
+            //15%奖励射击距离
+            self.distance += 20.0;
+            let new_distance = self.distance + self.get_rust_weapon().bind().get_distance();
+            self.hud.bind_mut().update_distance_hud(new_distance);
+            what = PlayerUpgrade::Distance;
+        } else {
+            //60%奖励生命值
+            self.health = self.health.saturating_add(10);
+            self.current_health = self.current_health.saturating_add(10);
+            self.hud
+                .bind_mut()
+                .update_hp_hud(self.current_health, self.health);
+            what = PlayerUpgrade::Health;
+        }
+        if let Some(mut level_up_label) = self.level_up_scene.try_instantiate_as::<PlayerLevelUp>()
+        {
+            level_up_label.set_global_position(RustPlayer::get_position());
+            if let Some(tree) = self.base().get_tree() {
+                if let Some(mut root) = tree.get_root() {
+                    root.add_child(&level_up_label);
+                    level_up_label.bind_mut().show_level_up(what);
+                }
+            }
+        }
+    }
+
     pub fn get_mouse_position(&self) -> Vector2 {
         self.base().get_canvas_transform().affine_inverse()
             * self
@@ -371,8 +448,16 @@ impl RustPlayer {
         KILL_COUNT.fetch_add(1, Ordering::Release);
     }
 
+    pub fn get_kill_count() -> u32 {
+        KILL_COUNT.load(Ordering::Acquire)
+    }
+
     pub fn add_score(score: u64) {
         SCORE.fetch_add(score, Ordering::Release);
+    }
+
+    pub fn get_score() -> u64 {
+        SCORE.load(Ordering::Acquire)
     }
 
     pub fn get_position() -> Vector2 {
@@ -381,105 +466,5 @@ impl RustPlayer {
 
     pub fn get_state() -> PlayerState {
         STATE.load()
-    }
-}
-
-#[derive(GodotClass)]
-#[class(base=CanvasLayer)]
-pub struct PlayerHUD {
-    cross_hair: OnReady<Gd<TextureRect>>,
-    control: OnReady<Gd<Control>>,
-    base: Base<CanvasLayer>,
-}
-
-#[godot_api]
-impl ICanvasLayer for PlayerHUD {
-    fn init(base: Base<CanvasLayer>) -> Self {
-        Self {
-            cross_hair: OnReady::from_node("CrossHair"),
-            control: OnReady::from_node("Control"),
-            base,
-        }
-    }
-
-    fn ready(&mut self) {
-        Input::singleton().set_mouse_mode(MouseMode::HIDDEN);
-    }
-
-    fn process(&mut self, _delta: f64) {
-        let viewport = self.base().get_viewport().unwrap();
-        let affine_inverse = self.base().get_transform().affine_inverse();
-        let mouse_position =
-            affine_inverse * viewport.get_mouse_position() - self.cross_hair.get_size() / 2.0;
-        self.cross_hair.set_position(mouse_position);
-    }
-
-    fn exit_tree(&mut self) {
-        Input::singleton().set_mouse_mode(MouseMode::VISIBLE);
-    }
-}
-
-#[godot_api]
-impl PlayerHUD {
-    pub fn update_lives_hud(&mut self, lives: u32, max_lives: u32) {
-        let mut hp_hud = self.get_vcontainer().get_node_as::<Label>("Lives");
-        hp_hud.set_text(&format!("LIVES {}/{}", lives, max_lives));
-        hp_hud.show();
-    }
-
-    pub fn update_hp_hud(&mut self, hp: u32, max_hp: u32) {
-        let mut hp_hud = self.get_vcontainer().get_node_as::<Label>("HP");
-        hp_hud.set_text(&format!("HP {}/{}", hp, max_hp));
-        hp_hud.show();
-    }
-
-    pub fn update_ammo_hud(&mut self, ammo: i64, clip: i64) {
-        let mut ammo_hud = self.get_vcontainer().get_node_as::<Label>("Ammo");
-        ammo_hud.set_text(&format!("AMMO {}/{}", ammo, clip));
-        ammo_hud.show();
-    }
-
-    pub fn update_damage_hud(&mut self, damage: i64) {
-        let mut damage_hud = self.get_vcontainer().get_node_as::<Label>("Damage");
-        damage_hud.set_text(&format!("DAMAGE {}", damage));
-        damage_hud.show();
-    }
-
-    pub fn update_distance_hud(&mut self, distance: real) {
-        let mut damage_hud = self.get_vcontainer().get_node_as::<Label>("Distance");
-        damage_hud.set_text(&format!("DISTANCE {:.0}", distance));
-        damage_hud.show();
-    }
-
-    pub fn update_penetrate_hud(&mut self, penetrate: u8) {
-        let mut penetrate_hud = self.get_vcontainer().get_node_as::<Label>("Penetrate");
-        penetrate_hud.set_text(&format!("PENETRATE {}", penetrate));
-        penetrate_hud.show();
-    }
-
-    pub fn update_repel_hud(&mut self, repel: real) {
-        let mut repel_hud = self.get_vcontainer().get_node_as::<Label>("Repel");
-        repel_hud.set_text(&format!("REPEL {}", repel));
-        repel_hud.show();
-    }
-
-    pub fn update_killed_hud(&mut self) {
-        let mut repel_hud = self.get_hcontainer().get_node_as::<Label>("Killed");
-        repel_hud.set_text(&format!("KILLED {}", KILL_COUNT.load(Ordering::Acquire)));
-        repel_hud.show();
-    }
-
-    pub fn update_score_hud(&mut self) {
-        let mut repel_hud = self.get_hcontainer().get_node_as::<Label>("Score");
-        repel_hud.set_text(&format!("SCORE {}", SCORE.load(Ordering::Acquire)));
-        repel_hud.show();
-    }
-
-    fn get_vcontainer(&mut self) -> Gd<VBoxContainer> {
-        self.control.get_node_as::<VBoxContainer>("VBoxContainer")
-    }
-
-    fn get_hcontainer(&mut self) -> Gd<HBoxContainer> {
-        self.control.get_node_as::<HBoxContainer>("HBoxContainer")
     }
 }
