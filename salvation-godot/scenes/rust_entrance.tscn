@@ -35,31 +35,6 @@ text = "Salvation"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Help" type="Label" parent="."]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -104.5
-offset_top = -90.5
-offset_right = 104.5
-offset_bottom = 90.5
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
-text = "PauseGame: esc
-Shoot: mouseLeft
-Reload: R
-Run: mouseRight or shift
-MoveUp: W or ↑
-MoveDown: S or ↓
-MoveLeft: A or ← 
-MoveRight: D or →"
-horizontal_alignment = 1
-vertical_alignment = 1
-
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 2
@@ -83,3 +58,44 @@ text = "Exit"
 [node name="Bgm" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("1_uh0c4")
 volume_db = 8.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -188.5
+offset_top = -90.5
+offset_right = 188.5
+offset_bottom = 90.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="Fight" type="Label" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
+text = "Fight
+Shoot: mouseLeft
+Reload: R
+Run: mouseRight or shift
+MoveUp: W or ↑
+MoveDown: S or ↓
+MoveLeft: A or ← 
+MoveRight: D or →"
+vertical_alignment = 1
+
+[node name="Help" type="Label" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
+text = "Help
+PauseGame: P
+RefreshZombies: K
+JumpLevel: J"
+vertical_alignment = 1

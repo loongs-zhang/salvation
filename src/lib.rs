@@ -21,7 +21,9 @@ const PLAYER_MAX_LIVES: u32 = 3;
 
 const PLAYER_MAX_HEALTH: u32 = 100;
 
-const PLAYER_LEVEL_UP_BARRIER: u64 = 2000;
+const PLAYER_LEVEL_UP_GROW_RATE: real = 1.2;
+
+const PLAYER_LEVEL_UP_BARRIER: u32 = 2000;
 
 const PLAYER_MOVE_SPEED: real = 225.0;
 
@@ -34,13 +36,15 @@ const BULLET_DISTANCE: real = 800.0;
 
 const BULLET_REPEL: real = 15.0;
 
-const MAX_AMMO: i64 = 30;
+const BULLET_PENETRATE: real = 2.0;
 
-const MAX_BULLET_HIT: u8 = 2;
+const MAX_AMMO: i64 = 30;
 
 const RELOAD_TIME: u32 = 1000;
 
 //level
+const LEVEL_GROW_RATE: real = 1.1;
+
 const LEVEL_RAMPAGE_TIME: real = 120.0;
 
 // zombie

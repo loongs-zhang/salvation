@@ -1,6 +1,6 @@
 use crate::bullet::RustBullet;
 use crate::{
-    BULLET_DAMAGE, BULLET_DISTANCE, BULLET_REPEL, MAX_AMMO, MAX_BULLET_HIT, RELOAD_TIME,
+    BULLET_DAMAGE, BULLET_DISTANCE, BULLET_PENETRATE, BULLET_REPEL, MAX_AMMO, RELOAD_TIME,
     WEAPON_FIRE_COOLDOWN,
 };
 use godot::builtin::{Vector2, real};
@@ -25,7 +25,7 @@ pub struct RustWeapon {
     repel: real,
     //武器穿透
     #[export]
-    penetrate: u8,
+    penetrate: real,
     #[export]
     fire_cooldown: real,
     #[export]
@@ -49,7 +49,7 @@ impl INode2D for RustWeapon {
             distance: BULLET_DISTANCE,
             clip: MAX_AMMO,
             repel: BULLET_REPEL,
-            penetrate: MAX_BULLET_HIT,
+            penetrate: BULLET_PENETRATE,
             fire_cooldown: WEAPON_FIRE_COOLDOWN,
             reload_time: RELOAD_TIME,
             ammo: MAX_AMMO,
@@ -75,7 +75,7 @@ impl RustWeapon {
         &mut self,
         player_damage: i64,
         player_distance: real,
-        player_penetrate: u8,
+        player_penetrate: real,
         player_repel: real,
     ) {
         if 0 == self.ammo || self.current_fire_cooldown > 0.0 {
@@ -93,7 +93,7 @@ impl RustWeapon {
             gd_mut.set_bullet_point(bullet_point);
             gd_mut.set_final_distance(player_distance + self.distance);
             gd_mut.set_final_damage(player_damage.saturating_add(self.damage));
-            gd_mut.set_final_max_hit_count(player_penetrate.saturating_add(self.penetrate));
+            gd_mut.set_final_penetrate(player_penetrate + self.penetrate);
             gd_mut.set_final_repel(player_repel + self.repel);
             gd_mut.set_direction(direction);
             drop(gd_mut);

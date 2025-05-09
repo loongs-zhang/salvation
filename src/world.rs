@@ -66,7 +66,7 @@ impl INode2D for RustWorld {
         self.signals()
             .player_dead()
             .connect_self(Self::on_player_dead);
-        self.generate_world(100);
+        self.generate_world(125);
         // stop BGM after world generated
         self.base()
             .get_tree()
@@ -78,7 +78,7 @@ impl INode2D for RustWorld {
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
-        if event.is_action_pressed("esc") {
+        if event.is_action_pressed("p") {
             Self::pause();
         }
     }

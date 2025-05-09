@@ -1,7 +1,9 @@
 use crate::player::RustPlayer;
 use crate::world::RustWorld;
 use crate::zombie::RustZombie;
-use crate::{LEVEL_RAMPAGE_TIME, ZOMBIE_MAX_SCREEN_COUNT, ZOMBIE_MIN_REFRESH_BATCH};
+use crate::{
+    LEVEL_GROW_RATE, LEVEL_RAMPAGE_TIME, ZOMBIE_MAX_SCREEN_COUNT, ZOMBIE_MIN_REFRESH_BATCH,
+};
 use godot::builtin::{Array, Vector2, real};
 use godot::classes::{
     AudioStreamPlayer2D, CanvasLayer, Engine, INode, InputEvent, Label, Node, PackedScene, Timer,
@@ -27,7 +29,7 @@ pub struct RustLevel {
     #[export]
     rampage_time: real,
     left_rampage_time: real,
-    killed: u32,
+    killed: AtomicU32,
     hud: OnReady<Gd<CanvasLayer>>,
     generator: OnReady<Gd<ZombieGenerator>>,
     bgm: OnReady<Gd<AudioStreamPlayer2D>>,
@@ -40,10 +42,10 @@ impl INode for RustLevel {
     fn init(base: Base<Node>) -> Self {
         Self {
             level: 0,
-            grow_rate: 1.1,
+            grow_rate: LEVEL_GROW_RATE,
             rampage_time: LEVEL_RAMPAGE_TIME,
             left_rampage_time: LEVEL_RAMPAGE_TIME,
-            killed: 0,
+            killed: AtomicU32::new(0),
             hud: OnReady::from_node("LevelHUD"),
             generator: OnReady::from_node("ZombieGenerator"),
             bgm: OnReady::from_node("Bgm"),
@@ -60,14 +62,15 @@ impl INode for RustLevel {
         if RustWorld::is_paused() {
             return;
         }
-        KILL_COUNT.store(self.killed, Ordering::Release);
         LIVE_COUNT.store(
-            self.generator.bind().current.saturating_sub(self.killed),
+            self.generator
+                .bind()
+                .current
+                .saturating_sub(self.killed.load(Ordering::Acquire)),
             Ordering::Release,
         );
         self.left_rampage_time = (self.left_rampage_time - delta as real).max(0.0);
         self.update_rampage_hud();
-        self.update_refresh_hud();
         self.update_progress_hud();
         self.update_fps_hud();
         if 0.0 == self.left_rampage_time {
@@ -77,7 +80,16 @@ impl INode for RustLevel {
             RAMPAGE.store(false, Ordering::Release);
             self.play_bgm();
         }
-        if self.killed >= self.generator.bind().current_total {
+        if self.killed.load(Ordering::Acquire) >= self.generator.bind().current_total {
+            self.level_up();
+        }
+    }
+
+    fn input(&mut self, event: Gd<InputEvent>) {
+        if event.is_action_pressed("k") {
+            self.left_rampage_time = 0.0;
+        } else if event.is_action_pressed("j") {
+            //跳关
             self.level_up();
         }
     }
@@ -87,27 +99,41 @@ impl INode for RustLevel {
 impl RustLevel {
     #[func]
     pub fn kill_confirmed(&mut self) {
-        self.killed += 1;
+        self.killed.fetch_add(1, Ordering::Release);
+        KILL_COUNT.store(self.killed.load(Ordering::Acquire), Ordering::Release);
         self.update_progress_hud();
         RustPlayer::add_kill_count();
     }
 
     pub fn update_level_hud(&mut self) {
-        let mut label = self.get_container().get_node_as::<Label>("Level");
+        let mut label = self.get_center_container().get_node_as::<Label>("Level");
         label.set_text(&format!("LEVEL {}", self.level));
         label.show();
     }
 
     pub fn update_rampage_hud(&mut self) {
-        let mut label = self.get_container().get_node_as::<Label>("Rampage");
+        let mut label = self.get_center_container().get_node_as::<Label>("Rampage");
         label.set_text(&format!("ZOMBIE RAMPAGE {:.1} s", self.left_rampage_time));
+        label.show();
+    }
+
+    pub fn update_progress_hud(&mut self) {
+        let refreshed = self.generator.bind().current;
+        let total = self.generator.bind().current_total;
+        let mut label = self.get_center_container().get_node_as::<Label>("Progress");
+        label.set_text(&format!(
+            "PROGRESS {}/{}/{}",
+            self.killed.load(Ordering::Acquire),
+            refreshed,
+            total
+        ));
         label.show();
     }
 
     pub fn update_refresh_hud(&mut self) {
         let refresh_count = self.generator.bind().current_refresh_count;
         let wait_time = self.generator.get_node_as::<Timer>("Timer").get_wait_time();
-        let mut label = self.get_container().get_node_as::<Label>("Refresh");
+        let mut label = self.get_right_container().get_node_as::<Label>("Refresh");
         label.set_text(&format!(
             "REFRESH {} ZOMBIES IN {:.0}s",
             refresh_count, wait_time
@@ -115,20 +141,8 @@ impl RustLevel {
         label.show();
     }
 
-    pub fn update_progress_hud(&mut self) {
-        let refreshed = self.generator.bind().current;
-        let total = self.generator.bind().current_total;
-        let mut label = self.get_container().get_node_as::<Label>("Progress");
-        label.set_text(&format!("PROGRESS {}/{}/{}", self.killed, refreshed, total));
-        label.show();
-    }
-
-    fn get_container(&mut self) -> Gd<VBoxContainer> {
-        self.hud.get_node_as::<VBoxContainer>("VBoxContainer")
-    }
-
     pub fn update_fps_hud(&mut self) {
-        let mut label = self.hud.get_node_as::<Label>("FPS");
+        let mut label = self.get_right_container().get_node_as::<Label>("FPS");
         label.set_text(&format!(
             "FPS {}",
             Engine::singleton().get_frames_per_second(),
@@ -136,11 +150,19 @@ impl RustLevel {
         label.show();
     }
 
+    fn get_center_container(&mut self) -> Gd<VBoxContainer> {
+        self.hud.get_node_as::<VBoxContainer>("VBoxCenter")
+    }
+
+    fn get_right_container(&mut self) -> Gd<VBoxContainer> {
+        self.hud.get_node_as::<VBoxContainer>("VBoxRight")
+    }
+
     pub fn level_up(&mut self) {
         let mut generator = self.generator.bind_mut();
         let rate = self.grow_rate.powf(self.level as f32);
         self.level += 1;
-        self.killed = 0;
+        self.killed.store(0, Ordering::Release);
         self.left_rampage_time = self.rampage_time / rate;
         generator.level_up(rate);
         drop(generator);
@@ -222,13 +244,20 @@ impl INode for ZombieGenerator {
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
-        if event.is_action_pressed("esc") {
+        if event.is_action_pressed("p") {
             let mut timer = self.base().get_node_as::<Timer>("Timer");
             if timer.is_stopped() {
                 self.generate();
                 timer.start();
             } else {
                 timer.stop();
+            }
+        } else if event.is_action_pressed("k") {
+            while self.current < self.current_total
+                && self.current.saturating_sub(RustLevel::get_kill_count())
+                    < ZOMBIE_MAX_SCREEN_COUNT
+            {
+                self.generate();
             }
         }
     }

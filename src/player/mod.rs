@@ -3,8 +3,8 @@ use crate::player::level_up::PlayerLevelUp;
 use crate::weapon::RustWeapon;
 use crate::world::RustWorld;
 use crate::{
-    MAX_AMMO, PLAYER_LEVEL_UP_BARRIER, PLAYER_MAX_HEALTH, PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED,
-    PlayerState, PlayerUpgrade,
+    MAX_AMMO, PLAYER_LEVEL_UP_BARRIER, PLAYER_LEVEL_UP_GROW_RATE, PLAYER_MAX_HEALTH,
+    PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState, PlayerUpgrade,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
@@ -46,7 +46,7 @@ pub struct RustPlayer {
     distance: real,
     // 玩家穿透
     #[export]
-    penetrate: u8,
+    penetrate: real,
     // 玩家击退
     #[export]
     repel: real,
@@ -56,6 +56,9 @@ pub struct RustPlayer {
     // 玩家移动速度
     #[export]
     speed: real,
+    #[export]
+    level_up_barrier: u32,
+    current_level_up_barrier: u64,
     current_lives: u32,
     current_health: u32,
     state: PlayerState,
@@ -80,12 +83,14 @@ impl ICharacterBody2D for RustPlayer {
             lives: PLAYER_MAX_LIVES,
             damage: 0,
             distance: 0.0,
-            penetrate: 0,
+            penetrate: 0.0,
             repel: 0.0,
             health: PLAYER_MAX_HEALTH,
             current_health: PLAYER_MAX_HEALTH,
             state: PlayerState::Born,
             speed: PLAYER_MOVE_SPEED,
+            level_up_barrier: PLAYER_LEVEL_UP_BARRIER,
+            current_level_up_barrier: PLAYER_LEVEL_UP_BARRIER as u64,
             current_lives: PLAYER_MAX_LIVES,
             current_speed: PLAYER_MOVE_SPEED,
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
@@ -113,10 +118,7 @@ impl ICharacterBody2D for RustPlayer {
         hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
         hud.update_distance_hud(self.distance + rust_weapon.bind().get_distance());
         hud.update_repel_hud(self.repel + rust_weapon.bind().get_repel());
-        hud.update_penetrate_hud(
-            self.penetrate
-                .saturating_add(rust_weapon.bind().get_penetrate()),
-        );
+        hud.update_penetrate_hud(self.penetrate + rust_weapon.bind().get_penetrate());
         hud.update_killed_hud();
         hud.update_score_hud();
     }
@@ -205,7 +207,7 @@ impl RustPlayer {
         if 0 != self.current_health {
             self.hit(hit_position);
         } else {
-            self.die();
+            self.die(hit_position);
         }
     }
 
@@ -333,10 +335,11 @@ impl RustPlayer {
         }
     }
 
-    pub fn die(&mut self) {
+    pub fn die(&mut self, hit_position: Vector2) {
         if PlayerState::Dead == self.state {
             return;
         }
+        self.animated_sprite2d.look_at(hit_position);
         self.animated_sprite2d.play_ex().name("die").done();
         self.current_speed = 0.0;
         self.state = PlayerState::Dead;
@@ -361,8 +364,7 @@ impl RustPlayer {
     }
 
     pub fn level_up(&mut self) {
-        let score = Self::get_score();
-        if 0 == score || 0 != score % PLAYER_LEVEL_UP_BARRIER {
+        if Self::get_score() < self.current_level_up_barrier {
             return;
         }
         //防止重复触发升级
@@ -370,51 +372,74 @@ impl RustPlayer {
             .damage
             .saturating_add(self.get_rust_weapon().bind().get_damage());
         RustPlayer::add_score(damage as u64);
-        let what;
-        let random = rand::thread_rng().gen_range(0..100);
-        if random >= 98 {
-            //2%奖励穿透力
-            self.penetrate = self.penetrate.saturating_add(1);
-            let new_penetrate = self.penetrate + self.get_rust_weapon().bind().get_penetrate();
-            self.hud.bind_mut().update_penetrate_hud(new_penetrate);
-            what = PlayerUpgrade::Penetrate;
-        } else if random >= 94 {
-            //4%奖励伤害
-            self.damage = self.damage.saturating_add(2);
-            let new_damage = self
-                .damage
-                .saturating_add(self.get_rust_weapon().bind().get_damage());
-            self.hud.bind_mut().update_damage_hud(new_damage);
-            what = PlayerUpgrade::Damage;
-        } else if random >= 85 {
-            //9%奖励击退力
-            self.repel += 1.0;
-            let new_repel = self.repel + self.get_rust_weapon().bind().get_repel();
-            self.hud.bind_mut().update_repel_hud(new_repel);
-            what = PlayerUpgrade::Repel;
-        } else if random >= 75 {
-            //10%奖励生命数
-            self.lives = self.lives.saturating_add(1);
-            self.current_lives = self.current_lives.saturating_add(1);
-            self.hud
-                .bind_mut()
-                .update_lives_hud(self.current_lives, self.lives);
-            what = PlayerUpgrade::Lives;
-        } else if random >= 60 {
-            //15%奖励射击距离
-            self.distance += 20.0;
-            let new_distance = self.distance + self.get_rust_weapon().bind().get_distance();
-            self.hud.bind_mut().update_distance_hud(new_distance);
-            what = PlayerUpgrade::Distance;
-        } else {
-            //60%奖励生命值
-            self.health = self.health.saturating_add(10);
-            self.current_health = self.current_health.saturating_add(10);
-            self.hud
-                .bind_mut()
-                .update_hp_hud(self.current_health, self.health);
-            what = PlayerUpgrade::Health;
-        }
+        self.level_up_barrier = (self.level_up_barrier as real * PLAYER_LEVEL_UP_GROW_RATE) as u32;
+        self.current_level_up_barrier += self.level_up_barrier as u64;
+        RustWorld::pause();
+        self.hud.bind_mut().set_upgrade_visible(true);
+    }
+
+    #[func]
+    pub fn upgrade_penetrate(&mut self) {
+        //穿透力升级
+        self.penetrate += 0.1;
+        let new_penetrate = self.penetrate + self.get_rust_weapon().bind().get_penetrate();
+        self.hud.bind_mut().update_penetrate_hud(new_penetrate);
+        self.show_upgrade_label(PlayerUpgrade::Penetrate);
+    }
+
+    #[func]
+    pub fn upgrade_damage(&mut self) {
+        //伤害升级
+        self.damage = self.damage.saturating_add(2);
+        let new_damage = self
+            .damage
+            .saturating_add(self.get_rust_weapon().bind().get_damage());
+        self.hud.bind_mut().update_damage_hud(new_damage);
+        self.show_upgrade_label(PlayerUpgrade::Damage);
+    }
+
+    #[func]
+    pub fn upgrade_repel(&mut self) {
+        //击退力升级
+        self.repel += 1.0;
+        let new_repel = self.repel + self.get_rust_weapon().bind().get_repel();
+        self.hud.bind_mut().update_repel_hud(new_repel);
+        self.show_upgrade_label(PlayerUpgrade::Repel);
+    }
+
+    #[func]
+    pub fn upgrade_lives(&mut self) {
+        //奖励生命数
+        self.lives = self.lives.saturating_add(1);
+        self.current_lives = self.current_lives.saturating_add(1);
+        self.hud
+            .bind_mut()
+            .update_lives_hud(self.current_lives, self.lives);
+        self.show_upgrade_label(PlayerUpgrade::Lives);
+    }
+
+    #[func]
+    pub fn upgrade_distance(&mut self) {
+        //射击距离升级
+        self.distance += 20.0;
+        let new_distance = self.distance + self.get_rust_weapon().bind().get_distance();
+        self.hud.bind_mut().update_distance_hud(new_distance);
+        self.show_upgrade_label(PlayerUpgrade::Distance);
+    }
+
+    #[func]
+    pub fn upgrade_health(&mut self) {
+        //生命值升级
+        self.health = self.health.saturating_add(10);
+        self.current_health = self.current_health.saturating_add(10);
+        self.hud
+            .bind_mut()
+            .update_hp_hud(self.current_health, self.health);
+        self.show_upgrade_label(PlayerUpgrade::Health);
+    }
+
+    fn show_upgrade_label(&mut self, what: PlayerUpgrade) {
+        self.hud.bind_mut().set_upgrade_visible(false);
         if let Some(mut level_up_label) = self.level_up_scene.try_instantiate_as::<PlayerLevelUp>()
         {
             level_up_label.set_global_position(RustPlayer::get_position());
@@ -425,6 +450,7 @@ impl RustPlayer {
                 }
             }
         }
+        RustWorld::pause();
     }
 
     pub fn get_mouse_position(&self) -> Vector2 {

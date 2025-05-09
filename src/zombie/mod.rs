@@ -104,8 +104,7 @@ impl ICharacterBody2D for RustZombie {
     fn process(&mut self, delta: f64) {
         if ZombieState::Dead == self.state || RustWorld::is_paused() {
             if BODY_COUNT.load(Ordering::Acquire) >= ZOMBIE_MAX_BODY_COUNT {
-                self.base_mut().queue_free();
-                BODY_COUNT.fetch_sub(1, Ordering::Release);
+                self.clean_body();
             }
             return;
         }
@@ -348,6 +347,18 @@ impl RustZombie {
             .bind_mut()
             .kill_confirmed();
         BODY_COUNT.fetch_add(1, Ordering::Release);
+        // 45S后自动清理尸体
+        if let Some(mut tree) = self.base().get_tree() {
+            if let Some(mut timer) = tree.create_timer(45.0) {
+                timer.connect("timeout", &self.base().callable("clean_body"));
+            }
+        }
+    }
+
+    #[func]
+    pub fn clean_body(&mut self) {
+        self.base_mut().queue_free();
+        BODY_COUNT.fetch_sub(1, Ordering::Release);
     }
 
     pub fn flash(&mut self) {

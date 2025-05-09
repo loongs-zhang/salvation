@@ -2,7 +2,8 @@ use crate::player::RustPlayer;
 use godot::builtin::real;
 use godot::classes::input::MouseMode;
 use godot::classes::{
-    CanvasLayer, Control, HBoxContainer, ICanvasLayer, Input, Label, TextureRect, VBoxContainer,
+    Button, CanvasLayer, Control, HBoxContainer, ICanvasLayer, Input, Label, TextureRect,
+    VBoxContainer,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -12,6 +13,7 @@ use godot::register::{GodotClass, godot_api};
 pub struct PlayerHUD {
     cross_hair: OnReady<Gd<TextureRect>>,
     control: OnReady<Gd<Control>>,
+    upgrade: OnReady<Gd<Control>>,
     base: Base<CanvasLayer>,
 }
 
@@ -21,12 +23,46 @@ impl ICanvasLayer for PlayerHUD {
         Self {
             cross_hair: OnReady::from_node("CrossHair"),
             control: OnReady::from_node("Control"),
+            upgrade: OnReady::from_node("Upgrade"),
             base,
         }
     }
 
     fn ready(&mut self) {
         Input::singleton().set_mouse_mode(MouseMode::HIDDEN);
+        if let Some(parent) = self.base().get_parent() {
+            let player = parent.cast::<RustPlayer>();
+            self.get_container()
+                .get_node_as::<Button>("Penetrate")
+                .signals()
+                .pressed()
+                .connect_obj(&player, RustPlayer::upgrade_penetrate);
+            self.get_container()
+                .get_node_as::<Button>("Damage")
+                .signals()
+                .pressed()
+                .connect_obj(&player, RustPlayer::upgrade_damage);
+            self.get_container()
+                .get_node_as::<Button>("Repel")
+                .signals()
+                .pressed()
+                .connect_obj(&player, RustPlayer::upgrade_repel);
+            self.get_container()
+                .get_node_as::<Button>("Lives")
+                .signals()
+                .pressed()
+                .connect_obj(&player, RustPlayer::upgrade_lives);
+            self.get_container()
+                .get_node_as::<Button>("Distance")
+                .signals()
+                .pressed()
+                .connect_obj(&player, RustPlayer::upgrade_distance);
+            self.get_container()
+                .get_node_as::<Button>("Health")
+                .signals()
+                .pressed()
+                .connect_obj(&player, RustPlayer::upgrade_health);
+        }
     }
 
     fn process(&mut self, _delta: f64) {
@@ -44,6 +80,10 @@ impl ICanvasLayer for PlayerHUD {
 
 #[godot_api]
 impl PlayerHUD {
+    pub fn set_upgrade_visible(&mut self, visible: bool) {
+        self.upgrade.set_visible(visible);
+    }
+
     pub fn update_lives_hud(&mut self, lives: u32, max_lives: u32) {
         let mut hp_hud = self.get_vcontainer().get_node_as::<Label>("Lives");
         hp_hud.set_text(&format!("LIVES {}/{}", lives, max_lives));
@@ -74,7 +114,7 @@ impl PlayerHUD {
         damage_hud.show();
     }
 
-    pub fn update_penetrate_hud(&mut self, penetrate: u8) {
+    pub fn update_penetrate_hud(&mut self, penetrate: real) {
         let mut penetrate_hud = self.get_vcontainer().get_node_as::<Label>("Penetrate");
         penetrate_hud.set_text(&format!("PENETRATE {}", penetrate));
         penetrate_hud.show();
@@ -104,5 +144,9 @@ impl PlayerHUD {
 
     fn get_hcontainer(&mut self) -> Gd<HBoxContainer> {
         self.control.get_node_as::<HBoxContainer>("HBoxContainer")
+    }
+
+    fn get_container(&mut self) -> Gd<VBoxContainer> {
+        self.upgrade.get_node_as::<VBoxContainer>("VBoxContainer")
     }
 }

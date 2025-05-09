@@ -15,7 +15,7 @@ pub struct RustBullet {
     final_distance: real,
     final_repel: real,
     final_damage: i64,
-    final_max_hit_count: u8,
+    final_penetrate: real,
     hit_count: u8,
     direction: Vector2,
     base: Base<Node2D>,
@@ -30,7 +30,7 @@ impl INode2D for RustBullet {
             final_distance: 0.0,
             final_repel: 0.0,
             final_damage: 0,
-            final_max_hit_count: 0,
+            final_penetrate: 0.0,
             hit_count: 0,
             direction: Vector2::ZERO,
             base,
@@ -83,8 +83,8 @@ impl RustBullet {
         self.final_repel = final_repel;
     }
 
-    pub fn set_final_max_hit_count(&mut self, max_hit_count: u8) {
-        self.final_max_hit_count = max_hit_count;
+    pub fn set_final_penetrate(&mut self, penetrate: real) {
+        self.final_penetrate = penetrate;
     }
 
     pub fn set_direction(&mut self, direction: Vector2) {
@@ -102,7 +102,7 @@ impl RustBullet {
 
     fn on_hit(&mut self) {
         self.hit_count += 1;
-        if self.hit_count >= self.final_max_hit_count {
+        if self.hit_count >= self.final_penetrate as u8 {
             //达到最大穿透上限
             self.base_mut().queue_free()
         }

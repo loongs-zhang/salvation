@@ -64,9 +64,9 @@ layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -64.5
+offset_left = -66.5
 offset_top = 10.0
-offset_right = 64.5
+offset_right = 66.5
 offset_bottom = 30.0
 grow_horizontal = 2
 theme_override_constants/separation = 8
@@ -98,3 +98,61 @@ pivot_offset = Vector2(16, 16)
 texture = ExtResource("2_iraov")
 expand_mode = 1
 stretch_mode = 6
+
+[node name="Upgrade" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Upgrade"]
+layout_direction = 1
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -90.5
+offset_top = -118.0
+offset_right = 90.5
+offset_bottom = 118.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Label" type="Label" parent="Upgrade/VBoxContainer"]
+layout_mode = 2
+text = "Choose your upgrade"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Penetrate" type="Button" parent="Upgrade/VBoxContainer"]
+layout_mode = 2
+text = "PENETRATE+0.1"
+
+[node name="Damage" type="Button" parent="Upgrade/VBoxContainer"]
+layout_mode = 2
+text = "DAMAGE+2"
+
+[node name="Repel" type="Button" parent="Upgrade/VBoxContainer"]
+layout_mode = 2
+text = "REPEL+1"
+
+[node name="Lives" type="Button" parent="Upgrade/VBoxContainer"]
+layout_mode = 2
+text = "LIVES+1"
+
+[node name="Distance" type="Button" parent="Upgrade/VBoxContainer"]
+layout_mode = 2
+text = "DISTANCE+20"
+
+[node name="Health" type="Button" parent="Upgrade/VBoxContainer"]
+layout_mode = 2
+text = "HEALTH+10"
