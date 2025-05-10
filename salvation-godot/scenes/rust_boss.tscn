@@ -322,18 +322,16 @@ attenuation = 1e-05
 
 [node name="GuardAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("4_ollki")
-volume_db = -20.0
 max_distance = 500.0
 
 [node name="ScreamAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_ojx4y")
-volume_db = 8.0
+volume_db = 12.0
 max_distance = 4096.0
 attenuation = 1e-05
 
 [node name="BumpAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("6_72vyj")
-volume_db = -10.0
 max_distance = 4096.0
 attenuation = 1e-05
 
@@ -347,6 +345,6 @@ max_distance = 300.0
 
 [node name="DieAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("9_pgect")
-volume_db = 8.0
+volume_db = 12.0
 max_distance = 4096.0
 attenuation = 1e-05
