@@ -116,7 +116,7 @@ impl PlayerHUD {
 
     pub fn update_penetrate_hud(&mut self, penetrate: real) {
         let mut penetrate_hud = self.get_vcontainer().get_node_as::<Label>("Penetrate");
-        penetrate_hud.set_text(&format!("PENETRATE {}", penetrate));
+        penetrate_hud.set_text(&format!("PENETRATE {:.1}", penetrate));
         penetrate_hud.show();
     }
 
@@ -128,7 +128,11 @@ impl PlayerHUD {
 
     pub fn update_killed_hud(&mut self) {
         let mut repel_hud = self.get_hcontainer().get_node_as::<Label>("Killed");
-        repel_hud.set_text(&format!("KILLED {}", RustPlayer::get_kill_count()));
+        repel_hud.set_text(&format!(
+            "KILLED {}+{}",
+            RustPlayer::get_kill_boss_count(),
+            RustPlayer::get_kill_count()
+        ));
         repel_hud.show();
     }
 

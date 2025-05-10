@@ -31,12 +31,14 @@ pub struct RustLevel {
     #[export]
     rampage_time: real,
     left_rampage_time: real,
-    killed: AtomicU32,
+    zombie_killed: AtomicU32,
+    boss_killed: AtomicU32,
     hud: OnReady<Gd<CanvasLayer>>,
     zombie_generator: OnReady<Gd<ZombieGenerator>>,
     boss_generator: OnReady<Gd<ZombieGenerator>>,
     bgm: OnReady<Gd<AudioStreamPlayer2D>>,
     rampage_bgm: OnReady<Gd<AudioStreamPlayer2D>>,
+    boss_bgm: OnReady<Gd<AudioStreamPlayer2D>>,
     no_kill_time: f64,
     base: Base<Node>,
 }
@@ -49,12 +51,14 @@ impl INode for RustLevel {
             grow_rate: LEVEL_GROW_RATE,
             rampage_time: LEVEL_RAMPAGE_TIME,
             left_rampage_time: LEVEL_RAMPAGE_TIME,
-            killed: AtomicU32::new(0),
+            zombie_killed: AtomicU32::new(0),
+            boss_killed: AtomicU32::new(0),
             hud: OnReady::from_node("LevelHUD"),
             zombie_generator: OnReady::from_node("ZombieGenerator"),
             boss_generator: OnReady::from_node("BossGenerator"),
             bgm: OnReady::from_node("Bgm"),
             rampage_bgm: OnReady::from_node("RampageBgm"),
+            boss_bgm: OnReady::from_node("BossBgm"),
             no_kill_time: 0.0,
             base,
         }
@@ -68,9 +72,13 @@ impl INode for RustLevel {
         if RustWorld::is_paused() {
             return;
         }
-        let killed = self.killed.load(Ordering::Acquire);
+        let zombie_killed = self.zombie_killed.load(Ordering::Acquire);
+        let boss_killed = self.boss_killed.load(Ordering::Acquire);
+        let killed = zombie_killed.saturating_add(boss_killed);
         let zombie_generator = self.zombie_generator.bind();
         let boss_generator = self.boss_generator.bind();
+        let zombie_current = zombie_generator.current;
+        let boss_current = boss_generator.current;
         let current_total = zombie_generator
             .current_total
             .saturating_add(boss_generator.current_total);
@@ -91,12 +99,18 @@ impl INode for RustLevel {
                 }
                 self.no_kill_time = 0.0;
             }
+            if boss_timer.get_wait_time() == self.no_kill_time {
+                //卡关了，实际上玩家击杀数足够，但由于穿透太强，击杀统计少了，强制刷新一批僵尸
+                for _ in 0..maybe_refresh {
+                    boss_generator.generate_zombie();
+                }
+                self.no_kill_time = 0.0;
+            }
         }
         KILL_COUNT.store(killed, Ordering::Release);
         LIVE_COUNT.store(
-            zombie_generator
-                .current
-                .saturating_add(boss_generator.current)
+            zombie_current
+                .saturating_add(boss_current)
                 .saturating_sub(killed),
             Ordering::Release,
         );
@@ -106,9 +120,11 @@ impl INode for RustLevel {
         self.update_rampage_hud();
         self.update_progress_hud();
         self.update_fps_hud();
-        if 0.0 == self.left_rampage_time {
+        if 0.0 == self.left_rampage_time && zombie_killed < zombie_current {
             RAMPAGE.store(true, Ordering::Release);
             self.play_rampage_bgm();
+        } else if boss_killed < boss_current {
+            self.play_boss_bgm();
         } else {
             RAMPAGE.store(false, Ordering::Release);
             self.play_bgm();
@@ -132,9 +148,16 @@ impl INode for RustLevel {
 impl RustLevel {
     #[func]
     pub fn kill_confirmed(&mut self) {
-        self.killed.fetch_add(1, Ordering::Release);
+        self.zombie_killed.fetch_add(1, Ordering::Release);
         self.update_progress_hud();
         RustPlayer::add_kill_count();
+    }
+
+    #[func]
+    pub fn kill_boss_confirmed(&mut self) {
+        self.boss_killed.fetch_add(1, Ordering::Release);
+        self.update_progress_hud();
+        RustPlayer::add_kill_boss_count();
     }
 
     pub fn update_level_hud(&mut self) {
@@ -162,8 +185,9 @@ impl RustLevel {
             .saturating_add(self.boss_generator.bind().current_total);
         let mut label = self.get_center_container().get_node_as::<Label>("Progress");
         label.set_text(&format!(
-            "PROGRESS {}/{}/{}",
-            self.killed.load(Ordering::Acquire),
+            "PROGRESS {}+{}/{}/{}",
+            self.boss_killed.load(Ordering::Acquire),
+            self.zombie_killed.load(Ordering::Acquire),
             refreshed,
             total
         ));
@@ -210,7 +234,8 @@ impl RustLevel {
         let mut generator = self.zombie_generator.bind_mut();
         let rate = self.grow_rate.powf(self.level as f32);
         self.level += 1;
-        self.killed.store(0, Ordering::Release);
+        self.zombie_killed.store(0, Ordering::Release);
+        self.boss_killed.store(0, Ordering::Release);
         self.left_rampage_time = self.rampage_time / rate;
         generator.level_up(rate);
         self.boss_generator.bind_mut().level_up(rate);
@@ -225,6 +250,7 @@ impl RustLevel {
             return;
         }
         self.rampage_bgm.stop();
+        self.boss_bgm.stop();
         self.bgm.play();
     }
 
@@ -233,7 +259,17 @@ impl RustLevel {
             return;
         }
         self.bgm.stop();
+        self.boss_bgm.stop();
         self.rampage_bgm.play();
+    }
+
+    pub fn play_boss_bgm(&mut self) {
+        if self.boss_bgm.is_playing() {
+            return;
+        }
+        self.bgm.stop();
+        self.rampage_bgm.stop();
+        self.boss_bgm.play();
     }
 
     pub fn is_rampage() -> bool {

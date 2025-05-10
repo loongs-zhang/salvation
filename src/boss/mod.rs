@@ -215,7 +215,7 @@ impl RustBoss {
             return;
         }
         self.animated_sprite2d.play_ex().name("guard").done();
-        self.current_speed = self.speed * 0.5;
+        self.current_speed = self.speed;
         self.state = ZombieState::Guard;
         if !self.guard_audio.is_playing() && self.guard_audio.is_inside_tree() {
             self.guard_audio.play();
@@ -298,7 +298,7 @@ impl RustBoss {
             .get_node_as::<RustWorld>("RustWorld")
             .get_node_as::<RustLevel>("RustLevel")
             .bind_mut()
-            .kill_confirmed();
+            .kill_boss_confirmed();
         BODY_COUNT.fetch_add(1, Ordering::Release);
         // 45S后自动清理尸体
         if let Some(mut tree) = self.base().get_tree() {

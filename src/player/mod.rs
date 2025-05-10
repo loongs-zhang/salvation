@@ -30,6 +30,8 @@ static RELOADING: AtomicCell<f64> = AtomicCell::new(0.0);
 
 static KILL_COUNT: AtomicU32 = AtomicU32::new(0);
 
+static KILL_BOSS_COUNT: AtomicU32 = AtomicU32::new(0);
+
 static SCORE: AtomicU64 = AtomicU64::new(0);
 
 #[derive(GodotClass)]
@@ -476,6 +478,14 @@ impl RustPlayer {
 
     pub fn get_kill_count() -> u32 {
         KILL_COUNT.load(Ordering::Acquire)
+    }
+
+    pub fn add_kill_boss_count() {
+        KILL_BOSS_COUNT.fetch_add(1, Ordering::Release);
+    }
+
+    pub fn get_kill_boss_count() -> u32 {
+        KILL_BOSS_COUNT.load(Ordering::Acquire)
     }
 
     pub fn add_score(score: u64) {

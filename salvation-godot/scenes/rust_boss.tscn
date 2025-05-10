@@ -10,7 +10,7 @@
 [ext_resource type="AudioStream" uid="uid://dmdxayn7g648c" path="res://asserts/zombie/zombie_die.mp3" id="9_pgect"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_xgxvb"]
-radius = 24.0
+radius = 36.0
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_1ypyr"]
 atlas = ExtResource("1_4lcne")
