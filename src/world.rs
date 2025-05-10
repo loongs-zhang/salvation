@@ -194,9 +194,9 @@ impl RustWorld {
     fn random_half_position() -> real {
         let mut rng = rand::thread_rng();
         if rng.gen_range(-1.0..1.0) >= 0.0 {
-            rng.gen_range(250.0..500.0)
+            rng.gen_range(275.0..500.0)
         } else {
-            rng.gen_range(-500.0..-250.0)
+            rng.gen_range(-500.0..-275.0)
         }
     }
 

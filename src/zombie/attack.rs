@@ -1,6 +1,7 @@
+use crate::boss::RustBoss;
 use crate::zombie::RustZombie;
 use crate::zombie::animation::ZombieAnimation;
-use godot::classes::{Area2D, IArea2D, Node2D, Object};
+use godot::classes::{Area2D, IArea2D, Node, Node2D, Object};
 use godot::obj::{Base, Gd, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
 
@@ -42,35 +43,41 @@ impl ZombieAttackArea {
                 .signals()
                 .player_in_area()
                 .emit(true);
-            // 攻击玩家
-            self.get_zombie().bind_mut().attack();
+            self.attack();
         }
     }
 
     #[func]
     pub fn on_area_2d_body_exited(&mut self, body: Gd<Node2D>) {
         if body.is_class("RustPlayer") {
-            self.get_zombie().bind_mut().attack();
+            self.attack();
             if let Some(mut tree) = self.base().get_tree() {
                 if let Some(mut timer) = tree.create_timer(0.5) {
-                    timer.connect("timeout", &self.get_zombie().callable("guard"));
+                    timer.connect("timeout", &self.get_parent().callable("guard"));
                 }
             }
         }
     }
 
-    fn get_zombie(&self) -> Gd<RustZombie> {
+    fn attack(&mut self) {
+        // 攻击玩家
+        if let Ok(mut zombie) = self.get_parent().try_cast::<RustZombie>() {
+            zombie.bind_mut().attack();
+        } else if let Ok(mut boss) = self.get_parent().try_cast::<RustBoss>() {
+            boss.bind_mut().attack();
+        }
+    }
+
+    fn get_parent(&self) -> Gd<Node> {
         self.base()
             .get_parent()
             .expect("ZombieAttackArea parent not found")
-            .cast::<RustZombie>()
     }
 
     fn get_zombie_animation(&self) -> Gd<ZombieAnimation> {
         self.base()
             .get_parent()
             .expect("ZombieAttackArea parent not found")
-            .cast::<RustZombie>()
             .get_node_as::<ZombieAnimation>("AnimatedSprite2D")
     }
 }
@@ -117,7 +124,6 @@ impl ZombieDamageArea {
         self.base()
             .get_parent()
             .expect("ZombieAttackArea parent not found")
-            .cast::<RustZombie>()
             .get_node_as::<ZombieAnimation>("AnimatedSprite2D")
     }
 }

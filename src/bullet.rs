@@ -1,3 +1,4 @@
+use crate::boss::RustBoss;
 use crate::player::RustPlayer;
 use crate::zombie::RustZombie;
 use godot::builtin::{Vector2, real};
@@ -149,6 +150,24 @@ impl BulletDamageArea {
             let damage = rust_bullet.bind().final_damage;
             rust_bullet.bind_mut().on_hit();
             body.cast::<RustZombie>().bind_mut().on_hit(
+                damage,
+                rust_bullet.bind().direction,
+                rust_bullet.bind().final_repel,
+                rust_bullet.get_global_position(),
+            );
+            if damage > 0 {
+                RustPlayer::add_score(damage as u64);
+            }
+        } else if body.is_class("RustBoss") {
+            self.hit_audio.play();
+            let mut rust_bullet = self
+                .base()
+                .get_parent()
+                .expect("RustBullet not found")
+                .cast::<RustBullet>();
+            let damage = rust_bullet.bind().final_damage;
+            rust_bullet.bind_mut().on_hit();
+            body.cast::<RustBoss>().bind_mut().on_hit(
                 damage,
                 rust_bullet.bind().direction,
                 rust_bullet.bind().final_repel,

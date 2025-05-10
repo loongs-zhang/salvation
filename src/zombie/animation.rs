@@ -1,15 +1,15 @@
 use crate::player::RustPlayer;
 use crate::world::RustWorld;
-use crate::{PlayerState, ZOMBIE_DAMAGE, ZombieState};
+use crate::{PlayerState, ZombieState};
 use godot::classes::{AnimatedSprite2D, IAnimatedSprite2D, Object};
 use godot::obj::{Base, Gd, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
 
-const HURT_FRAME: [i32; 4] = [2, 3, 4, 5];
-
 #[derive(GodotClass)]
 #[class(base=AnimatedSprite2D)]
 pub struct ZombieAnimation {
+    damage: i64,
+    hurt_frames: Vec<i32>,
     player_in_area: bool,
     zombie_state: ZombieState,
     base: Base<AnimatedSprite2D>,
@@ -19,6 +19,8 @@ pub struct ZombieAnimation {
 impl IAnimatedSprite2D for ZombieAnimation {
     fn init(base: Base<AnimatedSprite2D>) -> Self {
         Self {
+            damage: 0,
+            hurt_frames: Vec::new(),
             player_in_area: false,
             zombie_state: ZombieState::Guard,
             base,
@@ -31,7 +33,7 @@ impl IAnimatedSprite2D for ZombieAnimation {
             .connect_self(Self::on_animated_sprite_2d_frame_changed);
     }
 
-    fn physics_process(&mut self, _delta: f64) {
+    fn process(&mut self, _delta: f64) {
         if ZombieState::Attack != self.zombie_state {
             return;
         }
@@ -66,6 +68,14 @@ impl ZombieAnimation {
         self.player_in_area = player_in_area;
     }
 
+    pub fn set_hurt_frames(&mut self, frames: Vec<i32>) {
+        self.hurt_frames = frames;
+    }
+
+    pub fn set_damage(&mut self, damage: i64) {
+        self.damage = damage;
+    }
+
     #[func]
     pub fn on_animated_sprite_2d_frame_changed(&mut self) {
         let base = self.base();
@@ -73,13 +83,13 @@ impl ZombieAnimation {
             && PlayerState::Dead != RustPlayer::get_state()
             && ZombieState::Attack == self.zombie_state
             && base.get_animation() == "attack".into()
-            && HURT_FRAME.contains(&base.get_frame())
+            && self.hurt_frames.contains(&base.get_frame())
         {
             // 伤害玩家
             let position = self.base().get_global_position();
             self.get_rust_player()
                 .bind_mut()
-                .on_hit(ZOMBIE_DAMAGE, position);
+                .on_hit(self.damage, position);
         }
     }
 

@@ -1,17 +1,16 @@
-[gd_scene load_steps=48 format=3 uid="uid://5koe2fd6n3fc"]
+[gd_scene load_steps=46 format=3 uid="uid://b8ou2gd7qcb4n"]
 
 [ext_resource type="Texture2D" uid="uid://b0iko5y4ocllp" path="res://asserts/zombie/zombie.png" id="1_4lcne"]
 [ext_resource type="AudioStream" uid="uid://cmrqyjcdujjjv" path="res://asserts/zombie/zombie_hit.mp3" id="2_xgxvb"]
 [ext_resource type="AudioStream" uid="uid://b7xt3dmbm6mui" path="res://asserts/zombie/zombie_scream.mp3" id="3_ojx4y"]
 [ext_resource type="AudioStream" uid="uid://dewl1306cphll" path="res://asserts/zombie/zombie_guard.mp3" id="4_ollki"]
-[ext_resource type="AudioStream" uid="uid://bim3x32u0dguq" path="res://asserts/zombie/zombie_run.mp3" id="5_pgect"]
 [ext_resource type="AudioStream" uid="uid://cny01wkcrhegk" path="res://asserts/zombie/zombie_rampage.mp3" id="6_72vyj"]
 [ext_resource type="AudioStream" uid="uid://bcnhffrg5qxh6" path="res://asserts/zombie/zombie_attack.mp3" id="7_4y265"]
 [ext_resource type="AudioStream" uid="uid://dc37ofk5eturh" path="res://asserts/zombie/zombie_attack_scream.mp3" id="8_5l3r1"]
 [ext_resource type="AudioStream" uid="uid://dmdxayn7g648c" path="res://asserts/zombie/zombie_die.mp3" id="9_pgect"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_xgxvb"]
-radius = 18.0
+radius = 24.0
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_1ypyr"]
 atlas = ExtResource("1_4lcne")
@@ -49,54 +48,6 @@ region = Rect2(2560, 640, 128, 128)
 atlas = ExtResource("1_4lcne")
 region = Rect2(2688, 640, 128, 128)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_lbdxp"]
-atlas = ExtResource("1_4lcne")
-region = Rect2(3584, 640, 128, 128)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_o1aca"]
-atlas = ExtResource("1_4lcne")
-region = Rect2(3712, 640, 128, 128)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_srbvg"]
-atlas = ExtResource("1_4lcne")
-region = Rect2(3840, 640, 128, 128)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_egqai"]
-atlas = ExtResource("1_4lcne")
-region = Rect2(3968, 640, 128, 128)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_itt55"]
-atlas = ExtResource("1_4lcne")
-region = Rect2(4096, 640, 128, 128)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_fhjgp"]
-atlas = ExtResource("1_4lcne")
-region = Rect2(4224, 640, 128, 128)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_js088"]
-atlas = ExtResource("1_4lcne")
-region = Rect2(4352, 640, 128, 128)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_e7tn6"]
-atlas = ExtResource("1_4lcne")
-region = Rect2(4480, 640, 128, 128)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_pgect"]
-atlas = ExtResource("1_4lcne")
-region = Rect2(0, 640, 128, 128)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_72vyj"]
-atlas = ExtResource("1_4lcne")
-region = Rect2(128, 640, 128, 128)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_4y265"]
-atlas = ExtResource("1_4lcne")
-region = Rect2(256, 640, 128, 128)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_5l3r1"]
-atlas = ExtResource("1_4lcne")
-region = Rect2(384, 640, 128, 128)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_5vvj4"]
 atlas = ExtResource("1_4lcne")
 region = Rect2(512, 640, 128, 128)
@@ -129,7 +80,47 @@ region = Rect2(1280, 640, 128, 128)
 atlas = ExtResource("1_4lcne")
 region = Rect2(1408, 640, 128, 128)
 
-[sub_resource type="SpriteFrames" id="SpriteFrames_a2hqs"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_pgect"]
+atlas = ExtResource("1_4lcne")
+region = Rect2(0, 640, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5l3r1"]
+atlas = ExtResource("1_4lcne")
+region = Rect2(384, 640, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1tx4n"]
+atlas = ExtResource("1_4lcne")
+region = Rect2(2816, 640, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bn0to"]
+atlas = ExtResource("1_4lcne")
+region = Rect2(2944, 640, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_slr8m"]
+atlas = ExtResource("1_4lcne")
+region = Rect2(3072, 640, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1vqsv"]
+atlas = ExtResource("1_4lcne")
+region = Rect2(3200, 640, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_q3x11"]
+atlas = ExtResource("1_4lcne")
+region = Rect2(3328, 640, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aesfu"]
+atlas = ExtResource("1_4lcne")
+region = Rect2(3456, 640, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_72vyj"]
+atlas = ExtResource("1_4lcne")
+region = Rect2(128, 640, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4y265"]
+atlas = ExtResource("1_4lcne")
+region = Rect2(256, 640, 128, 128)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_3rmjs"]
 animations = [{
 "frames": [{
 "duration": 1.0,
@@ -165,52 +156,6 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_lbdxp")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_o1aca")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_srbvg")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_egqai")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_itt55")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_fhjgp")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_js088")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_e7tn6")
-}],
-"loop": false,
-"name": &"die",
-"speed": 4.0
-}, {
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_pgect")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_72vyj")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_4y265")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_5l3r1")
-}],
-"loop": true,
-"name": &"guard",
-"speed": 4.0
-}, {
-"frames": [{
-"duration": 1.0,
 "texture": SubResource("AtlasTexture_5vvj4")
 }, {
 "duration": 1.0,
@@ -235,12 +180,61 @@ animations = [{
 "texture": SubResource("AtlasTexture_hjanx")
 }],
 "loop": true,
-"name": &"run",
+"name": &"bump",
 "speed": 12.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pgect")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5l3r1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1tx4n")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bn0to")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_slr8m")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1vqsv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_q3x11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aesfu")
+}],
+"loop": false,
+"name": &"die",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pgect")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_72vyj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4y265")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5l3r1")
+}],
+"loop": true,
+"name": &"guard",
+"speed": 4.0
 }]
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_k4su3"]
+radius = 100.0
+
 [sub_resource type="CircleShape2D" id="CircleShape2D_4lcne"]
-radius = 36.0
+radius = 54.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_ojx4y"]
 radius = 100.0
@@ -271,7 +265,7 @@ scale_max = 6.0
 scale_curve = SubResource("CurveTexture_ulhoy")
 color_ramp = SubResource("GradientTexture1D_fuakc")
 
-[node name="RustZombie" type="RustZombie"]
+[node name="RustBoss" type="RustBoss"]
 z_index = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
@@ -280,9 +274,19 @@ visibility_layer = 0
 shape = SubResource("CircleShape2D_xgxvb")
 
 [node name="AnimatedSprite2D" type="ZombieAnimation" parent="."]
-sprite_frames = SubResource("SpriteFrames_a2hqs")
-animation = &"guard"
+scale = Vector2(2, 2)
+sprite_frames = SubResource("SpriteFrames_3rmjs")
+animation = &"die"
 autoplay = "guard"
+
+[node name="BossBumpArea" type="BossBumpArea" parent="."]
+light_mask = 0
+visibility_layer = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BossBumpArea"]
+light_mask = 0
+visibility_layer = 2
+shape = SubResource("CircleShape2D_k4su3")
 
 [node name="ZombieAttackArea" type="ZombieAttackArea" parent="."]
 light_mask = 0
@@ -327,12 +331,7 @@ volume_db = 8.0
 max_distance = 4096.0
 attenuation = 1e-05
 
-[node name="RunAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("5_pgect")
-volume_db = 4.0
-max_distance = 500.0
-
-[node name="RampageAudio" type="AudioStreamPlayer2D" parent="."]
+[node name="BumpAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("6_72vyj")
 volume_db = -10.0
 max_distance = 4096.0

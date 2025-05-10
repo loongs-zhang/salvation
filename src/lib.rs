@@ -16,6 +16,8 @@ pub mod bullet;
 
 pub mod zombie;
 
+pub mod boss;
+
 // player
 const PLAYER_MAX_LIVES: u32 = 3;
 
@@ -52,9 +54,9 @@ const ZOMBIE_MAX_SCREEN_COUNT: u32 = 160;
 
 const ZOMBIE_MIN_REFRESH_BATCH: u32 = 40;
 
-const ZOMBIE_MAX_BODY_COUNT: u32 = 80;
+const ZOMBIE_MAX_BODY_COUNT: u32 = 60;
 
-const ZOMBIE_DAMAGE: i64 = 10;
+const ZOMBIE_DAMAGE: i64 = 5;
 
 const ZOMBIE_PURSUIT_DISTANCE: real = 225.0;
 
@@ -67,6 +69,17 @@ const ZOMBIE_MAX_HEALTH: u32 = 100;
 const ZOMBIE_ALARM_TIME: real = 1.5;
 
 const ZOMBIE_RAMPAGE_TIME: real = 30.0;
+
+//boss
+const BOSS_MAX_HEALTH: u32 = 3600;
+
+const BOSS_MOVE_SPEED: real = 200.0;
+
+const BOSS_DAMAGE: i64 = 8;
+
+const BOSS_BUMP_DISTANCE: real = 275.0;
+
+const BOSS_MAX_BODY_COUNT: u32 = 20;
 
 #[derive(GodotConvert, Default, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
 #[godot(via = GString)]
