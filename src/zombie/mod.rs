@@ -7,7 +7,7 @@ use crate::zombie::hit::ZombieHit;
 use crate::{
     PlayerState, ZOMBIE_ALARM_TIME, ZOMBIE_DAMAGE, ZOMBIE_MAX_BODY_COUNT, ZOMBIE_MAX_DISTANCE,
     ZOMBIE_MAX_HEALTH, ZOMBIE_MIN_REFRESH_BATCH, ZOMBIE_MOVE_SPEED, ZOMBIE_PURSUIT_DISTANCE,
-    ZOMBIE_RAMPAGE_TIME, ZombieState,
+    ZOMBIE_RAMPAGE_TIME, ZOMBIE_SKIP_FRAME, ZombieState,
 };
 use godot::builtin::{Vector2, real};
 use godot::classes::{
@@ -45,6 +45,7 @@ pub struct RustZombie {
     state: ZombieState,
     current_speed: real,
     hurt_frames: Vec<i32>,
+    frame_counter: u128,
     collision_shape2d: OnReady<Gd<CollisionShape2D>>,
     animated_sprite2d: OnReady<Gd<ZombieAnimation>>,
     zombie_attack_area: OnReady<Gd<ZombieAttackArea>>,
@@ -76,6 +77,7 @@ impl ICharacterBody2D for RustZombie {
             state: ZombieState::Guard,
             current_speed: ZOMBIE_MOVE_SPEED * 0.2,
             hurt_frames: vec![2, 3, 4, 5],
+            frame_counter: 0,
             collision_shape2d: OnReady::from_node("CollisionShape2D"),
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             zombie_attack_area: OnReady::from_node("ZombieAttackArea"),
@@ -108,7 +110,11 @@ impl ICharacterBody2D for RustZombie {
     }
 
     fn process(&mut self, delta: f64) {
-        if ZombieState::Dead == self.state || RustWorld::is_paused() {
+        self.frame_counter = self.frame_counter.wrapping_add(1);
+        if ZombieState::Dead == self.state
+            || RustWorld::is_paused()
+            || 0 == self.frame_counter % ZOMBIE_SKIP_FRAME
+        {
             if BODY_COUNT.load(Ordering::Acquire) >= ZOMBIE_MAX_BODY_COUNT {
                 self.clean_body();
             }
@@ -268,7 +274,7 @@ impl RustZombie {
             return;
         }
         self.animated_sprite2d.play_ex().name("run").done();
-        self.current_speed = self.speed * 1.75;
+        self.current_speed = self.speed * 2.5;
         self.state = ZombieState::Run;
         if !self.run_audio.is_playing() && self.run_audio.is_inside_tree() {
             self.run_audio.play();
@@ -300,7 +306,7 @@ impl RustZombie {
             return;
         }
         self.animated_sprite2d.play_ex().name("run").done();
-        self.current_speed = self.speed * 1.75;
+        self.current_speed = self.speed * 2.5;
         self.state = ZombieState::Rampage;
         if !self.rampage_audio.is_playing() && self.rampage_audio.is_inside_tree() {
             let live_count = RustLevel::get_live_count();

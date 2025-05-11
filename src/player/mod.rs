@@ -125,10 +125,15 @@ impl ICharacterBody2D for RustPlayer {
         hud.update_score_hud();
     }
 
-    fn physics_process(&mut self, delta: f64) {
+    fn process(&mut self, delta: f64) {
         if PlayerState::Dead == self.state || RustWorld::is_paused() {
             return;
         }
+        self.level_up();
+        let mut hud = self.hud.bind_mut();
+        hud.update_killed_hud();
+        hud.update_score_hud();
+        drop(hud);
         if PlayerState::Reload == self.state {
             let reload_cost = RELOADING.load() + delta;
             RELOADING.store(reload_cost);
@@ -169,13 +174,6 @@ impl ICharacterBody2D for RustPlayer {
             self.guard();
         }
         character_body2d.move_and_slide();
-    }
-
-    fn process(&mut self, _delta: f64) {
-        self.level_up();
-        let mut hud = self.hud.bind_mut();
-        hud.update_killed_hud();
-        hud.update_score_hud();
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {

@@ -83,9 +83,9 @@ impl INode2D for RustWorld {
 
     fn input(&mut self, event: Gd<InputEvent>) {
         if event.is_action_pressed("esc") {
-            Self::pause();
             if self.game_over.is_visible() {
                 self.game_over.set_visible(false);
+                Self::resume();
             } else {
                 let mut message = self
                     .game_over
@@ -94,6 +94,7 @@ impl INode2D for RustWorld {
                 message.set_text("Game paused");
                 message.show();
                 self.game_over.set_visible(true);
+                Self::pause();
             }
         }
     }
