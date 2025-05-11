@@ -49,6 +49,9 @@ impl INode2D for RustWorld {
     }
 
     fn ready(&mut self) {
+        if Self::is_paused() {
+            Self::resume();
+        }
         let gd = self.to_gd();
         let container = self
             .game_over
@@ -131,7 +134,7 @@ impl RustWorld {
             self.rust_player.bind_mut().reborn();
         }
         if Self::is_paused() {
-            Self::pause();
+            Self::resume();
         }
     }
 
@@ -224,11 +227,11 @@ impl RustWorld {
     }
 
     pub fn pause() {
-        if PAUSED.load(Ordering::Acquire) {
-            PAUSED.store(false, Ordering::Release);
-        } else {
-            PAUSED.store(true, Ordering::Release);
-        }
+        PAUSED.store(true, Ordering::Release);
+    }
+
+    pub fn resume() {
+        PAUSED.store(false, Ordering::Release);
     }
 
     pub fn is_paused() -> bool {

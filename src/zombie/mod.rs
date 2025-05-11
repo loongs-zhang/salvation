@@ -188,7 +188,7 @@ impl ICharacterBody2D for RustZombie {
 
     fn input(&mut self, event: Gd<InputEvent>) {
         if event.is_action_pressed("k") {
-            self.die(false);
+            self.die();
         }
     }
 }
@@ -227,7 +227,7 @@ impl RustZombie {
         if 0 != self.health {
             self.hit(direction, hit_position);
         } else {
-            self.die(true);
+            self.die();
         }
     }
 
@@ -332,7 +332,7 @@ impl RustZombie {
         self.notify_animation();
     }
 
-    pub fn die(&mut self, confirm: bool) {
+    pub fn die(&mut self) {
         if ZombieState::Dead == self.state {
             return;
         }
@@ -348,18 +348,16 @@ impl RustZombie {
         self.zombie_attack_area.queue_free();
         self.zombie_damage_area.queue_free();
         self.notify_animation();
-        if confirm {
-            // 击杀僵尸确认
-            self.base()
-                .get_tree()
-                .unwrap()
-                .get_root()
-                .unwrap()
-                .get_node_as::<RustWorld>("RustWorld")
-                .get_node_as::<RustLevel>("RustLevel")
-                .bind_mut()
-                .kill_confirmed();
-        }
+        // 击杀僵尸确认
+        self.base()
+            .get_tree()
+            .unwrap()
+            .get_root()
+            .unwrap()
+            .get_node_as::<RustWorld>("RustWorld")
+            .get_node_as::<RustLevel>("RustLevel")
+            .bind_mut()
+            .kill_confirmed();
         BODY_COUNT.fetch_add(1, Ordering::Release);
         // 45S后自动清理尸体
         if let Some(mut tree) = self.base().get_tree() {

@@ -452,7 +452,7 @@ impl RustPlayer {
                 }
             }
         }
-        RustWorld::pause();
+        RustWorld::resume();
     }
 
     pub fn get_mouse_position(&self) -> Vector2 {
