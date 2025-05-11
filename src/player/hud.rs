@@ -1,6 +1,7 @@
 use crate::player::RustPlayer;
 use godot::builtin::real;
 use godot::classes::input::MouseMode;
+use godot::classes::notify::NodeNotification;
 use godot::classes::{
     Button, CanvasLayer, Control, HBoxContainer, ICanvasLayer, Input, Label, TextureRect,
     VBoxContainer,
@@ -71,6 +72,20 @@ impl ICanvasLayer for PlayerHUD {
         let mouse_position =
             affine_inverse * viewport.get_mouse_position() - self.cross_hair.get_size() / 2.0;
         self.cross_hair.set_position(mouse_position);
+    }
+
+    fn on_notification(&mut self, what: NodeNotification) {
+        match what {
+            NodeNotification::WM_MOUSE_ENTER => {
+                //鼠标进入窗口时隐藏
+                Input::singleton().set_mouse_mode(MouseMode::HIDDEN);
+            }
+            NodeNotification::WM_MOUSE_EXIT | NodeNotification::WM_WINDOW_FOCUS_OUT => {
+                //鼠标离开窗口或窗口失去焦点时显示
+                Input::singleton().set_mouse_mode(MouseMode::VISIBLE);
+            }
+            _ => {}
+        }
     }
 
     fn exit_tree(&mut self) {

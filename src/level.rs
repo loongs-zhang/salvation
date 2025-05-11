@@ -65,7 +65,7 @@ impl INode for RustLevel {
     }
 
     fn ready(&mut self) {
-        self.level_up();
+        self.level_up(false);
     }
 
     fn process(&mut self, delta: f64) {
@@ -130,7 +130,7 @@ impl INode for RustLevel {
             self.play_bgm();
         }
         if killed >= current_total {
-            self.level_up();
+            self.level_up(false);
         }
     }
 
@@ -139,7 +139,7 @@ impl INode for RustLevel {
             self.left_rampage_time = 0.0;
         } else if event.is_action_pressed("j") {
             //跳关
-            self.level_up();
+            self.level_up(true);
         }
     }
 }
@@ -230,15 +230,15 @@ impl RustLevel {
         self.hud.get_node_as::<VBoxContainer>("VBoxRight")
     }
 
-    pub fn level_up(&mut self) {
+    pub fn level_up(&mut self, jump: bool) {
         let mut generator = self.zombie_generator.bind_mut();
         let rate = self.grow_rate.powf(self.level as f32);
         self.level += 1;
         self.zombie_killed.store(0, Ordering::Release);
         self.boss_killed.store(0, Ordering::Release);
         self.left_rampage_time = self.rampage_time / rate;
-        generator.level_up(rate);
-        self.boss_generator.bind_mut().level_up(rate);
+        generator.level_up(jump, rate);
+        self.boss_generator.bind_mut().level_up(jump, rate);
         drop(generator);
         self.update_level_hud();
         self.update_refresh_hud();
@@ -334,7 +334,7 @@ impl INode for ZombieGenerator {
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
-        if event.is_action_pressed("p") {
+        if event.is_action_pressed("esc") {
             if self.timer.is_stopped() {
                 self.generate();
                 self.timer.start();
@@ -354,13 +354,13 @@ impl INode for ZombieGenerator {
 
 #[godot_api]
 impl ZombieGenerator {
-    pub fn level_up(&mut self, rate: f32) {
+    pub fn level_up(&mut self, jump: bool, rate: f32) {
         self.current = 0;
         self.refresh_barrier = ZOMBIE_MIN_REFRESH_BATCH;
         self.current_total = (self.total as f32 * rate) as u32;
         self.current_refresh_count = (self.refresh_count as f32 * rate) as u32;
         self.timer.start();
-        if self.immediate {
+        if !jump && self.immediate {
             self.generate();
         }
     }

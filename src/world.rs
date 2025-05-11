@@ -1,3 +1,4 @@
+use crate::PlayerState;
 use crate::entrance::RustEntrance;
 use crate::player::RustPlayer;
 use godot::builtin::{Array, Vector2, Vector2i, array, real};
@@ -78,8 +79,13 @@ impl INode2D for RustWorld {
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
-        if event.is_action_pressed("p") {
+        if event.is_action_pressed("esc") {
             Self::pause();
+            if self.game_over.is_visible() {
+                self.game_over.set_visible(false);
+            } else {
+                self.game_over.set_visible(true);
+            }
         }
     }
 }
@@ -109,7 +115,12 @@ impl RustWorld {
     #[func]
     pub fn on_continue_pressed(&mut self) {
         self.game_over.set_visible(false);
-        self.rust_player.bind_mut().reborn();
+        if PlayerState::Dead == RustPlayer::get_state() {
+            self.rust_player.bind_mut().reborn();
+        }
+        if Self::is_paused() {
+            Self::pause();
+        }
     }
 
     #[func]

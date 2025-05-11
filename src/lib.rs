@@ -1,4 +1,4 @@
-use godot::builtin::{GString, real};
+use godot::builtin::{GString, Vector2, real};
 use godot::init::{ExtensionLibrary, gdextension};
 use godot::register::GodotConvert;
 
@@ -17,6 +17,9 @@ pub mod bullet;
 pub mod zombie;
 
 pub mod boss;
+
+// game info
+const DEFAULT_SCREEN_SIZE: Vector2 = Vector2::new(960.0, 540.0);
 
 // player
 const PLAYER_MAX_LIVES: u32 = 3;
