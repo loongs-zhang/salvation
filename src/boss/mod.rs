@@ -124,6 +124,11 @@ impl ICharacterBody2D for RustBoss {
         }
         let zombie_position = self.base().get_global_position();
         let distance = zombie_position.distance_to(player_position);
+        if distance >= ZOMBIE_MAX_DISTANCE {
+            //解决刷新僵尸导致的体积碰撞问题
+            self.flash();
+            return;
+        }
         let to_player_dir = zombie_position.direction_to(player_position).normalized();
         let mut character_body2d = self.base.to_gd();
         //僵尸之间的体积碰撞检测
@@ -148,10 +153,7 @@ impl ICharacterBody2D for RustBoss {
                 }
             }
         }
-        if distance >= ZOMBIE_MAX_DISTANCE {
-            //解决刷新僵尸导致的体积碰撞问题
-            self.flash();
-        } else if distance >= BOSS_BUMP_DISTANCE {
+        if distance >= BOSS_BUMP_DISTANCE {
             // 走向玩家
             self.guard();
             self.base_mut().look_at(player_position);

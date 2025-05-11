@@ -125,7 +125,11 @@ impl ICharacterBody2D for RustZombie {
         let zombie_position = self.base().get_global_position();
         let player_position = RustPlayer::get_position();
         let distance = zombie_position.distance_to(player_position);
-        if distance <= ZOMBIE_PURSUIT_DISTANCE && self.is_face_to_user() {
+        if distance >= ZOMBIE_MAX_DISTANCE {
+            //解决刷新僵尸导致的体积碰撞问题
+            self.flash();
+            return;
+        } else if distance <= ZOMBIE_PURSUIT_DISTANCE && self.is_face_to_user() {
             self.current_alarm_time =
                 (self.current_alarm_time + delta as real).min(self.alarm_time);
         } else {
@@ -160,10 +164,7 @@ impl ICharacterBody2D for RustZombie {
                 }
             }
         }
-        if distance >= ZOMBIE_MAX_DISTANCE {
-            //解决刷新僵尸导致的体积碰撞问题
-            self.flash();
-        } else if self.is_alarmed() || RustLevel::is_rampage() {
+        if self.is_alarmed() || RustLevel::is_rampage() {
             // 跑向玩家
             self.rampage();
             self.base_mut().look_at(player_position);
