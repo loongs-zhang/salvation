@@ -4,7 +4,7 @@ use crate::player::RustPlayer;
 use godot::builtin::{Array, Vector2, Vector2i, array, real};
 use godot::classes::fast_noise_lite::NoiseType;
 use godot::classes::{
-    Button, CanvasLayer, Control, FastNoiseLite, HBoxContainer, INode2D, InputEvent, Node2D,
+    Button, CanvasLayer, Control, FastNoiseLite, HBoxContainer, INode2D, InputEvent, Label, Node2D,
     Object, PackedScene, TileMapLayer,
 };
 use godot::global::godot_print;
@@ -84,6 +84,12 @@ impl INode2D for RustWorld {
             if self.game_over.is_visible() {
                 self.game_over.set_visible(false);
             } else {
+                let mut message = self
+                    .game_over
+                    .get_node_as::<Control>("Control")
+                    .get_node_as::<Label>("Message");
+                message.set_text("Game paused");
+                message.show();
                 self.game_over.set_visible(true);
             }
         }
@@ -97,6 +103,12 @@ impl RustWorld {
 
     #[func]
     pub fn on_player_dead(&mut self) {
+        let mut message = self
+            .game_over
+            .get_node_as::<Control>("Control")
+            .get_node_as::<Label>("Message");
+        message.set_text("You have turned");
+        message.show();
         self.game_over.set_visible(true);
     }
 

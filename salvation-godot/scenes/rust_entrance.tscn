@@ -72,8 +72,9 @@ size_flags_vertical = 0
 theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
 text = "Help
 PauseGame: esc
-RefreshZombies: K
-JumpLevel: J"
+JumpLevel: J
+KillZombies: K
+RefreshZombies: L"
 vertical_alignment = 1
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]

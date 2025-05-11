@@ -79,13 +79,11 @@ impl INode for RustLevel {
         let boss_generator = self.boss_generator.bind();
         let zombie_current = zombie_generator.current;
         let boss_current = boss_generator.current;
-        let current_total = zombie_generator
-            .current_total
-            .saturating_add(boss_generator.current_total);
-        let maybe_refresh = current_total.saturating_sub(killed);
+        let zombie_total = zombie_generator.current_total;
+        let boss_total = boss_generator.current_total;
         let zombie_timer = self.zombie_generator.get_node_as::<Timer>("Timer");
         let boss_timer = self.boss_generator.get_node_as::<Timer>("Timer");
-        if zombie_timer.is_stopped() || boss_timer.is_stopped() {
+        if zombie_timer.is_stopped() && boss_timer.is_stopped() {
             if Self::get_kill_count() == killed {
                 //累计时间
                 self.no_kill_time += delta;
@@ -94,14 +92,14 @@ impl INode for RustLevel {
             }
             if zombie_timer.get_wait_time() == self.no_kill_time {
                 //卡关了，实际上玩家击杀数足够，但由于穿透太强，击杀统计少了，强制刷新一批僵尸
-                for _ in 0..maybe_refresh {
+                for _ in 0..zombie_total.saturating_sub(zombie_killed) {
                     zombie_generator.generate_zombie();
                 }
                 self.no_kill_time = 0.0;
             }
             if boss_timer.get_wait_time() == self.no_kill_time {
                 //卡关了，实际上玩家击杀数足够，但由于穿透太强，击杀统计少了，强制刷新一批僵尸
-                for _ in 0..maybe_refresh {
+                for _ in 0..boss_total.saturating_sub(boss_killed) {
                     boss_generator.generate_zombie();
                 }
                 self.no_kill_time = 0.0;
@@ -129,13 +127,13 @@ impl INode for RustLevel {
             RAMPAGE.store(false, Ordering::Release);
             self.play_bgm();
         }
-        if killed >= current_total {
+        if zombie_killed >= zombie_total && boss_killed >= boss_total {
             self.level_up(false);
         }
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
-        if event.is_action_pressed("k") {
+        if event.is_action_pressed("l") {
             self.left_rampage_time = 0.0;
         } else if event.is_action_pressed("j") {
             //跳关
@@ -336,12 +334,11 @@ impl INode for ZombieGenerator {
     fn input(&mut self, event: Gd<InputEvent>) {
         if event.is_action_pressed("esc") {
             if self.timer.is_stopped() {
-                self.generate();
                 self.timer.start();
             } else {
                 self.timer.stop();
             }
-        } else if event.is_action_pressed("k") {
+        } else if event.is_action_pressed("l") {
             while self.current < self.current_total
                 && self.current.saturating_sub(RustLevel::get_kill_count())
                     < ZOMBIE_MAX_SCREEN_COUNT
@@ -374,6 +371,7 @@ impl ZombieGenerator {
                 && self.current_refresh_count > ZOMBIE_MIN_REFRESH_BATCH
                 || self.current.saturating_sub(kill_count) >= ZOMBIE_MAX_SCREEN_COUNT
             {
+                //fixme 现在刷出来的僵尸和BOSS同时出现，数量太多，需要区分僵尸和BOSS
                 break;
             }
             if self.current >= self.current_total {
