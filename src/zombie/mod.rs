@@ -114,25 +114,6 @@ impl ICharacterBody2D for RustZombie {
         }
     }
 
-    fn ready(&mut self) {
-        self.last_turn_time -= self.turn_cooldown;
-        let mut animated_sprite2d = self.animated_sprite2d.bind_mut();
-        animated_sprite2d.set_hurt_frames(self.hurt_frames.clone());
-        animated_sprite2d.set_damage(ZOMBIE_DAMAGE);
-        animated_sprite2d
-            .signals()
-            .change_zombie_state()
-            .connect_self(ZombieAnimation::on_change_zombie_state);
-        drop(animated_sprite2d);
-        self.guard();
-        if !self.name.is_empty() {
-            let name = self.name.clone();
-            let mut name_label = self.name_label.get_node_as::<Label>("Name");
-            name_label.set_text(&name);
-            name_label.show();
-        }
-    }
-
     fn process(&mut self, delta: f64) {
         self.name_label.set_global_rotation_degrees(0.0);
         self.frame_counter = self.frame_counter.wrapping_add(1);
@@ -209,8 +190,7 @@ impl ICharacterBody2D for RustZombie {
                             || dir.x.abs() >= dir.y.abs()
                         {
                             from.orthogonal()
-                        } else if (-120.0..0.0).contains(&move_angle) || dir.x.abs() < dir.y.abs()
-                        {
+                        } else if (-120.0..0.0).contains(&move_angle) || dir.x.abs() < dir.y.abs() {
                             -from.orthogonal()
                         } else if self.pursuit_direction {
                             from.orthogonal()
@@ -220,6 +200,25 @@ impl ICharacterBody2D for RustZombie {
                     }
                 }
             }
+        }
+    }
+
+    fn ready(&mut self) {
+        self.last_turn_time -= self.turn_cooldown;
+        let mut animated_sprite2d = self.animated_sprite2d.bind_mut();
+        animated_sprite2d.set_hurt_frames(self.hurt_frames.clone());
+        animated_sprite2d.set_damage(ZOMBIE_DAMAGE);
+        animated_sprite2d
+            .signals()
+            .change_zombie_state()
+            .connect_self(ZombieAnimation::on_change_zombie_state);
+        drop(animated_sprite2d);
+        self.guard();
+        if !self.name.is_empty() {
+            let name = self.name.clone();
+            let mut name_label = self.name_label.get_node_as::<Label>("Name");
+            name_label.set_text(&name);
+            name_label.show();
         }
     }
 

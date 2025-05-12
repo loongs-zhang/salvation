@@ -17,6 +17,7 @@ use godot::classes::{
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub mod hud;
 
@@ -33,6 +34,8 @@ static KILL_COUNT: AtomicU32 = AtomicU32::new(0);
 static KILL_BOSS_COUNT: AtomicU32 = AtomicU32::new(0);
 
 static SCORE: AtomicU64 = AtomicU64::new(0);
+
+static LAST_SCORE_UPDATE: AtomicCell<f64> = AtomicCell::new(0.0);
 
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
@@ -113,26 +116,6 @@ impl ICharacterBody2D for RustPlayer {
         }
     }
 
-    fn enter_tree(&mut self) {
-        self.scale();
-    }
-
-    fn ready(&mut self) {
-        self.base_mut()
-            .set_physics_interpolation_mode(PhysicsInterpolationMode::ON);
-        let rust_weapon = self.weapon.get_node_as::<RustWeapon>("RustWeapon");
-        let mut hud = self.hud.bind_mut();
-        hud.update_lives_hud(self.current_lives, self.lives);
-        hud.update_hp_hud(self.current_health, self.health);
-        hud.update_ammo_hud(rust_weapon.bind().get_ammo(), MAX_AMMO);
-        hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
-        hud.update_distance_hud(self.distance + rust_weapon.bind().get_distance());
-        hud.update_repel_hud(self.repel + rust_weapon.bind().get_repel());
-        hud.update_penetrate_hud(self.penetrate + rust_weapon.bind().get_penetrate());
-        hud.update_killed_hud();
-        hud.update_score_hud();
-    }
-
     fn process(&mut self, delta: f64) {
         if PlayerState::Dead == self.state || RustWorld::is_paused() {
             return;
@@ -182,6 +165,26 @@ impl ICharacterBody2D for RustPlayer {
             self.guard();
         }
         character_body2d.move_and_slide();
+    }
+
+    fn enter_tree(&mut self) {
+        self.scale();
+    }
+
+    fn ready(&mut self) {
+        self.base_mut()
+            .set_physics_interpolation_mode(PhysicsInterpolationMode::ON);
+        let rust_weapon = self.weapon.get_node_as::<RustWeapon>("RustWeapon");
+        let mut hud = self.hud.bind_mut();
+        hud.update_lives_hud(self.current_lives, self.lives);
+        hud.update_hp_hud(self.current_health, self.health);
+        hud.update_ammo_hud(rust_weapon.bind().get_ammo(), MAX_AMMO);
+        hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
+        hud.update_distance_hud(self.distance + rust_weapon.bind().get_distance());
+        hud.update_repel_hud(self.repel + rust_weapon.bind().get_repel());
+        hud.update_penetrate_hud(self.penetrate + rust_weapon.bind().get_penetrate());
+        hud.update_killed_hud();
+        hud.update_score_hud();
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
@@ -509,10 +512,24 @@ impl RustPlayer {
 
     pub fn add_score(score: u64) {
         SCORE.fetch_add(score, Ordering::Release);
+        Self::reset_last_score_update();
     }
 
     pub fn get_score() -> u64 {
         SCORE.load(Ordering::Acquire)
+    }
+
+    pub fn get_last_score_update() -> f64 {
+        LAST_SCORE_UPDATE.load()
+    }
+
+    pub fn reset_last_score_update() {
+        LAST_SCORE_UPDATE.store(
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("1970-01-01 00:00:00 UTC was {} seconds ago!")
+                .as_secs_f64(),
+        );
     }
 
     pub fn get_position() -> Vector2 {

@@ -26,12 +26,6 @@ impl IAnimatedSprite2D for ZombieAnimation {
         }
     }
 
-    fn ready(&mut self) {
-        self.signals()
-            .frame_changed()
-            .connect_self(Self::on_animated_sprite_2d_frame_changed);
-    }
-
     fn process(&mut self, _delta: f64) {
         if ZombieState::Attack != self.zombie_state {
             return;
@@ -46,6 +40,12 @@ impl IAnimatedSprite2D for ZombieAnimation {
                 }
             }
         }
+    }
+
+    fn ready(&mut self) {
+        self.signals()
+            .frame_changed()
+            .connect_self(Self::on_animated_sprite_2d_frame_changed);
     }
 }
 

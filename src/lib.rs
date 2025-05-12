@@ -56,7 +56,7 @@ const LEVEL_RAMPAGE_TIME: real = 120.0;
 // zombie
 const ZOMBIE_SKIP_FRAME: u128 = 4;
 
-const ZOMBIE_MAX_SCREEN_COUNT: u32 = 160;
+const ZOMBIE_MAX_SCREEN_COUNT: u32 = 150;
 
 const ZOMBIE_MIN_REFRESH_BATCH: u32 = 40;
 
@@ -83,7 +83,7 @@ const BOSS_MOVE_SPEED: real = 200.0;
 
 const BOSS_DAMAGE: i64 = 8;
 
-const BOSS_BUMP_DISTANCE: real = 275.0;
+const BOSS_BUMP_DISTANCE: real = 250.0;
 
 const BOSS_MAX_BODY_COUNT: u32 = 20;
 

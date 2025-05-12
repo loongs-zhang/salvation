@@ -1,5 +1,6 @@
 use crate::PlayerState;
 use crate::entrance::RustEntrance;
+use crate::level::RustLevel;
 use crate::player::RustPlayer;
 use godot::builtin::{Array, Vector2, Vector2i, array};
 use godot::classes::fast_noise_lite::NoiseType;
@@ -27,6 +28,7 @@ pub struct RustWorld {
     entrance_scene: OnReady<Gd<PackedScene>>,
     tile_map_layer: OnReady<Gd<TileMapLayer>>,
     rust_player: OnReady<Gd<RustPlayer>>,
+    rust_level: OnReady<Gd<RustLevel>>,
     game_over: OnReady<Gd<CanvasLayer>>,
     generated: HashSet<Vector2i>,
     base: Base<Node2D>,
@@ -41,6 +43,7 @@ impl INode2D for RustWorld {
             entrance_scene: OnReady::from_loaded("res://scenes/rust_entrance.tscn"),
             tile_map_layer: OnReady::from_node("TileMapLayer"),
             rust_player: OnReady::from_node("RustPlayer"),
+            rust_level: OnReady::from_node("RustLevel"),
             game_over: OnReady::from_node("CanvasLayer"),
             generated: HashSet::new(),
             base,
@@ -133,6 +136,7 @@ impl RustWorld {
         if PlayerState::Dead == RustPlayer::get_state() {
             self.rust_player.bind_mut().reborn();
         }
+        self.rust_level.bind_mut().start();
         if Self::is_paused() {
             Self::resume();
         }

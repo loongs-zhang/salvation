@@ -91,22 +91,6 @@ impl ICharacterBody2D for RustBoss {
         }
     }
 
-    fn ready(&mut self) {
-        let mut animated_sprite2d = self.animated_sprite2d.bind_mut();
-        animated_sprite2d.set_hurt_frames(self.hurt_frames.clone());
-        animated_sprite2d.set_damage(BOSS_DAMAGE);
-        animated_sprite2d
-            .signals()
-            .change_zombie_state()
-            .connect_self(ZombieAnimation::on_change_zombie_state);
-        drop(animated_sprite2d);
-        self.bump_damage_area
-            .signals()
-            .change_zombie_state()
-            .connect_self(BossBumpArea::on_change_zombie_state);
-        self.guard();
-    }
-
     fn process(&mut self, _delta: f64) {
         if ZombieState::Dead == self.state || RustWorld::is_paused() {
             if BODY_COUNT.load(Ordering::Acquire) >= BOSS_MAX_BODY_COUNT {
@@ -177,6 +161,22 @@ impl ICharacterBody2D for RustBoss {
             // todo refactor to move_and_collide
             character_body2d.move_and_slide();
         }
+    }
+
+    fn ready(&mut self) {
+        let mut animated_sprite2d = self.animated_sprite2d.bind_mut();
+        animated_sprite2d.set_hurt_frames(self.hurt_frames.clone());
+        animated_sprite2d.set_damage(BOSS_DAMAGE);
+        animated_sprite2d
+            .signals()
+            .change_zombie_state()
+            .connect_self(ZombieAnimation::on_change_zombie_state);
+        drop(animated_sprite2d);
+        self.bump_damage_area
+            .signals()
+            .change_zombie_state()
+            .connect_self(BossBumpArea::on_change_zombie_state);
+        self.guard();
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {

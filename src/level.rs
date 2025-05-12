@@ -10,10 +10,12 @@ use godot::classes::{
     AudioStreamPlayer2D, CanvasLayer, Engine, INode, InputEvent, Label, Node, PackedScene, Timer,
     VBoxContainer,
 };
+use godot::global::godot_print;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::prelude::ToGodot;
 use godot::register::{GodotClass, godot_api};
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 static RAMPAGE: AtomicBool = AtomicBool::new(false);
 
@@ -39,7 +41,6 @@ pub struct RustLevel {
     bgm: OnReady<Gd<AudioStreamPlayer2D>>,
     rampage_bgm: OnReady<Gd<AudioStreamPlayer2D>>,
     boss_bgm: OnReady<Gd<AudioStreamPlayer2D>>,
-    no_kill_time: f64,
     base: Base<Node>,
 }
 
@@ -59,13 +60,8 @@ impl INode for RustLevel {
             bgm: OnReady::from_node("Bgm"),
             rampage_bgm: OnReady::from_node("RampageBgm"),
             boss_bgm: OnReady::from_node("BossBgm"),
-            no_kill_time: 0.0,
             base,
         }
-    }
-
-    fn ready(&mut self) {
-        self.level_up(false);
     }
 
     fn process(&mut self, delta: f64) {
@@ -81,29 +77,37 @@ impl INode for RustLevel {
         let boss_current = boss_generator.current;
         let zombie_total = zombie_generator.current_total;
         let boss_total = boss_generator.current_total;
+        let zombie_refresh_count = zombie_generator.current_refresh_count;
+        let boss_refresh_count = boss_generator.current_refresh_count;
         let zombie_timer = self.zombie_generator.get_node_as::<Timer>("Timer");
         let boss_timer = self.boss_generator.get_node_as::<Timer>("Timer");
-        if zombie_timer.is_stopped() && boss_timer.is_stopped() {
-            if Self::get_kill_count() == killed {
-                //累计时间
-                self.no_kill_time += delta;
-            } else {
-                self.no_kill_time = (self.no_kill_time - delta).max(0.0);
+        if zombie_timer.is_stopped()
+            && boss_timer.is_stopped()
+            && SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("1970-01-01 00:00:00 UTC was {} seconds ago!")
+                .as_secs_f64()
+                - RustPlayer::get_last_score_update()
+                >= boss_timer.get_wait_time()
+        {
+            RustPlayer::reset_last_score_update();
+            //30s内未造成任何伤害，认为卡关了，实际上玩家击杀数足够，但击杀统计少了，强制刷新一批僵尸
+            for _ in 0..zombie_total
+                .saturating_sub(zombie_killed)
+                .min(boss_refresh_count)
+            {
+                zombie_generator.generate_zombie();
             }
-            if zombie_timer.get_wait_time() == self.no_kill_time {
-                //卡关了，实际上玩家击杀数足够，但由于穿透太强，击杀统计少了，强制刷新一批僵尸
-                for _ in 0..zombie_total.saturating_sub(zombie_killed) {
-                    zombie_generator.generate_zombie();
-                }
-                self.no_kill_time = 0.0;
+            for _ in 0..boss_total
+                .saturating_sub(boss_killed)
+                .min(zombie_refresh_count)
+            {
+                boss_generator.generate_zombie();
             }
-            if boss_timer.get_wait_time() == self.no_kill_time {
-                //卡关了，实际上玩家击杀数足够，但由于穿透太强，击杀统计少了，强制刷新一批僵尸
-                for _ in 0..boss_total.saturating_sub(boss_killed) {
-                    boss_generator.generate_zombie();
-                }
-                self.no_kill_time = 0.0;
-            }
+            godot_print!(
+                "Level{} is blocked, forcing a batch of zombies to be refreshed",
+                self.level
+            );
         }
         KILL_COUNT.store(killed, Ordering::Release);
         LIVE_COUNT.store(
@@ -130,6 +134,23 @@ impl INode for RustLevel {
         if zombie_killed >= zombie_total && boss_killed >= boss_total {
             self.level_up(false);
         }
+    }
+
+    fn ready(&mut self) {
+        let gd = self.to_gd();
+        self.bgm
+            .signals()
+            .finished()
+            .connect_obj(&gd, Self::play_bgm);
+        self.rampage_bgm
+            .signals()
+            .finished()
+            .connect_obj(&gd, Self::play_rampage_bgm);
+        self.boss_bgm
+            .signals()
+            .finished()
+            .connect_obj(&gd, Self::play_boss_bgm);
+        self.level_up(false);
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
@@ -171,42 +192,40 @@ impl RustLevel {
     }
 
     pub fn update_progress_hud(&mut self) {
-        let refreshed = self
-            .zombie_generator
-            .bind()
-            .current
-            .saturating_add(self.boss_generator.bind().current);
-        let total = self
-            .zombie_generator
-            .bind()
-            .current_total
-            .saturating_add(self.boss_generator.bind().current_total);
+        let boss_refreshed = self.boss_generator.bind().current;
+        let zombie_refreshed = self.zombie_generator.bind().current;
+        let boss_total = self.boss_generator.bind().current_total;
+        let zombie_total = self.zombie_generator.bind().current_total;
         let mut label = self.get_center_container().get_node_as::<Label>("Progress");
         label.set_text(&format!(
-            "PROGRESS {}+{}/{}/{}",
+            "PROGRESS {}+{}/{}+{}/{}+{}",
             self.boss_killed.load(Ordering::Acquire),
             self.zombie_killed.load(Ordering::Acquire),
-            refreshed,
-            total
+            boss_refreshed,
+            zombie_refreshed,
+            boss_total,
+            zombie_total
         ));
         label.show();
     }
 
+    #[func]
     pub fn update_refresh_hud(&mut self) {
         let zombie_refresh_count = self.zombie_generator.bind().current_refresh_count;
-        let zombie_wait_time = self
-            .zombie_generator
-            .get_node_as::<Timer>("Timer")
-            .get_wait_time();
+        let zombie_timer = self.zombie_generator.get_node_as::<Timer>("Timer");
+        let zombie_wait_time = zombie_timer.get_wait_time();
         let boss_refresh_count = self.boss_generator.bind().current_refresh_count;
-        let boss_wait_time = self
-            .boss_generator
-            .get_node_as::<Timer>("Timer")
-            .get_wait_time();
+        let boss_timer = self.boss_generator.get_node_as::<Timer>("Timer");
+        let boss_wait_time = boss_timer.get_wait_time();
         let mut label = self.get_right_container().get_node_as::<Label>("Refresh");
         label.set_text(&format!(
-            "REFRESH {} ZOMBIES IN {:.0}s\nREFRESH {} BOSS IN {:.0}s",
-            zombie_refresh_count, zombie_wait_time, boss_refresh_count, boss_wait_time
+            "REFRESH {} ZOMBIES IN {:.0}s {}\nREFRESH {} BOSS IN {:.0}s {}",
+            zombie_refresh_count,
+            zombie_wait_time,
+            !zombie_timer.is_stopped(),
+            boss_refresh_count,
+            boss_wait_time,
+            !boss_timer.is_stopped()
         ));
         label.show();
     }
@@ -229,15 +248,14 @@ impl RustLevel {
     }
 
     pub fn level_up(&mut self, jump: bool) {
-        let mut generator = self.zombie_generator.bind_mut();
+        RustPlayer::reset_last_score_update();
         let rate = self.grow_rate.powf(self.level as f32);
         self.level += 1;
         self.zombie_killed.store(0, Ordering::Release);
         self.boss_killed.store(0, Ordering::Release);
         self.left_rampage_time = self.rampage_time / rate;
-        generator.level_up(jump, rate);
+        self.zombie_generator.bind_mut().level_up(jump, rate);
         self.boss_generator.bind_mut().level_up(jump, rate);
-        drop(generator);
         self.update_level_hud();
         self.update_refresh_hud();
         self.update_progress_hud();
@@ -270,6 +288,11 @@ impl RustLevel {
         self.boss_bgm.play();
     }
 
+    pub fn start(&mut self) {
+        self.zombie_generator.bind_mut().start_timer();
+        self.boss_generator.bind_mut().start_timer();
+    }
+
     pub fn is_rampage() -> bool {
         RAMPAGE.load(Ordering::Acquire)
     }
@@ -283,7 +306,7 @@ impl RustLevel {
     }
 }
 
-#[derive(GodotClass)]
+#[derive(GodotClass, Debug)]
 #[class(base=Node)]
 pub struct ZombieGenerator {
     #[export]
@@ -333,12 +356,16 @@ impl INode for ZombieGenerator {
 
     fn input(&mut self, event: Gd<InputEvent>) {
         if event.is_action_pressed("esc") {
+            RustPlayer::reset_last_score_update();
             if self.timer.is_stopped() {
                 self.timer.start();
             } else {
                 self.timer.stop();
             }
+            let mut gd = self.base().get_parent().unwrap().cast::<RustLevel>();
+            gd.call_deferred("update_refresh_hud", &[]);
         } else if event.is_action_pressed("l") {
+            RustPlayer::reset_last_score_update();
             while self.current < self.current_total
                 && self.current.saturating_sub(RustLevel::get_kill_count())
                     < ZOMBIE_MAX_SCREEN_COUNT
@@ -360,6 +387,12 @@ impl ZombieGenerator {
         if !jump && self.immediate {
             self.generate();
         }
+    }
+
+    pub fn start_timer(&mut self) {
+        self.timer.start();
+        let mut gd = self.base().get_parent().unwrap().cast::<RustLevel>();
+        gd.call_deferred("update_refresh_hud", &[]);
     }
 
     #[func]

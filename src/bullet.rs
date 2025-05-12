@@ -38,13 +38,6 @@ impl INode2D for RustBullet {
         }
     }
 
-    fn ready(&mut self) {
-        self.base_mut()
-            .set_physics_interpolation_mode(PhysicsInterpolationMode::ON);
-        let mouse_position = self.get_mouse_position();
-        self.base_mut().look_at(mouse_position);
-    }
-
     fn physics_process(&mut self, delta: f64) {
         let direction = self.direction;
         let speed = self.speed;
@@ -63,6 +56,13 @@ impl INode2D for RustBullet {
             return;
         }
         base_mut.set_global_position(new_position);
+    }
+
+    fn ready(&mut self) {
+        self.base_mut()
+            .set_physics_interpolation_mode(PhysicsInterpolationMode::ON);
+        let mouse_position = self.get_mouse_position();
+        self.base_mut().look_at(mouse_position);
     }
 }
 

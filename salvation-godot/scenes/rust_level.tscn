@@ -20,7 +20,7 @@ zombie_scenes = Array[PackedScene]([ExtResource("1_4leux")])
 immediate = true
 total = 2
 refresh_count = 1
-refresh_time = 60.0
+refresh_time = 30.0
 zombie_scenes = Array[PackedScene]([ExtResource("3_ww368")])
 
 [node name="Timer" type="Timer" parent="BossGenerator"]
