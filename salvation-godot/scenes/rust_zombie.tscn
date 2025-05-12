@@ -274,6 +274,28 @@ color_ramp = SubResource("GradientTexture1D_fuakc")
 [node name="RustZombie" type="RustZombie"]
 z_index = 1
 
+[node name="RemoteTransform2D" type="RemoteTransform2D" parent="."]
+z_index = 1
+remote_path = NodePath("..")
+update_position = false
+update_rotation = false
+
+[node name="Name" type="Label" parent="RemoteTransform2D"]
+z_index = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -10.0
+offset_top = -10.0
+offset_right = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(1, 0, 0, 1)
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 light_mask = 4
 visibility_layer = 0
@@ -281,7 +303,7 @@ shape = SubResource("CircleShape2D_xgxvb")
 
 [node name="AnimatedSprite2D" type="ZombieAnimation" parent="."]
 sprite_frames = SubResource("SpriteFrames_a2hqs")
-animation = &"guard"
+animation = &"attack"
 autoplay = "guard"
 
 [node name="ZombieAttackArea" type="ZombieAttackArea" parent="."]

@@ -3,19 +3,19 @@ use crate::player::level_up::PlayerLevelUp;
 use crate::weapon::RustWeapon;
 use crate::world::RustWorld;
 use crate::{
-    MAX_AMMO, PLAYER_LEVEL_UP_BARRIER, PLAYER_LEVEL_UP_GROW_RATE, PLAYER_MAX_HEALTH,
-    PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState, PlayerUpgrade,
+    DEFAULT_SCREEN_SIZE, MAX_AMMO, PLAYER_LEVEL_UP_BARRIER, PLAYER_LEVEL_UP_GROW_RATE,
+    PLAYER_MAX_HEALTH, PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState, PlayerUpgrade,
+    random_bool,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
-    AnimatedSprite2D, AudioStreamPlayer2D, CharacterBody2D, GpuParticles2D, ICharacterBody2D,
-    Input, InputEvent, Node2D, PackedScene,
+    AnimatedSprite2D, AudioStreamPlayer2D, CharacterBody2D, DisplayServer, GpuParticles2D,
+    ICharacterBody2D, Input, InputEvent, Node2D, PackedScene,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
-use rand::Rng;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
 pub mod hud;
@@ -37,6 +37,9 @@ static SCORE: AtomicU64 = AtomicU64::new(0);
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
 pub struct RustPlayer {
+    // 玩家无敌
+    #[export]
+    invincible: bool,
     // 玩家穿透
     #[export]
     lives: u32,
@@ -82,6 +85,7 @@ pub struct RustPlayer {
 impl ICharacterBody2D for RustPlayer {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
+            invincible: false,
             lives: PLAYER_MAX_LIVES,
             damage: 0,
             distance: 0.0,
@@ -107,6 +111,10 @@ impl ICharacterBody2D for RustPlayer {
             level_up_scene: OnReady::from_loaded("res://scenes/player_level_up.tscn"),
             base,
         }
+    }
+
+    fn enter_tree(&mut self) {
+        self.scale();
     }
 
     fn ready(&mut self) {
@@ -193,17 +201,34 @@ impl ICharacterBody2D for RustPlayer {
 
 #[godot_api]
 impl RustPlayer {
+    pub fn scale(&self) {
+        //计算缩放倍数
+        let window_size = DisplayServer::singleton()
+            .screen_get_size_ex()
+            .screen(DisplayServer::SCREEN_PRIMARY)
+            .done();
+        let scale = (window_size.x as real / DEFAULT_SCREEN_SIZE.x)
+            .min(window_size.y as real / DEFAULT_SCREEN_SIZE.y)
+            .max(1.0);
+        self.base()
+            .get_window()
+            .unwrap()
+            .set_content_scale_factor(scale);
+    }
+
     #[func]
     pub fn on_hit(&mut self, hit_val: i64, hit_position: Vector2) {
-        let health = self.current_health;
-        self.current_health = if hit_val > 0 {
-            health.saturating_sub(hit_val as u32)
-        } else {
-            health.saturating_add(-hit_val as u32)
-        };
-        self.hud
-            .bind_mut()
-            .update_hp_hud(self.current_health, self.health);
+        if !self.invincible {
+            let health = self.current_health;
+            self.current_health = if hit_val > 0 {
+                health.saturating_sub(hit_val as u32)
+            } else {
+                health.saturating_add(-hit_val as u32)
+            };
+            self.hud
+                .bind_mut()
+                .update_hp_hud(self.current_health, self.health);
+        }
         if 0 != self.current_health {
             self.hit(hit_position);
         } else {
@@ -325,7 +350,7 @@ impl RustPlayer {
         self.blood_flash.look_at(hit_position);
         self.blood_flash.restart();
         STATE.store(self.state);
-        if Self::random_bool() {
+        if random_bool() {
             self.hurt_audio1.play();
         } else {
             self.hurt_audio2.play();
@@ -464,10 +489,6 @@ impl RustPlayer {
 
     pub fn get_rust_weapon(&mut self) -> Gd<RustWeapon> {
         self.weapon.get_node_as::<RustWeapon>("RustWeapon")
-    }
-
-    pub fn random_bool() -> bool {
-        rand::thread_rng().gen_range(-1.0..1.0) >= 0.0
     }
 
     pub fn add_kill_count() {

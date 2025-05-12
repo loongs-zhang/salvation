@@ -1,7 +1,7 @@
 use crate::PlayerState;
 use crate::entrance::RustEntrance;
 use crate::player::RustPlayer;
-use godot::builtin::{Array, Vector2, Vector2i, array, real};
+use godot::builtin::{Array, Vector2, Vector2i, array};
 use godot::classes::fast_noise_lite::NoiseType;
 use godot::classes::{
     Button, CanvasLayer, Control, FastNoiseLite, HBoxContainer, INode2D, InputEvent, Label, Node2D,
@@ -10,7 +10,6 @@ use godot::classes::{
 use godot::global::godot_print;
 use godot::obj::{Base, Gd, NewGd, OnReady, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
-use rand::Rng;
 use std::collections::HashSet;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
@@ -215,16 +214,7 @@ impl RustWorld {
     }
 
     pub fn random_position() -> Vector2 {
-        Vector2::new(Self::random_half_position(), Self::random_half_position())
-    }
-
-    fn random_half_position() -> real {
-        let mut rng = rand::thread_rng();
-        if rng.gen_range(-1.0..1.0) >= 0.0 {
-            rng.gen_range(275.0..500.0)
-        } else {
-            rng.gen_range(-500.0..-275.0)
-        }
+        crate::random_position(275.0, 500.0)
     }
 
     pub fn pause() {

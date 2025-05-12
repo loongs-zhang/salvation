@@ -7,16 +7,17 @@ use crate::zombie::hit::ZombieHit;
 use crate::{
     PlayerState, ZOMBIE_ALARM_TIME, ZOMBIE_DAMAGE, ZOMBIE_MAX_BODY_COUNT, ZOMBIE_MAX_DISTANCE,
     ZOMBIE_MAX_HEALTH, ZOMBIE_MIN_REFRESH_BATCH, ZOMBIE_MOVE_SPEED, ZOMBIE_PURSUIT_DISTANCE,
-    ZOMBIE_RAMPAGE_TIME, ZOMBIE_SKIP_FRAME, ZombieState,
+    ZOMBIE_RAMPAGE_TIME, ZOMBIE_SKIP_FRAME, ZombieState, random_bool, random_direction,
+    random_position,
 };
-use godot::builtin::{Vector2, real};
+use crossbeam_utils::atomic::AtomicCell;
+use godot::builtin::{GString, Vector2, real};
 use godot::classes::{
     AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, GpuParticles2D, ICharacterBody2D,
-    InputEvent, PackedScene,
+    InputEvent, Label, Node, PackedScene, RemoteTransform2D,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
-use rand::Rng;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{Duration, Instant};
 
@@ -28,9 +29,17 @@ pub mod hit;
 
 static BODY_COUNT: AtomicU32 = AtomicU32::new(0);
 
+static NEXT_ATTACK_DIRECTION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
+
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
 pub struct RustZombie {
+    #[export]
+    name: GString,
+    #[export]
+    moveable: bool,
+    #[export]
+    attackable: bool,
     #[export]
     health: u32,
     #[export]
@@ -45,7 +54,10 @@ pub struct RustZombie {
     state: ZombieState,
     current_speed: real,
     hurt_frames: Vec<i32>,
+    collision: Vector2,
     frame_counter: u128,
+    pursuit_direction: bool,
+    name_label: OnReady<Gd<RemoteTransform2D>>,
     collision_shape2d: OnReady<Gd<CollisionShape2D>>,
     animated_sprite2d: OnReady<Gd<ZombieAnimation>>,
     zombie_attack_area: OnReady<Gd<ZombieAttackArea>>,
@@ -67,6 +79,9 @@ pub struct RustZombie {
 impl ICharacterBody2D for RustZombie {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
+            name: GString::new(),
+            moveable: true,
+            attackable: true,
             speed: ZOMBIE_MOVE_SPEED,
             health: ZOMBIE_MAX_HEALTH,
             rampage_time: ZOMBIE_RAMPAGE_TIME,
@@ -77,7 +92,10 @@ impl ICharacterBody2D for RustZombie {
             state: ZombieState::Guard,
             current_speed: ZOMBIE_MOVE_SPEED * 0.2,
             hurt_frames: vec![2, 3, 4, 5],
+            collision: Vector2::ZERO,
             frame_counter: 0,
+            pursuit_direction: random_bool(),
+            name_label: OnReady::from_node("RemoteTransform2D"),
             collision_shape2d: OnReady::from_node("CollisionShape2D"),
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             zombie_attack_area: OnReady::from_node("ZombieAttackArea"),
@@ -107,9 +125,16 @@ impl ICharacterBody2D for RustZombie {
             .connect_self(ZombieAnimation::on_change_zombie_state);
         drop(animated_sprite2d);
         self.guard();
+        if !self.name.is_empty() {
+            let name = self.name.clone();
+            let mut name_label = self.name_label.get_node_as::<Label>("Name");
+            name_label.set_text(&name);
+            name_label.show();
+        }
     }
 
     fn process(&mut self, delta: f64) {
+        self.name_label.set_global_rotation_degrees(0.0);
         self.frame_counter = self.frame_counter.wrapping_add(1);
         if ZombieState::Dead == self.state
             || RustWorld::is_paused()
@@ -142,39 +167,17 @@ impl ICharacterBody2D for RustZombie {
             self.current_alarm_time = (self.current_alarm_time - delta as real).max(0.0);
         }
         let to_player_dir = zombie_position.direction_to(player_position).normalized();
+        let real_to_player_dir = if Vector2::ZERO != self.collision {
+            self.collision
+        } else {
+            to_player_dir
+        };
         let mut character_body2d = self.base.to_gd();
-        //僵尸之间的体积碰撞检测
-        for i in 0..character_body2d.get_slide_collision_count() {
-            if let Some(collision) = character_body2d.get_slide_collision(i) {
-                // 发出排斥力的方向
-                let from = collision.get_normal();
-                if let Some(object) = collision.get_collider() {
-                    if object.is_class("RustZombie") {
-                        // 受到排斥的僵尸
-                        let mut to_zombie = object.cast::<Self>();
-                        if ZombieState::Run == to_zombie.bind().state
-                            || ZombieState::Rampage == to_zombie.bind().state
-                        {
-                            continue;
-                        }
-                        // 给其他僵尸让开位置，这里分2步走是为了规避一些碰撞检测
-                        let dir = from.orthogonal();
-                        let speed = to_zombie.bind().current_speed;
-                        to_zombie.look_at(player_position);
-                        to_zombie.set_velocity(dir * speed);
-                        to_zombie.move_and_slide();
-                        to_zombie.look_at(player_position);
-                        to_zombie.set_velocity((-from) * speed);
-                        to_zombie.move_and_slide();
-                    }
-                }
-            }
-        }
-        if self.is_alarmed() || RustLevel::is_rampage() {
+        let velocity = if self.is_alarmed() || RustLevel::is_rampage() {
             // 跑向玩家
             self.rampage();
             self.base_mut().look_at(player_position);
-            character_body2d.set_velocity(to_player_dir * self.current_speed);
+            real_to_player_dir * self.current_speed
         } else {
             // 无目的移动
             if self.is_rampage_run() {
@@ -184,13 +187,40 @@ impl ICharacterBody2D for RustZombie {
             }
             let now = Instant::now();
             if now.duration_since(self.last_turn_time) >= self.turn_cooldown {
-                let direction = Self::random_direction();
+                let direction = random_direction();
                 character_body2d.look_at(zombie_position + direction);
-                character_body2d.set_velocity(direction * self.current_speed);
                 self.last_turn_time = now;
+                direction * self.current_speed
+            } else {
+                Vector2::ZERO
+            }
+        };
+        if self.moveable {
+            //撞到僵尸了
+            self.collision = Vector2::ZERO;
+            if let Some(collision) = character_body2d.move_and_collide(velocity) {
+                // 发出排斥力的方向
+                let from = collision.get_normal();
+                if let Some(object) = collision.get_collider() {
+                    if object.is_class("RustZombie") {
+                        let dir = NEXT_ATTACK_DIRECTION.load();
+                        let move_angle = to_player_dir.angle_to(dir).to_degrees();
+                        self.collision = if (0.0..=120.0).contains(&move_angle)
+                            || dir.x.abs() >= dir.y.abs()
+                        {
+                            from.orthogonal()
+                        } else if (-120.0..0.0).contains(&move_angle) || dir.x.abs() < dir.y.abs()
+                        {
+                            -from.orthogonal()
+                        } else if self.pursuit_direction {
+                            from.orthogonal()
+                        } else {
+                            -from.orthogonal()
+                        }
+                    }
+                }
             }
         }
-        character_body2d.move_and_slide();
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
@@ -225,22 +255,16 @@ impl RustZombie {
         let new_position = zombie_position + moved;
         let mut base_mut = self.base_mut();
         base_mut.look_at(zombie_position - direction);
-        base_mut.set_velocity(-direction * speed);
         //僵尸被击退
         base_mut.set_global_position(new_position);
         //僵尸往被攻击的方向移动
-        base_mut.move_and_slide();
+        base_mut.move_and_collide(-direction * speed);
         drop(base_mut);
         if 0 != self.health {
             self.hit(direction, hit_position);
         } else {
             self.die();
         }
-    }
-
-    pub fn random_direction() -> Vector2 {
-        let mut rng = rand::thread_rng();
-        Vector2::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0)).normalized()
     }
 
     fn notify_animation(&mut self) {
@@ -274,7 +298,7 @@ impl RustZombie {
             return;
         }
         self.animated_sprite2d.play_ex().name("run").done();
-        self.current_speed = self.speed * 2.5;
+        self.current_speed = self.speed * 1.75;
         self.state = ZombieState::Run;
         if !self.run_audio.is_playing() && self.run_audio.is_inside_tree() {
             self.run_audio.play();
@@ -306,7 +330,7 @@ impl RustZombie {
             return;
         }
         self.animated_sprite2d.play_ex().name("run").done();
-        self.current_speed = self.speed * 2.5;
+        self.current_speed = self.speed * 1.75;
         self.state = ZombieState::Rampage;
         if !self.rampage_audio.is_playing() && self.rampage_audio.is_inside_tree() {
             let live_count = RustLevel::get_live_count();
@@ -323,13 +347,19 @@ impl RustZombie {
     }
 
     pub fn attack(&mut self) {
-        if ZombieState::Dead == self.state {
+        if ZombieState::Dead == self.state || !self.attackable {
             return;
         }
         self.base_mut().look_at(RustPlayer::get_position());
         self.animated_sprite2d.play_ex().name("attack").done();
         self.current_speed = self.speed * 0.5;
         self.state = ZombieState::Attack;
+        let direction = NEXT_ATTACK_DIRECTION.load()
+            + self
+                .base()
+                .get_global_position()
+                .direction_to(RustPlayer::get_position());
+        NEXT_ATTACK_DIRECTION.store(direction.normalized());
         if self.attack_audio.is_inside_tree() {
             self.attack_audio.play();
         }
@@ -361,7 +391,7 @@ impl RustZombie {
             .unwrap()
             .get_root()
             .unwrap()
-            .get_node_as::<RustWorld>("RustWorld")
+            .get_node_as::<Node>("RustWorld")
             .get_node_as::<RustLevel>("RustLevel")
             .bind_mut()
             .kill_confirmed();
@@ -383,19 +413,8 @@ impl RustZombie {
     pub fn flash(&mut self) {
         let player_position = RustPlayer::get_position();
         self.base_mut().look_at(-player_position);
-        self.base_mut().set_global_position(
-            player_position
-                + Vector2::new(Self::random_half_position(), Self::random_half_position()),
-        );
-    }
-
-    fn random_half_position() -> real {
-        let mut rng = rand::thread_rng();
-        if rng.gen_range(-1.0..1.0) >= 0.0 {
-            rng.gen_range(900.0..1100.0)
-        } else {
-            rng.gen_range(-1100.0..-900.0)
-        }
+        self.base_mut()
+            .set_global_position(player_position + random_position(900.0, 1100.0));
     }
 
     pub fn move_back(&mut self) {
@@ -408,8 +427,7 @@ impl RustZombie {
         let speed = self.current_speed;
         let mut zombie = self.base_mut();
         zombie.look_at(zombie_position + from_player_dir);
-        zombie.set_velocity(from_player_dir * speed);
-        zombie.move_and_slide();
+        zombie.move_and_collide(from_player_dir * speed);
     }
 
     // 看到玩家不会马上狂暴，而是累计时间条，类似刺客信条

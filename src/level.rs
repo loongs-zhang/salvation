@@ -403,7 +403,7 @@ impl ZombieGenerator {
             .unwrap()
             .get_root()
             .unwrap()
-            .get_node_as::<RustWorld>("RustWorld")
+            .get_node_as::<Node>("RustWorld")
             .call_deferred("add_child", &zombies);
     }
 }

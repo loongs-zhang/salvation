@@ -1,6 +1,7 @@
 use godot::builtin::{GString, Vector2, real};
 use godot::init::{ExtensionLibrary, gdextension};
 use godot::register::GodotConvert;
+use rand::Rng;
 
 pub mod entrance;
 
@@ -67,7 +68,7 @@ const ZOMBIE_PURSUIT_DISTANCE: real = 225.0;
 
 const ZOMBIE_MAX_DISTANCE: real = 1600.0;
 
-const ZOMBIE_MOVE_SPEED: real = 150.0;
+const ZOMBIE_MOVE_SPEED: real = 2.25;
 
 const ZOMBIE_MAX_HEALTH: u32 = 100;
 
@@ -127,3 +128,28 @@ struct Salvation;
 
 #[gdextension]
 unsafe impl ExtensionLibrary for Salvation {}
+
+pub fn random_bool() -> bool {
+    rand::thread_rng().gen_range(-1.0..=1.0) >= 0.0
+}
+
+pub fn random_direction() -> Vector2 {
+    let mut rng = rand::thread_rng();
+    Vector2::new(rng.gen_range(-1.0..=1.0), rng.gen_range(-1.0..=1.0)).normalized()
+}
+
+pub fn random_position(from: real, to: real) -> Vector2 {
+    Vector2::new(
+        random_half_position(from, to),
+        random_half_position(from, to),
+    )
+}
+
+fn random_half_position(from: real, to: real) -> real {
+    let mut rng = rand::thread_rng();
+    if rng.gen_range(-1.0..=1.0) >= 0.0 {
+        rng.gen_range(from..to)
+    } else {
+        rng.gen_range(-to..=-from)
+    }
+}

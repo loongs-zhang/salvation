@@ -1,7 +1,6 @@
 use crate::player::RustPlayer;
-use crate::world::RustWorld;
 use crate::{BOSS_DAMAGE, ZombieState};
-use godot::classes::{Area2D, IArea2D, Node2D, Object};
+use godot::classes::{Area2D, IArea2D, Node, Node2D, Object};
 use godot::obj::{Base, Gd, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
 
@@ -55,7 +54,7 @@ impl BossBumpArea {
         if let Some(tree) = self.base().get_tree() {
             if let Some(root) = tree.get_root() {
                 return root
-                    .get_node_as::<RustWorld>("RustWorld")
+                    .get_node_as::<Node>("RustWorld")
                     .get_node_as::<RustPlayer>("RustPlayer");
             }
         }

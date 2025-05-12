@@ -8,16 +8,15 @@ use crate::zombie::attack::{ZombieAttackArea, ZombieDamageArea};
 use crate::zombie::hit::ZombieHit;
 use crate::{
     BOSS_BUMP_DISTANCE, BOSS_DAMAGE, BOSS_MAX_BODY_COUNT, BOSS_MAX_HEALTH, BOSS_MOVE_SPEED,
-    PlayerState, ZOMBIE_MAX_DISTANCE, ZombieState,
+    PlayerState, ZOMBIE_MAX_DISTANCE, ZombieState, random_position,
 };
 use godot::builtin::{Vector2, real};
 use godot::classes::{
     AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, GpuParticles2D, ICharacterBody2D,
-    InputEvent, PackedScene,
+    InputEvent, Node, PackedScene,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
-use rand::Rng;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{Duration, Instant};
 
@@ -28,6 +27,10 @@ static BODY_COUNT: AtomicU32 = AtomicU32::new(0);
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
 pub struct RustBoss {
+    #[export]
+    moveable: bool,
+    #[export]
+    attackable: bool,
     #[export]
     health: u32,
     #[export]
@@ -59,6 +62,8 @@ pub struct RustBoss {
 impl ICharacterBody2D for RustBoss {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
+            moveable: true,
+            attackable: true,
             speed: BOSS_MOVE_SPEED,
             health: BOSS_MAX_HEALTH,
             state: ZombieState::Guard,
@@ -168,7 +173,10 @@ impl ICharacterBody2D for RustBoss {
             self.base_mut().look_at(player_position);
             character_body2d.set_velocity(bump_dir * self.current_speed * 1.5);
         }
-        character_body2d.move_and_slide();
+        if self.moveable {
+            // todo refactor to move_and_collide
+            character_body2d.move_and_slide();
+        }
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
@@ -264,7 +272,7 @@ impl RustBoss {
     }
 
     pub fn attack(&mut self) {
-        if ZombieState::Dead == self.state {
+        if ZombieState::Dead == self.state || !self.attackable {
             return;
         }
         self.base_mut().look_at(RustPlayer::get_position());
@@ -303,7 +311,7 @@ impl RustBoss {
             .unwrap()
             .get_root()
             .unwrap()
-            .get_node_as::<RustWorld>("RustWorld")
+            .get_node_as::<Node>("RustWorld")
             .get_node_as::<RustLevel>("RustLevel")
             .bind_mut()
             .kill_boss_confirmed();
@@ -338,19 +346,8 @@ impl RustBoss {
 
     pub fn flash(&mut self) {
         let player_position = RustPlayer::get_position();
-        self.base_mut().set_global_position(
-            player_position
-                + Vector2::new(Self::random_half_position(), Self::random_half_position()),
-        );
-    }
-
-    fn random_half_position() -> real {
-        let mut rng = rand::thread_rng();
-        if rng.gen_range(-1.0..1.0) >= 0.0 {
-            rng.gen_range(1000.0..1100.0)
-        } else {
-            rng.gen_range(-1100.0..-1000.0)
-        }
+        self.base_mut()
+            .set_global_position(player_position + random_position(1000.0, 1100.0));
     }
 
     fn notify_animation(&mut self) {

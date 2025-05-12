@@ -1,7 +1,6 @@
 use crate::player::RustPlayer;
-use crate::world::RustWorld;
 use crate::{PlayerState, ZombieState};
-use godot::classes::{AnimatedSprite2D, IAnimatedSprite2D, Object};
+use godot::classes::{AnimatedSprite2D, IAnimatedSprite2D, Node, Object};
 use godot::obj::{Base, Gd, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
 
@@ -97,7 +96,7 @@ impl ZombieAnimation {
         if let Some(tree) = self.base().get_tree() {
             if let Some(root) = tree.get_root() {
                 return root
-                    .get_node_as::<RustWorld>("RustWorld")
+                    .get_node_as::<Node>("RustWorld")
                     .get_node_as::<RustPlayer>("RustPlayer");
             }
         }
