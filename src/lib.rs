@@ -46,7 +46,7 @@ const BULLET_PENETRATE: real = 2.0;
 
 const MAX_AMMO: i64 = 30;
 
-const RELOAD_TIME: u32 = 1000;
+const RELOAD_TIME: real = 1.0;
 
 //level
 const LEVEL_GROW_RATE: real = 1.1;

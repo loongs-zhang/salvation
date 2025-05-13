@@ -29,7 +29,7 @@ pub struct RustWeapon {
     #[export]
     fire_cooldown: real,
     #[export]
-    reload_time: u32,
+    reload_time: real,
     ammo: i64,
     current_fire_cooldown: real,
     bullet_scene: OnReady<Gd<PackedScene>>,

@@ -67,7 +67,7 @@ impl ICharacterBody2D for RustBoss {
             speed: BOSS_MOVE_SPEED,
             health: BOSS_MAX_HEALTH,
             state: ZombieState::Guard,
-            current_speed: BOSS_MOVE_SPEED,
+            current_speed: BOSS_MOVE_SPEED * 0.75,
             // hurt_frames: vec![26, 27, 28, 29, 30],
             hurt_frames: vec![2, 3, 4, 5],
             last_player_position: Vector2::ZERO,
@@ -217,7 +217,7 @@ impl RustBoss {
             return;
         }
         self.animated_sprite2d.play_ex().name("guard").done();
-        self.current_speed = self.speed;
+        self.current_speed = self.speed * 0.75;
         self.state = ZombieState::Guard;
         if !self.guard_audio.is_playing() && self.guard_audio.is_inside_tree() {
             self.guard_audio.play();

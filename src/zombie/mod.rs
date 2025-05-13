@@ -156,6 +156,7 @@ impl ICharacterBody2D for RustZombie {
         };
         let mut character_body2d = self.base.to_gd();
         let velocity = if self.is_alarmed() || RustLevel::is_rampage() {
+            //todo 增加僵尸发狂的HUD
             // 跑向玩家
             self.rampage();
             self.base_mut().look_at(player_position);

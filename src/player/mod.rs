@@ -27,7 +27,7 @@ static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
 static STATE: AtomicCell<PlayerState> = AtomicCell::new(PlayerState::Born);
 
-static RELOADING: AtomicCell<f64> = AtomicCell::new(0.0);
+static RELOADING: AtomicCell<real> = AtomicCell::new(0.0);
 
 static IMPACT_POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
@@ -133,9 +133,9 @@ impl ICharacterBody2D for RustPlayer {
         hud.update_died_hud();
         drop(hud);
         if PlayerState::Reload == self.state {
-            let reload_cost = RELOADING.load() + delta;
+            let reload_cost = RELOADING.load() + delta as real;
             RELOADING.store(reload_cost);
-            if reload_cost >= self.get_rust_weapon().bind().get_reload_time() as f64 / 1000.0 {
+            if reload_cost >= self.get_rust_weapon().bind().get_reload_time() {
                 self.reloaded();
             }
         } else if PlayerState::Impact == self.state {
