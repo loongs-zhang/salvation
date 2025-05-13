@@ -157,6 +157,12 @@ impl PlayerHUD {
         repel_hud.show();
     }
 
+    pub fn update_died_hud(&mut self) {
+        let mut repel_hud = self.get_hcontainer().get_node_as::<Label>("Died");
+        repel_hud.set_text(&format!("DIED {}", RustPlayer::get_died()));
+        repel_hud.show();
+    }
+
     fn get_vcontainer(&mut self) -> Gd<VBoxContainer> {
         self.control.get_node_as::<VBoxContainer>("VBoxContainer")
     }

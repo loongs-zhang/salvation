@@ -6,8 +6,8 @@ use crate::zombie::attack::{ZombieAttackArea, ZombieDamageArea};
 use crate::zombie::hit::ZombieHit;
 use crate::{
     PlayerState, ZOMBIE_ALARM_TIME, ZOMBIE_DAMAGE, ZOMBIE_MAX_BODY_COUNT, ZOMBIE_MAX_DISTANCE,
-    ZOMBIE_MAX_HEALTH, ZOMBIE_MIN_REFRESH_BATCH, ZOMBIE_MOVE_SPEED, ZOMBIE_PURSUIT_DISTANCE,
-    ZOMBIE_RAMPAGE_TIME, ZOMBIE_SKIP_FRAME, ZombieState, random_bool, random_direction,
+    ZOMBIE_MAX_HEALTH, ZOMBIE_MOVE_SPEED, ZOMBIE_PURSUIT_DISTANCE, ZOMBIE_RAMPAGE_TIME,
+    ZOMBIE_REFRESH_BARRIER, ZOMBIE_SKIP_FRAME, ZombieState, random_bool, random_direction,
     random_position,
 };
 use crossbeam_utils::atomic::AtomicCell;
@@ -282,7 +282,7 @@ impl RustZombie {
         self.current_speed = self.speed * 0.2;
         self.state = ZombieState::Guard;
         if !self.guard_audio.is_playing() && self.guard_audio.is_inside_tree() {
-            if RustLevel::get_live_count() >= ZOMBIE_MIN_REFRESH_BATCH {
+            if RustLevel::get_live_count() >= ZOMBIE_REFRESH_BARRIER {
                 self.guard_audio.set_volume_db(-30.0);
             } else {
                 self.guard_audio.set_volume_db(-20.0);
@@ -333,9 +333,9 @@ impl RustZombie {
         self.state = ZombieState::Rampage;
         if !self.rampage_audio.is_playing() && self.rampage_audio.is_inside_tree() {
             let live_count = RustLevel::get_live_count();
-            if live_count >= ZOMBIE_MIN_REFRESH_BATCH {
+            if live_count >= ZOMBIE_REFRESH_BARRIER {
                 self.rampage_audio.set_volume_db(-40.0);
-            } else if live_count >= ZOMBIE_MIN_REFRESH_BATCH / 2 {
+            } else if live_count >= ZOMBIE_REFRESH_BARRIER / 2 {
                 self.rampage_audio.set_volume_db(-25.0);
             } else {
                 self.rampage_audio.set_volume_db(-12.0);

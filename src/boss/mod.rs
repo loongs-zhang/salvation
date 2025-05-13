@@ -120,33 +120,11 @@ impl ICharacterBody2D for RustBoss {
         }
         let to_player_dir = zombie_position.direction_to(player_position).normalized();
         let mut character_body2d = self.base.to_gd();
-        //僵尸之间的体积碰撞检测
-        for i in 0..character_body2d.get_slide_collision_count() {
-            if let Some(collision) = character_body2d.get_slide_collision(i) {
-                // 发出排斥力的方向
-                let from = collision.get_normal();
-                if let Some(object) = collision.get_collider() {
-                    if object.is_class("RustZombie") {
-                        // 受到排斥的僵尸
-                        let mut to_zombie = object.cast::<RustZombie>();
-                        // 其他僵尸让开位置，这里分2步走是为了规避一些碰撞检测
-                        let dir = from.orthogonal();
-                        let speed = to_zombie.bind().get_current_speed();
-                        to_zombie.look_at(player_position);
-                        to_zombie.set_velocity(dir * speed);
-                        to_zombie.move_and_slide();
-                        to_zombie.look_at(player_position);
-                        to_zombie.set_velocity((-from) * speed);
-                        to_zombie.move_and_slide();
-                    }
-                }
-            }
-        }
-        if distance >= BOSS_BUMP_DISTANCE {
+        let velocity = if distance >= BOSS_BUMP_DISTANCE {
             // 走向玩家
             self.guard();
             self.base_mut().look_at(player_position);
-            character_body2d.set_velocity(to_player_dir * self.current_speed);
+            to_player_dir * self.current_speed
         } else {
             // 冲撞玩家
             let last_player_position = self.last_player_position;
@@ -155,11 +133,23 @@ impl ICharacterBody2D for RustBoss {
                 .normalized();
             self.bump();
             self.base_mut().look_at(player_position);
-            character_body2d.set_velocity(bump_dir * self.current_speed * 1.5);
-        }
+            bump_dir * self.current_speed * 1.5
+        };
         if self.moveable {
-            // todo refactor to move_and_collide
-            character_body2d.move_and_slide();
+            #[allow(warnings)]
+            if let Some(collision) = character_body2d.move_and_collide(velocity) {
+                // 发出排斥力的方向
+                let from = collision.get_normal();
+                if let Some(object) = collision.get_collider() {
+                    if object.is_class("RustZombie") {
+                        // todo 受到排斥的僵尸
+                        let mut to_zombie = object.cast::<RustZombie>();
+                    } else if object.is_class("RustPlayer") {
+                        // todo 受到排斥的玩家
+                        let mut to_player = object.cast::<RustPlayer>();
+                    }
+                }
+            }
         }
     }
 
@@ -348,6 +338,11 @@ impl RustBoss {
         let player_position = RustPlayer::get_position();
         self.base_mut()
             .set_global_position(player_position + random_position(1000.0, 1100.0));
+    }
+
+    pub fn get_current_direction(&self) -> Vector2 {
+        let rotation = self.base().get_rotation();
+        Vector2::new(rotation.cos(), rotation.sin())
     }
 
     fn notify_animation(&mut self) {

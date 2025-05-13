@@ -56,9 +56,9 @@ const LEVEL_RAMPAGE_TIME: real = 120.0;
 // zombie
 const ZOMBIE_SKIP_FRAME: u128 = 4;
 
-const ZOMBIE_MAX_SCREEN_COUNT: u32 = 150;
+const ZOMBIE_MAX_SCREEN_COUNT: u32 = 160;
 
-const ZOMBIE_MIN_REFRESH_BATCH: u32 = 40;
+const ZOMBIE_REFRESH_BARRIER: u32 = 40;
 
 const ZOMBIE_MAX_BODY_COUNT: u32 = 60;
 
@@ -79,13 +79,17 @@ const ZOMBIE_RAMPAGE_TIME: real = 30.0;
 //boss
 const BOSS_MAX_HEALTH: u32 = 3600;
 
-const BOSS_MOVE_SPEED: real = 200.0;
+const BOSS_MOVE_SPEED: real = 2.5;
 
 const BOSS_DAMAGE: i64 = 8;
 
 const BOSS_BUMP_DISTANCE: real = 250.0;
 
 const BOSS_MAX_BODY_COUNT: u32 = 20;
+
+const BOSS_MAX_SCREEN_COUNT: u32 = 6;
+
+const BOSS_REFRESH_BARRIER: u32 = 3;
 
 #[derive(GodotConvert, Default, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
 #[godot(via = GString)]

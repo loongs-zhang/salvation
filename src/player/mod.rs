@@ -35,6 +35,8 @@ static KILL_BOSS_COUNT: AtomicU32 = AtomicU32::new(0);
 
 static SCORE: AtomicU64 = AtomicU64::new(0);
 
+static DIED: AtomicU64 = AtomicU64::new(0);
+
 static LAST_SCORE_UPDATE: AtomicCell<f64> = AtomicCell::new(0.0);
 
 #[derive(GodotClass)]
@@ -124,6 +126,7 @@ impl ICharacterBody2D for RustPlayer {
         let mut hud = self.hud.bind_mut();
         hud.update_killed_hud();
         hud.update_score_hud();
+        hud.update_died_hud();
         drop(hud);
         if PlayerState::Reload == self.state {
             let reload_cost = RELOADING.load() + delta;
@@ -185,6 +188,7 @@ impl ICharacterBody2D for RustPlayer {
         hud.update_penetrate_hud(self.penetrate + rust_weapon.bind().get_penetrate());
         hud.update_killed_hud();
         hud.update_score_hud();
+        hud.update_died_hud();
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
@@ -373,6 +377,7 @@ impl RustPlayer {
         self.state = PlayerState::Dead;
         STATE.store(self.state);
         self.die_audio.play();
+        DIED.fetch_add(1, Ordering::Release);
         if 0 == self.current_lives {
             if let Some(tree) = self.base().get_tree() {
                 if let Some(root) = tree.get_root() {
@@ -517,6 +522,10 @@ impl RustPlayer {
 
     pub fn get_score() -> u64 {
         SCORE.load(Ordering::Acquire)
+    }
+
+    pub fn get_died() -> u64 {
+        DIED.load(Ordering::Acquire)
     }
 
     pub fn get_last_score_update() -> f64 {

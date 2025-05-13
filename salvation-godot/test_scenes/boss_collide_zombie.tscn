@@ -1,0 +1,78 @@
+[gd_scene load_steps=4 format=3 uid="uid://ckteh7lfh1lte"]
+
+[ext_resource type="PackedScene" uid="uid://d2ryhlh122dqg" path="res://scenes/rust_player.tscn" id="1_p3cd4"]
+[ext_resource type="PackedScene" uid="uid://5koe2fd6n3fc" path="res://scenes/rust_zombie.tscn" id="2_6qp56"]
+[ext_resource type="PackedScene" uid="uid://b8ou2gd7qcb4n" path="res://scenes/rust_boss.tscn" id="2_rlv2f"]
+
+[node name="RustWorld" type="Node2D"]
+
+[node name="RustPlayer" parent="." instance=ExtResource("1_p3cd4")]
+invincible = true
+
+[node name="RustBoss" parent="." instance=ExtResource("2_rlv2f")]
+attackable = false
+position = Vector2(250, 0)
+rotation = 3.14159
+
+[node name="RustZombie1" parent="." instance=ExtResource("2_6qp56")]
+name = "1"
+attackable = false
+rampage_time = 999.0
+alarm_time = 999.0
+position = Vector2(200, 0)
+rotation = 3.14159
+
+[node name="RustZombie2" parent="." instance=ExtResource("2_6qp56")]
+name = "2"
+attackable = false
+rampage_time = 999.0
+alarm_time = 999.0
+position = Vector2(200, -50)
+
+[node name="RustZombie3" parent="." instance=ExtResource("2_6qp56")]
+name = "3"
+attackable = false
+rampage_time = 999.0
+alarm_time = 999.0
+position = Vector2(200, 50)
+rotation = 3.14159
+
+[node name="RustZombie4" parent="." instance=ExtResource("2_6qp56")]
+name = "4"
+attackable = false
+rampage_time = 999.0
+alarm_time = 999.0
+position = Vector2(250, -50)
+rotation = 3.14159
+
+[node name="RustZombie5" parent="." instance=ExtResource("2_6qp56")]
+name = "5"
+attackable = false
+rampage_time = 999.0
+alarm_time = 999.0
+position = Vector2(250, 50)
+rotation = 3.14159
+
+[node name="RustZombie6" parent="." instance=ExtResource("2_6qp56")]
+name = "5"
+attackable = false
+rampage_time = 999.0
+alarm_time = 999.0
+position = Vector2(300, -50)
+rotation = 3.14159
+
+[node name="RustZombie7" parent="." instance=ExtResource("2_6qp56")]
+name = "5"
+attackable = false
+rampage_time = 999.0
+alarm_time = 999.0
+position = Vector2(300, 0)
+rotation = 3.14159
+
+[node name="RustZombie8" parent="." instance=ExtResource("2_6qp56")]
+name = "5"
+attackable = false
+rampage_time = 999.0
+alarm_time = 999.0
+position = Vector2(300, 50)
+rotation = 3.14159
