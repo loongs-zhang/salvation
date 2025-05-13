@@ -21,6 +21,7 @@ moveable = false
 rampage_time = 0.0
 alarm_time = 0.0
 position = Vector2(350, 0)
+rotation = -3.14159
 
 [node name="RustZombie3" parent="." instance=ExtResource("2_bsuhp")]
 moveable = false

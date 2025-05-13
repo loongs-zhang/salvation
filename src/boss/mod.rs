@@ -1,11 +1,11 @@
 use crate::boss::bump::BossBumpArea;
+use crate::common::RustMessage;
 use crate::level::RustLevel;
 use crate::player::RustPlayer;
 use crate::world::RustWorld;
 use crate::zombie::RustZombie;
 use crate::zombie::animation::ZombieAnimation;
 use crate::zombie::attack::{ZombieAttackArea, ZombieDamageArea};
-use crate::zombie::hit::ZombieHit;
 use crate::{
     BOSS_BUMP_DISTANCE, BOSS_DAMAGE, BOSS_MAX_BODY_COUNT, BOSS_MAX_HEALTH, BOSS_MOVE_SPEED,
     PlayerState, ZOMBIE_MAX_DISTANCE, ZombieState, random_position,
@@ -78,7 +78,7 @@ impl ICharacterBody2D for RustBoss {
             zombie_attack_area: OnReady::from_node("ZombieAttackArea"),
             zombie_damage_area: OnReady::from_node("ZombieDamageArea"),
             bump_damage_area: OnReady::from_node("BossBumpArea"),
-            hit_scene: OnReady::from_loaded("res://scenes/zombie_hit.tscn"),
+            hit_scene: OnReady::from_loaded("res://scenes/rust_message.tscn"),
             hit_audio: OnReady::from_node("HitAudio"),
             blood_flash: OnReady::from_node("GpuParticles2D"),
             guard_audio: OnReady::from_node("GuardAudio"),
@@ -135,16 +135,17 @@ impl ICharacterBody2D for RustBoss {
             self.base_mut().look_at(player_position);
             bump_dir * self.current_speed * 1.5
         };
-        if self.moveable {
-            #[allow(warnings)]
-            if let Some(collision) = self.base_mut().move_and_collide(velocity) {
-                // 发出排斥力的方向
-                let from = collision.get_normal();
-                if let Some(object) = collision.get_collider() {
-                    if object.is_class("RustZombie") {
-                        // todo BOSS撞到僵尸，僵尸要让路，问题是当BOSS被僵尸围时，需要扩散撞击
-                        let mut to_zombie = object.cast::<RustZombie>();
-                    }
+        if !self.moveable {
+            return;
+        }
+        #[allow(warnings)]
+        if let Some(collision) = self.base_mut().move_and_collide(velocity) {
+            // 发出排斥力的方向
+            let from = collision.get_normal();
+            if let Some(object) = collision.get_collider() {
+                if object.is_class("RustZombie") {
+                    // todo BOSS撞到僵尸，僵尸要让路，问题是当BOSS被僵尸围时，需要扩散撞击
+                    let mut to_zombie = object.cast::<RustZombie>();
                 }
             }
         }
@@ -178,7 +179,7 @@ impl RustBoss {
     #[func]
     pub fn on_hit(&mut self, hit_val: i64, direction: Vector2, repel: real, hit_position: Vector2) {
         let zombie_position = self.base().get_global_position();
-        if let Some(mut hit_label) = self.hit_scene.try_instantiate_as::<ZombieHit>() {
+        if let Some(mut hit_label) = self.hit_scene.try_instantiate_as::<RustMessage>() {
             hit_label.set_global_position(zombie_position);
             if let Some(tree) = self.base().get_tree() {
                 if let Some(mut root) = tree.get_root() {

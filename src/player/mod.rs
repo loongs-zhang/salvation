@@ -1,5 +1,5 @@
+use crate::common::RustMessage;
 use crate::player::hud::PlayerHUD;
-use crate::player::level_up::PlayerLevelUp;
 use crate::weapon::RustWeapon;
 use crate::world::RustWorld;
 use crate::{
@@ -20,8 +20,6 @@ use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub mod hud;
-
-pub mod level_up;
 
 static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
@@ -117,7 +115,7 @@ impl ICharacterBody2D for RustPlayer {
             bone_hurt: OnReady::from_node("HurtAudio2"),
             scream_audio: OnReady::from_node("ScreamAudio"),
             die_audio: OnReady::from_node("DieAudio"),
-            level_up_scene: OnReady::from_loaded("res://scenes/player_level_up.tscn"),
+            level_up_scene: OnReady::from_loaded("res://scenes/rust_message.tscn"),
             base,
         }
     }
@@ -133,6 +131,7 @@ impl ICharacterBody2D for RustPlayer {
         hud.update_died_hud();
         drop(hud);
         if PlayerState::Reload == self.state {
+            // 选择这种计时的方式是为了支持打断换弹
             let reload_cost = RELOADING.load() + delta as real;
             RELOADING.store(reload_cost);
             if reload_cost >= self.get_rust_weapon().bind().get_reload_time() {
@@ -550,8 +549,7 @@ impl RustPlayer {
 
     fn show_upgrade_label(&mut self, what: PlayerUpgrade) {
         self.hud.bind_mut().set_upgrade_visible(false);
-        if let Some(mut level_up_label) = self.level_up_scene.try_instantiate_as::<PlayerLevelUp>()
-        {
+        if let Some(mut level_up_label) = self.level_up_scene.try_instantiate_as::<RustMessage>() {
             level_up_label.set_global_position(RustPlayer::get_position());
             if let Some(tree) = self.base().get_tree() {
                 if let Some(mut root) = tree.get_root() {

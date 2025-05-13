@@ -1,4 +1,4 @@
-[gd_scene load_steps=48 format=3 uid="uid://5koe2fd6n3fc"]
+[gd_scene load_steps=49 format=3 uid="uid://5koe2fd6n3fc"]
 
 [ext_resource type="Texture2D" uid="uid://b0iko5y4ocllp" path="res://asserts/zombie/zombie.png" id="1_4lcne"]
 [ext_resource type="AudioStream" uid="uid://cmrqyjcdujjjv" path="res://asserts/zombie/zombie_hit.mp3" id="2_xgxvb"]
@@ -9,6 +9,13 @@
 [ext_resource type="AudioStream" uid="uid://bcnhffrg5qxh6" path="res://asserts/zombie/zombie_attack.mp3" id="7_4y265"]
 [ext_resource type="AudioStream" uid="uid://dc37ofk5eturh" path="res://asserts/zombie/zombie_attack_scream.mp3" id="8_5l3r1"]
 [ext_resource type="AudioStream" uid="uid://dmdxayn7g648c" path="res://asserts/zombie/zombie_die.mp3" id="9_pgect"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pgect"]
+bg_color = Color(0.545098, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_xgxvb"]
 radius = 18.0
@@ -293,6 +300,49 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 4
 theme_override_colors/font_color = Color(1, 0, 0, 1)
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="AlarmProgress" type="Control" parent="RemoteTransform2D"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = -30.0
+offset_top = -45.0
+offset_right = 30.0
+offset_bottom = -30.0
+
+[node name="ProgressBar" type="ProgressBar" parent="RemoteTransform2D/AlarmProgress"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -30.0
+offset_top = -7.5
+offset_right = 30.0
+offset_bottom = 7.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 8
+theme_override_styles/fill = SubResource("StyleBoxFlat_pgect")
+show_percentage = false
+
+[node name="Label" type="Label" parent="RemoteTransform2D/AlarmProgress"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.5
+offset_top = -5.5
+offset_right = 16.5
+offset_bottom = 5.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 8
+text = "ALARM"
 horizontal_alignment = 1
 vertical_alignment = 1
 

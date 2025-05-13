@@ -9,6 +9,8 @@ pub mod level;
 
 pub mod world;
 
+pub mod common;
+
 pub mod player;
 
 pub mod weapon;

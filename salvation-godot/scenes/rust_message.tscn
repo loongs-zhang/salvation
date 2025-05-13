@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://cd3rwutuaoi1q"]
 
-[node name="ZombieHit" type="ZombieHit"]
+[node name="RustMessage" type="RustMessage"]
 
-[node name="HitValue" type="Label" parent="."]
+[node name="Message" type="Label" parent="."]
 z_index = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,6 +11,6 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 8
-text = "HitValue"
+text = "Message"
 horizontal_alignment = 1
 vertical_alignment = 1
