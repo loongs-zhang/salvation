@@ -67,12 +67,12 @@ impl ICharacterBody2D for RustBoss {
             speed: BOSS_MOVE_SPEED,
             health: BOSS_MAX_HEALTH,
             state: ZombieState::Guard,
-            current_speed: BOSS_MOVE_SPEED * 0.2,
+            current_speed: BOSS_MOVE_SPEED,
             // hurt_frames: vec![26, 27, 28, 29, 30],
             hurt_frames: vec![2, 3, 4, 5],
             last_player_position: Vector2::ZERO,
             last_record_time: Instant::now(),
-            record_cooldown: Duration::from_millis(1000),
+            record_cooldown: Duration::from_secs(3),
             collision_shape2d: OnReady::from_node("CollisionShape2D"),
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             zombie_attack_area: OnReady::from_node("ZombieAttackArea"),
@@ -98,11 +98,12 @@ impl ICharacterBody2D for RustBoss {
             }
             return;
         }
-        if PlayerState::Dead == RustPlayer::get_state() {
+        let player_state = RustPlayer::get_state();
+        if PlayerState::Dead == player_state {
             self.move_back();
             return;
         }
-        if ZombieState::Attack == self.state {
+        if ZombieState::Attack == self.state || PlayerState::Impact == player_state {
             return;
         }
         let player_position = RustPlayer::get_position();
@@ -119,7 +120,6 @@ impl ICharacterBody2D for RustBoss {
             return;
         }
         let to_player_dir = zombie_position.direction_to(player_position).normalized();
-        let mut character_body2d = self.base.to_gd();
         let velocity = if distance >= BOSS_BUMP_DISTANCE {
             // 走向玩家
             self.guard();
@@ -137,16 +137,13 @@ impl ICharacterBody2D for RustBoss {
         };
         if self.moveable {
             #[allow(warnings)]
-            if let Some(collision) = character_body2d.move_and_collide(velocity) {
+            if let Some(collision) = self.base_mut().move_and_collide(velocity) {
                 // 发出排斥力的方向
                 let from = collision.get_normal();
                 if let Some(object) = collision.get_collider() {
                     if object.is_class("RustZombie") {
-                        // todo 受到排斥的僵尸
+                        // todo BOSS撞到僵尸，僵尸要让路，问题是当BOSS被僵尸围时，需要扩散撞击
                         let mut to_zombie = object.cast::<RustZombie>();
-                    } else if object.is_class("RustPlayer") {
-                        // todo 受到排斥的玩家
-                        let mut to_player = object.cast::<RustPlayer>();
                     }
                 }
             }
@@ -202,11 +199,10 @@ impl RustBoss {
         let new_position = zombie_position + moved;
         let mut base_mut = self.base_mut();
         base_mut.look_at(zombie_position - direction);
-        base_mut.set_velocity(-direction * speed);
         //僵尸被击退
         base_mut.set_global_position(new_position);
         //僵尸往被攻击的方向移动
-        base_mut.move_and_slide();
+        base_mut.move_and_collide(-direction * speed);
         drop(base_mut);
         if 0 != self.health {
             self.hit(direction, hit_position);
@@ -330,8 +326,7 @@ impl RustBoss {
         let speed = self.current_speed;
         let mut zombie = self.base_mut();
         zombie.look_at(zombie_position + from_player_dir);
-        zombie.set_velocity(from_player_dir * speed);
-        zombie.move_and_slide();
+        zombie.move_and_collide(from_player_dir * speed);
     }
 
     pub fn flash(&mut self) {

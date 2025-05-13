@@ -29,6 +29,10 @@ static STATE: AtomicCell<PlayerState> = AtomicCell::new(PlayerState::Born);
 
 static RELOADING: AtomicCell<f64> = AtomicCell::new(0.0);
 
+static IMPACT_POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
+
+static IMPACTING: AtomicCell<f64> = AtomicCell::new(0.0);
+
 static KILL_COUNT: AtomicU32 = AtomicU32::new(0);
 
 static KILL_BOSS_COUNT: AtomicU32 = AtomicU32::new(0);
@@ -78,8 +82,8 @@ pub struct RustPlayer {
     blood_flash: OnReady<Gd<GpuParticles2D>>,
     hud: OnReady<Gd<PlayerHUD>>,
     run_audio: OnReady<Gd<AudioStreamPlayer2D>>,
-    hurt_audio1: OnReady<Gd<AudioStreamPlayer2D>>,
-    hurt_audio2: OnReady<Gd<AudioStreamPlayer2D>>,
+    body_hurt: OnReady<Gd<AudioStreamPlayer2D>>,
+    bone_hurt: OnReady<Gd<AudioStreamPlayer2D>>,
     scream_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     die_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     level_up_scene: OnReady<Gd<PackedScene>>,
@@ -109,8 +113,8 @@ impl ICharacterBody2D for RustPlayer {
             blood_flash: OnReady::from_node("GpuParticles2D"),
             hud: OnReady::from_node("PlayerHUD"),
             run_audio: OnReady::from_node("RunAudio"),
-            hurt_audio1: OnReady::from_node("HurtAudio1"),
-            hurt_audio2: OnReady::from_node("HurtAudio2"),
+            body_hurt: OnReady::from_node("HurtAudio1"),
+            bone_hurt: OnReady::from_node("HurtAudio2"),
             scream_audio: OnReady::from_node("ScreamAudio"),
             die_audio: OnReady::from_node("DieAudio"),
             level_up_scene: OnReady::from_loaded("res://scenes/player_level_up.tscn"),
@@ -134,6 +138,14 @@ impl ICharacterBody2D for RustPlayer {
             if reload_cost >= self.get_rust_weapon().bind().get_reload_time() as f64 / 1000.0 {
                 self.reloaded();
             }
+        } else if PlayerState::Impact == self.state {
+            let impact_cost = IMPACTING.load() + delta;
+            IMPACTING.store(impact_cost);
+            if impact_cost < 1.0 {
+                self.impacting();
+            } else {
+                self.impacted();
+            }
         }
         let player_position = self.base().get_global_position();
         POSITION.store(player_position);
@@ -150,19 +162,26 @@ impl ICharacterBody2D for RustPlayer {
         {
             self.run();
         }
-        let key_direction = Vector2::new(
+        let mut move_direction = Vector2::new(
             input.get_axis("move_left", "move_right"),
             input.get_axis("move_up", "move_down"),
         );
         match self.state {
             PlayerState::Run => self
                 .animated_sprite2d
-                .look_at(player_position + key_direction),
+                .look_at(player_position + move_direction),
+            PlayerState::Impact => {
+                move_direction = IMPACT_POSITION
+                    .load()
+                    .direction_to(player_position)
+                    .normalized();
+                self.animated_sprite2d.look_at(IMPACT_POSITION.load());
+            }
             _ => self.animated_sprite2d.look_at(mouse_position),
         }
         let mut character_body2d = self.base.to_gd();
-        if key_direction != Vector2::ZERO {
-            character_body2d.set_velocity(key_direction.normalized() * self.current_speed);
+        if move_direction != Vector2::ZERO {
+            character_body2d.set_velocity(move_direction.normalized() * self.current_speed);
         } else {
             character_body2d.set_velocity(Vector2::ZERO);
             self.guard();
@@ -223,7 +242,6 @@ impl RustPlayer {
             .set_content_scale_factor(scale);
     }
 
-    #[func]
     pub fn on_hit(&mut self, hit_val: i64, hit_position: Vector2) {
         if !self.invincible {
             let health = self.current_health;
@@ -272,7 +290,10 @@ impl RustPlayer {
 
     #[func]
     pub fn guard(&mut self) {
-        if PlayerState::Dead == self.state || PlayerState::Reload == self.state {
+        if PlayerState::Dead == self.state
+            || PlayerState::Impact == self.state
+            || PlayerState::Reload == self.state
+        {
             return;
         }
         self.animated_sprite2d.play_ex().name("guard").done();
@@ -282,7 +303,7 @@ impl RustPlayer {
     }
 
     pub fn run(&mut self) {
-        if PlayerState::Dead == self.state {
+        if PlayerState::Dead == self.state || PlayerState::Impact == self.state {
             return;
         }
         self.animated_sprite2d.play_ex().name("run").done();
@@ -297,7 +318,10 @@ impl RustPlayer {
     }
 
     pub fn shoot(&mut self) {
-        if PlayerState::Dead == self.state || PlayerState::Reload == self.state {
+        if PlayerState::Dead == self.state
+            || PlayerState::Impact == self.state
+            || PlayerState::Reload == self.state
+        {
             return;
         }
         let mut rust_weapon = self.get_rust_weapon();
@@ -319,7 +343,10 @@ impl RustPlayer {
     }
 
     pub fn reload(&mut self) {
-        if PlayerState::Dead == self.state || !self.get_rust_weapon().bind_mut().reload() {
+        if PlayerState::Dead == self.state
+            || PlayerState::Impact == self.state
+            || !self.get_rust_weapon().bind_mut().reload()
+        {
             return;
         }
         self.animated_sprite2d.play_ex().name("reload").done();
@@ -328,9 +355,8 @@ impl RustPlayer {
         STATE.store(self.state);
     }
 
-    #[func]
     pub fn reloaded(&mut self) {
-        if PlayerState::Dead == self.state {
+        if PlayerState::Dead == self.state || PlayerState::Impact == self.state {
             return;
         }
         self.state = PlayerState::Guard;
@@ -358,13 +384,64 @@ impl RustPlayer {
         self.blood_flash.restart();
         STATE.store(self.state);
         if random_bool() {
-            self.hurt_audio1.play();
+            self.body_hurt.play();
         } else {
-            self.hurt_audio2.play();
+            self.bone_hurt.play();
         }
         if !self.scream_audio.is_playing() {
             self.scream_audio.play();
         }
+    }
+
+    pub fn on_impact(&mut self, hit_val: i64, impact_position: Vector2) {
+        if PlayerState::Dead == self.state {
+            return;
+        }
+        self.on_hit(hit_val, impact_position);
+        if PlayerState::Dead == self.state {
+            return;
+        }
+        self.animated_sprite2d.play_ex().name("bump").done();
+        self.current_speed = self.speed * 1.25;
+        self.state = PlayerState::Impact;
+        let player_position = self.base().get_global_position();
+        self.blood_flash.set_global_position(
+            player_position + player_position.direction_to(impact_position).normalized() * 18.0,
+        );
+        self.blood_flash.look_at(impact_position);
+        self.blood_flash.set_one_shot(false);
+        self.blood_flash.set_emitting(true);
+        self.blood_flash.restart();
+        STATE.store(self.state);
+        IMPACT_POSITION.store(impact_position);
+        STATE.store(self.state);
+    }
+
+    pub fn impacting(&mut self) {
+        if PlayerState::Impact != self.state {
+            return;
+        }
+        self.animated_sprite2d.play_ex().name("bump").done();
+        self.current_speed = self.speed * 1.25;
+        self.state = PlayerState::Impact;
+        STATE.store(self.state);
+        let hit_position = IMPACT_POSITION.load();
+        self.base_mut().look_at(hit_position);
+        if !self.scream_audio.is_playing() {
+            self.scream_audio.play();
+        }
+    }
+
+    pub fn impacted(&mut self) {
+        if PlayerState::Impact != self.state {
+            return;
+        }
+        self.state = PlayerState::Guard;
+        self.blood_flash.set_one_shot(true);
+        self.blood_flash.set_emitting(false);
+        IMPACT_POSITION.store(Vector2::ZERO);
+        IMPACTING.store(0.0);
+        self.guard();
     }
 
     pub fn die(&mut self, hit_position: Vector2) {

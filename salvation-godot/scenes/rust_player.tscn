@@ -16,6 +16,10 @@
 [sub_resource type="CircleShape2D" id="CircleShape2D_h4u8k"]
 radius = 18.0
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_jej6c"]
+atlas = ExtResource("3_53o8o")
+region = Rect2(0, 0, 35, 57)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_h4u8k"]
 atlas = ExtResource("2_53o8o")
 region = Rect2(2816, 640, 128, 128)
@@ -80,10 +84,6 @@ region = Rect2(320, 0, 80, 87)
 atlas = ExtResource("2_0rh5x")
 region = Rect2(400, 0, 80, 87)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_jej6c"]
-atlas = ExtResource("3_53o8o")
-region = Rect2(0, 0, 35, 57)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_f1ej7"]
 atlas = ExtResource("3_53o8o")
 region = Rect2(35, 0, 35, 57)
@@ -106,6 +106,14 @@ region = Rect2(175, 0, 35, 57)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_g8j1n"]
 animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jej6c")
+}],
+"loop": false,
+"name": &"bump",
+"speed": 1.0
+}, {
 "frames": [{
 "duration": 1.0,
 "texture": ExtResource("1_iwbmd")
@@ -271,7 +279,7 @@ shape = SubResource("CircleShape2D_h4u8k")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_g8j1n")
-animation = &"guard"
+animation = &"bump"
 autoplay = "guard"
 
 [node name="Camera2D" type="Camera2D" parent="."]

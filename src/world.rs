@@ -5,8 +5,8 @@ use crate::player::RustPlayer;
 use godot::builtin::{Array, Vector2, Vector2i, array};
 use godot::classes::fast_noise_lite::NoiseType;
 use godot::classes::{
-    Button, CanvasLayer, Control, FastNoiseLite, HBoxContainer, INode2D, InputEvent, Label, Node2D,
-    Object, PackedScene, TileMapLayer,
+    Button, CanvasLayer, Control, FastNoiseLite, HBoxContainer, INode2D, InputEvent, Label, Node,
+    Node2D, Object, PackedScene, TileMapLayer,
 };
 use godot::global::godot_print;
 use godot::obj::{Base, Gd, NewGd, OnReady, WithBaseField, WithUserSignals};
@@ -74,13 +74,13 @@ impl INode2D for RustWorld {
             .connect_self(Self::on_player_dead);
         self.generate_world(125);
         // stop BGM after world generated
-        self.base()
-            .get_tree()
-            .unwrap()
-            .get_root()
-            .unwrap()
-            .get_node_as::<RustEntrance>("RustEntrance")
-            .queue_free();
+        if let Some(tree) = self.base().get_tree() {
+            if let Some(root) = tree.get_root() {
+                if let Some(mut entrance) = root.try_get_node_as::<Node>("RustEntrance") {
+                    entrance.queue_free();
+                }
+            }
+        }
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {

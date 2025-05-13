@@ -126,11 +126,12 @@ impl ICharacterBody2D for RustZombie {
             }
             return;
         }
-        if PlayerState::Dead == RustPlayer::get_state() {
+        let player_state = RustPlayer::get_state();
+        if PlayerState::Dead == player_state {
             self.move_back();
             return;
         }
-        if ZombieState::Attack == self.state {
+        if ZombieState::Attack == self.state || PlayerState::Impact == player_state {
             return;
         }
         self.rampage_time = (self.rampage_time - delta as real).max(0.0);

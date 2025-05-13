@@ -3,11 +3,14 @@ use crate::{BOSS_DAMAGE, ZombieState};
 use godot::classes::{Area2D, IArea2D, Node, Node2D, Object};
 use godot::obj::{Base, Gd, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
+use std::time::{Duration, Instant};
 
 #[derive(GodotClass)]
 #[class(base=Area2D)]
 pub struct BossBumpArea {
     boss_state: ZombieState,
+    last_bump_time: Instant,
+    bump_cooldown: Duration,
     base: Base<Area2D>,
 }
 
@@ -16,11 +19,14 @@ impl IArea2D for BossBumpArea {
     fn init(base: Base<Area2D>) -> Self {
         Self {
             boss_state: ZombieState::Guard,
+            last_bump_time: Instant::now(),
+            bump_cooldown: Duration::from_secs(10),
             base,
         }
     }
 
     fn ready(&mut self) {
+        self.last_bump_time -= self.bump_cooldown;
         self.signals()
             .body_entered()
             .connect_self(Self::on_area_2d_body_entered);
@@ -39,14 +45,17 @@ impl BossBumpArea {
 
     #[func]
     pub fn on_area_2d_body_entered(&mut self, body: Gd<Node2D>) {
+        let now = Instant::now();
         if (ZombieState::Run == self.boss_state || ZombieState::Attack == self.boss_state)
             && body.is_class("RustPlayer")
+            && now.duration_since(self.last_bump_time) >= self.bump_cooldown
         {
-            // 伤害玩家
+            // 撞击玩家，如果无冷却就会一直撞击，不攻击
             let position = self.base().get_global_position();
             self.get_rust_player()
                 .bind_mut()
-                .on_hit(BOSS_DAMAGE, position);
+                .on_impact(BOSS_DAMAGE * 4, position);
+            self.last_bump_time = now;
         }
     }
 
