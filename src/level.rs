@@ -421,7 +421,9 @@ impl ZombieGenerator {
         self.max_screen_count = max_screen_count;
         self.current_total = (self.total as f32 * rate) as u32;
         self.current_refresh_count = (self.refresh_count as f32 * rate) as u32;
-        self.timer.start();
+        if !RustWorld::is_paused() {
+            self.timer.start();
+        }
         if !jump && self.immediate {
             self.generate();
         }
