@@ -3,9 +3,8 @@ use crate::player::hud::PlayerHUD;
 use crate::weapon::RustWeapon;
 use crate::world::RustWorld;
 use crate::{
-    DEFAULT_SCREEN_SIZE, MAX_AMMO, PLAYER_LEVEL_UP_BARRIER, PLAYER_LEVEL_UP_GROW_RATE,
-    PLAYER_MAX_HEALTH, PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState, PlayerUpgrade,
-    random_bool,
+    DEFAULT_SCREEN_SIZE, PLAYER_LEVEL_UP_BARRIER, PLAYER_LEVEL_UP_GROW_RATE, PLAYER_MAX_HEALTH,
+    PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState, PlayerUpgrade, random_bool,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
@@ -207,7 +206,7 @@ impl ICharacterBody2D for RustPlayer {
         let mut hud = self.hud.bind_mut();
         hud.update_lives_hud(self.current_lives, self.lives);
         hud.update_hp_hud(self.current_health, self.health);
-        hud.update_ammo_hud(rust_weapon.bind().get_ammo(), MAX_AMMO);
+        hud.update_ammo_hud(rust_weapon.bind().get_ammo(), rust_weapon.bind().get_clip());
         hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
         hud.update_distance_hud(self.distance + rust_weapon.bind().get_distance());
         hud.update_repel_hud(self.repel + rust_weapon.bind().get_repel());
@@ -232,6 +231,8 @@ impl ICharacterBody2D for RustPlayer {
             self.change_weapon(0);
         } else if event.is_action_pressed("2") {
             self.change_weapon(1);
+        } else if event.is_action_pressed("3") {
+            self.change_weapon(2);
         }
     }
 }
@@ -415,7 +416,7 @@ impl RustPlayer {
         // 更新HUD
         let rust_weapon = self.get_current_weapon();
         let mut hud = self.hud.bind_mut();
-        hud.update_ammo_hud(rust_weapon.bind().get_ammo(), MAX_AMMO);
+        hud.update_ammo_hud(rust_weapon.bind().get_ammo(), rust_weapon.bind().get_clip());
         hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
         hud.update_distance_hud(self.distance + rust_weapon.bind().get_distance());
         hud.update_repel_hud(self.repel + rust_weapon.bind().get_repel());

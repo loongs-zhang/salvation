@@ -69,6 +69,10 @@ impl INode2D for RustWeapon {
     fn process(&mut self, delta: f64) {
         self.current_fire_cooldown -= delta as real;
     }
+
+    fn ready(&mut self) {
+        self.ammo = self.clip;
+    }
 }
 
 #[godot_api]
