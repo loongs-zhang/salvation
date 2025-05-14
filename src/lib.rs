@@ -3,13 +3,13 @@ use godot::init::{ExtensionLibrary, gdextension};
 use godot::register::GodotConvert;
 use rand::Rng;
 
+pub mod common;
+
 pub mod entrance;
 
 pub mod level;
 
 pub mod world;
-
-pub mod common;
 
 pub mod player;
 

@@ -36,8 +36,9 @@ pub struct RustWeapon {
     bullet_point: OnReady<Gd<Node2D>>,
     fire_flash: OnReady<Gd<GpuParticles2D>>,
     fire_audio: OnReady<Gd<AudioStreamPlayer2D>>,
-    reload_start_audio: OnReady<Gd<AudioStreamPlayer2D>>,
-    reload_end_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    clip_out_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    clip_in_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    bolt_pull_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     base: Base<Node2D>,
 }
 
@@ -58,8 +59,9 @@ impl INode2D for RustWeapon {
             bullet_point: OnReady::from_node("BulletPoint"),
             fire_flash: OnReady::from_node("GpuParticles2D"),
             fire_audio: OnReady::from_node("FireAudio"),
-            reload_start_audio: OnReady::from_node("ReloadStartAudio"),
-            reload_end_audio: OnReady::from_node("ReloadEndAudio"),
+            clip_out_audio: OnReady::from_node("ClipOutAudio"),
+            clip_in_audio: OnReady::from_node("ClipInAudio"),
+            bolt_pull_audio: OnReady::from_node("BoltPullAudio"),
             base,
         }
     }
@@ -113,7 +115,7 @@ impl RustWeapon {
         if self.clip == self.ammo {
             return false;
         }
-        self.reload_start_audio.play();
+        self.clip_out_audio.play();
         true
     }
 
@@ -121,7 +123,9 @@ impl RustWeapon {
         if self.clip == self.ammo {
             return self.clip;
         }
-        self.reload_end_audio.play();
+        self.clip_in_audio.play();
+        //todo 后续需要重构，弹匣进来后，m4需要拉一下栓，ak不需要
+        self.bolt_pull_audio.play();
         self.ammo = self.clip;
         self.ammo
     }

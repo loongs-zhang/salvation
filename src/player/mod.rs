@@ -86,6 +86,8 @@ pub struct RustPlayer {
     bone_hurt: OnReady<Gd<AudioStreamPlayer2D>>,
     scream_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     die_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    change_success_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    change_fail_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     level_up_scene: OnReady<Gd<PackedScene>>,
     base: Base<CharacterBody2D>,
 }
@@ -118,6 +120,8 @@ impl ICharacterBody2D for RustPlayer {
             bone_hurt: OnReady::from_node("HurtAudio2"),
             scream_audio: OnReady::from_node("ScreamAudio"),
             die_audio: OnReady::from_node("DieAudio"),
+            change_success_audio: OnReady::from_node("ChangeWeaponSuccess"),
+            change_fail_audio: OnReady::from_node("ChangeWeaponFail"),
             level_up_scene: OnReady::from_loaded("res://scenes/rust_message.tscn"),
             base,
         }
@@ -196,6 +200,7 @@ impl ICharacterBody2D for RustPlayer {
     }
 
     fn ready(&mut self) {
+        self.change_weapon(self.current_weapon_index);
         self.base_mut()
             .set_physics_interpolation_mode(PhysicsInterpolationMode::ON);
         let rust_weapon = self.get_current_weapon();
@@ -223,6 +228,10 @@ impl ICharacterBody2D for RustPlayer {
             || event.is_action_released("mouse_right")
         {
             self.guard();
+        } else if event.is_action_pressed("1") {
+            self.change_weapon(0);
+        } else if event.is_action_pressed("2") {
+            self.change_weapon(1);
         }
     }
 }
@@ -374,6 +383,43 @@ impl RustPlayer {
             .update_ammo_hud(rust_weapon.bind().get_ammo(), clip);
         self.guard();
         RELOADING.store(0.0);
+    }
+
+    pub fn change_weapon(&mut self, weapon_index: i32) {
+        if PlayerState::Dead == self.state || PlayerState::Impact == self.state {
+            return;
+        }
+        for i in 0..self.weapons.get_child_count() {
+            if let Some(node) = self.weapons.get_child(i) {
+                let mut weapon = node.cast::<RustWeapon>();
+                if weapon_index == i {
+                    weapon.set_visible(true);
+                } else {
+                    weapon.set_visible(false);
+                }
+            }
+        }
+        self.weapons.set_visible(true);
+        if weapon_index == self.current_weapon_index {
+            self.change_fail_audio.play();
+            return;
+        }
+        self.animated_sprite2d.play_ex().name("guard").done();
+        self.current_speed = self.speed * 0.75;
+        self.current_weapon_index = weapon_index;
+        self.state = PlayerState::Guard;
+        STATE.store(self.state);
+        //打断换弹
+        RELOADING.store(0.0);
+        self.change_success_audio.play();
+        // 更新HUD
+        let rust_weapon = self.get_current_weapon();
+        let mut hud = self.hud.bind_mut();
+        hud.update_ammo_hud(rust_weapon.bind().get_ammo(), MAX_AMMO);
+        hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
+        hud.update_distance_hud(self.distance + rust_weapon.bind().get_distance());
+        hud.update_repel_hud(self.repel + rust_weapon.bind().get_repel());
+        hud.update_penetrate_hud(self.penetrate + rust_weapon.bind().get_penetrate());
     }
 
     pub fn hit(&mut self, hit_position: Vector2) {
