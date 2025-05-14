@@ -116,19 +116,19 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("1_iwbmd")
+"texture": SubResource("AtlasTexture_jej6c")
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_h4u8k")
 }, {
 "duration": 1.0,
-"texture": ExtResource("1_iwbmd")
+"texture": SubResource("AtlasTexture_jej6c")
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_h4u8k")
 }, {
 "duration": 1.0,
-"texture": ExtResource("1_iwbmd")
+"texture": SubResource("AtlasTexture_jej6c")
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_h4u8k")
@@ -156,19 +156,19 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("1_iwbmd")
+"texture": SubResource("AtlasTexture_jej6c")
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_h4u8k")
 }, {
 "duration": 1.0,
-"texture": ExtResource("1_iwbmd")
+"texture": SubResource("AtlasTexture_jej6c")
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_h4u8k")
 }, {
 "duration": 1.0,
-"texture": ExtResource("1_iwbmd")
+"texture": SubResource("AtlasTexture_jej6c")
 }],
 "loop": false,
 "name": &"hit",
@@ -279,12 +279,13 @@ shape = SubResource("CircleShape2D_h4u8k")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_g8j1n")
-animation = &"bump"
+animation = &"guard"
 autoplay = "guard"
 
 [node name="Camera2D" type="Camera2D" parent="."]
 
 [node name="Weapon" type="Node2D" parent="."]
+position = Vector2(10, 2)
 
 [node name="RustWeapon" parent="Weapon" instance=ExtResource("4_0rh5x")]
 

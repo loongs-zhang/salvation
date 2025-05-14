@@ -47,6 +47,8 @@ pub struct RustPlayer {
     // 玩家无敌
     #[export]
     invincible: bool,
+    #[export]
+    current_weapon_index: i32,
     // 玩家穿透
     #[export]
     lives: u32,
@@ -76,7 +78,7 @@ pub struct RustPlayer {
     state: PlayerState,
     current_speed: real,
     animated_sprite2d: OnReady<Gd<AnimatedSprite2D>>,
-    weapon: OnReady<Gd<Node2D>>,
+    weapons: OnReady<Gd<Node2D>>,
     blood_flash: OnReady<Gd<GpuParticles2D>>,
     hud: OnReady<Gd<PlayerHUD>>,
     run_audio: OnReady<Gd<AudioStreamPlayer2D>>,
@@ -93,6 +95,7 @@ impl ICharacterBody2D for RustPlayer {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
             invincible: false,
+            current_weapon_index: 0,
             lives: PLAYER_MAX_LIVES,
             damage: 0,
             distance: 0.0,
@@ -107,7 +110,7 @@ impl ICharacterBody2D for RustPlayer {
             current_lives: PLAYER_MAX_LIVES,
             current_speed: PLAYER_MOVE_SPEED,
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
-            weapon: OnReady::from_node("Weapon"),
+            weapons: OnReady::from_node("Weapon"),
             blood_flash: OnReady::from_node("GpuParticles2D"),
             hud: OnReady::from_node("PlayerHUD"),
             run_audio: OnReady::from_node("RunAudio"),
@@ -134,7 +137,7 @@ impl ICharacterBody2D for RustPlayer {
             // 选择这种计时的方式是为了支持打断换弹
             let reload_cost = RELOADING.load() + delta as real;
             RELOADING.store(reload_cost);
-            if reload_cost >= self.get_rust_weapon().bind().get_reload_time() {
+            if reload_cost >= self.get_current_weapon().bind().get_reload_time() {
                 self.reloaded();
             }
         } else if PlayerState::Impact == self.state {
@@ -149,7 +152,7 @@ impl ICharacterBody2D for RustPlayer {
         let player_position = self.base().get_global_position();
         POSITION.store(player_position);
         let mouse_position = self.get_mouse_position();
-        self.weapon.look_at(mouse_position);
+        self.base_mut().look_at(mouse_position);
         let input = Input::singleton();
         if input.is_action_pressed("mouse_left") {
             self.shoot();
@@ -195,7 +198,7 @@ impl ICharacterBody2D for RustPlayer {
     fn ready(&mut self) {
         self.base_mut()
             .set_physics_interpolation_mode(PhysicsInterpolationMode::ON);
-        let rust_weapon = self.weapon.get_node_as::<RustWeapon>("RustWeapon");
+        let rust_weapon = self.get_current_weapon();
         let mut hud = self.hud.bind_mut();
         hud.update_lives_hud(self.current_lives, self.lives);
         hud.update_hp_hud(self.current_health, self.health);
@@ -274,6 +277,7 @@ impl RustPlayer {
             return;
         }
         self.current_lives -= 1;
+        self.weapons.set_visible(true);
         self.animated_sprite2d.play_ex().name("guard").done();
         self.current_speed = self.speed;
         self.state = PlayerState::Born;
@@ -295,6 +299,7 @@ impl RustPlayer {
         {
             return;
         }
+        self.weapons.set_visible(true);
         self.animated_sprite2d.play_ex().name("guard").done();
         self.current_speed = self.speed;
         self.state = PlayerState::Guard;
@@ -305,6 +310,7 @@ impl RustPlayer {
         if PlayerState::Dead == self.state || PlayerState::Impact == self.state {
             return;
         }
+        self.weapons.set_visible(false);
         self.animated_sprite2d.play_ex().name("run").done();
         self.current_speed = self.speed * 1.5;
         self.state = PlayerState::Run;
@@ -323,12 +329,13 @@ impl RustPlayer {
         {
             return;
         }
-        let mut rust_weapon = self.get_rust_weapon();
+        let mut rust_weapon = self.get_current_weapon();
         if rust_weapon.bind().must_reload() {
             // 没子弹时自动装填
             self.reload();
             return;
         }
+        rust_weapon.set_visible(true);
         self.animated_sprite2d.play_ex().name("guard").done();
         self.current_speed = self.speed * 0.5;
         self.state = PlayerState::Shoot;
@@ -344,10 +351,11 @@ impl RustPlayer {
     pub fn reload(&mut self) {
         if PlayerState::Dead == self.state
             || PlayerState::Impact == self.state
-            || !self.get_rust_weapon().bind_mut().reload()
+            || !self.get_current_weapon().bind_mut().reload()
         {
             return;
         }
+        self.weapons.set_visible(true);
         self.animated_sprite2d.play_ex().name("reload").done();
         self.current_speed = self.speed * 0.75;
         self.state = PlayerState::Reload;
@@ -359,7 +367,7 @@ impl RustPlayer {
             return;
         }
         self.state = PlayerState::Guard;
-        let mut rust_weapon = self.get_rust_weapon();
+        let mut rust_weapon = self.get_current_weapon();
         let clip = rust_weapon.bind_mut().reloaded();
         self.hud
             .bind_mut()
@@ -372,6 +380,7 @@ impl RustPlayer {
         if PlayerState::Dead == self.state {
             return;
         }
+        self.weapons.set_visible(false);
         self.animated_sprite2d.play_ex().name("hit").done();
         self.current_speed = self.speed * 0.5;
         self.state = PlayerState::Hit;
@@ -400,6 +409,7 @@ impl RustPlayer {
         if PlayerState::Dead == self.state {
             return;
         }
+        self.weapons.set_visible(false);
         self.animated_sprite2d.play_ex().name("bump").done();
         self.current_speed = self.speed * 1.25;
         self.state = PlayerState::Impact;
@@ -447,6 +457,7 @@ impl RustPlayer {
         if PlayerState::Dead == self.state {
             return;
         }
+        self.weapons.set_visible(false);
         self.animated_sprite2d.look_at(hit_position);
         self.animated_sprite2d.play_ex().name("die").done();
         self.current_speed = 0.0;
@@ -479,7 +490,7 @@ impl RustPlayer {
         //防止重复触发升级
         let damage = self
             .damage
-            .saturating_add(self.get_rust_weapon().bind().get_damage());
+            .saturating_add(self.get_current_weapon().bind().get_damage());
         RustPlayer::add_score(damage as u64);
         self.level_up_barrier = (self.level_up_barrier as real * PLAYER_LEVEL_UP_GROW_RATE) as u32;
         self.current_level_up_barrier += self.level_up_barrier as u64;
@@ -491,7 +502,7 @@ impl RustPlayer {
     pub fn upgrade_penetrate(&mut self) {
         //穿透力升级
         self.penetrate += 0.1;
-        let new_penetrate = self.penetrate + self.get_rust_weapon().bind().get_penetrate();
+        let new_penetrate = self.penetrate + self.get_current_weapon().bind().get_penetrate();
         self.hud.bind_mut().update_penetrate_hud(new_penetrate);
         self.show_upgrade_label(PlayerUpgrade::Penetrate);
     }
@@ -502,7 +513,7 @@ impl RustPlayer {
         self.damage = self.damage.saturating_add(2);
         let new_damage = self
             .damage
-            .saturating_add(self.get_rust_weapon().bind().get_damage());
+            .saturating_add(self.get_current_weapon().bind().get_damage());
         self.hud.bind_mut().update_damage_hud(new_damage);
         self.show_upgrade_label(PlayerUpgrade::Damage);
     }
@@ -511,7 +522,7 @@ impl RustPlayer {
     pub fn upgrade_repel(&mut self) {
         //击退力升级
         self.repel += 1.0;
-        let new_repel = self.repel + self.get_rust_weapon().bind().get_repel();
+        let new_repel = self.repel + self.get_current_weapon().bind().get_repel();
         self.hud.bind_mut().update_repel_hud(new_repel);
         self.show_upgrade_label(PlayerUpgrade::Repel);
     }
@@ -531,7 +542,7 @@ impl RustPlayer {
     pub fn upgrade_distance(&mut self) {
         //射击距离升级
         self.distance += 20.0;
-        let new_distance = self.distance + self.get_rust_weapon().bind().get_distance();
+        let new_distance = self.distance + self.get_current_weapon().bind().get_distance();
         self.hud.bind_mut().update_distance_hud(new_distance);
         self.show_upgrade_label(PlayerUpgrade::Distance);
     }
@@ -570,8 +581,11 @@ impl RustPlayer {
                 .get_mouse_position()
     }
 
-    pub fn get_rust_weapon(&mut self) -> Gd<RustWeapon> {
-        self.weapon.get_node_as::<RustWeapon>("RustWeapon")
+    pub fn get_current_weapon(&self) -> Gd<RustWeapon> {
+        self.weapons
+            .get_child(self.current_weapon_index)
+            .expect("Weapon not configured")
+            .cast::<RustWeapon>()
     }
 
     pub fn add_kill_count() {

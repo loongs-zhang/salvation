@@ -55,7 +55,7 @@ pub struct RustZombie {
     collision: Vector2,
     frame_counter: u128,
     pursuit_direction: bool,
-    name_label: OnReady<Gd<RemoteTransform2D>>,
+    hud: OnReady<Gd<RemoteTransform2D>>,
     collision_shape2d: OnReady<Gd<CollisionShape2D>>,
     animated_sprite2d: OnReady<Gd<ZombieAnimation>>,
     zombie_attack_area: OnReady<Gd<ZombieAttackArea>>,
@@ -93,7 +93,7 @@ impl ICharacterBody2D for RustZombie {
             collision: Vector2::ZERO,
             frame_counter: 0,
             pursuit_direction: random_bool(),
-            name_label: OnReady::from_node("RemoteTransform2D"),
+            hud: OnReady::from_node("RemoteTransform2D"),
             collision_shape2d: OnReady::from_node("CollisionShape2D"),
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             zombie_attack_area: OnReady::from_node("ZombieAttackArea"),
@@ -113,7 +113,9 @@ impl ICharacterBody2D for RustZombie {
     }
 
     fn process(&mut self, delta: f64) {
-        self.name_label.set_global_rotation_degrees(0.0);
+        if self.hud.is_instance_valid() {
+            self.hud.set_global_rotation_degrees(0.0);
+        }
         self.frame_counter = self.frame_counter.wrapping_add(1);
         if ZombieState::Dead == self.state
             || RustWorld::is_paused()
@@ -219,7 +221,7 @@ impl ICharacterBody2D for RustZombie {
         self.guard();
         if !self.name.is_empty() {
             let name = self.name.clone();
-            let mut name_label = self.name_label.get_node_as::<Label>("Name");
+            let mut name_label = self.hud.get_node_as::<Label>("Name");
             name_label.set_text(&name);
             name_label.show();
         }
@@ -383,6 +385,7 @@ impl RustZombie {
         }
         // 释放资源
         self.base_mut().set_z_index(0);
+        self.hud.queue_free();
         self.collision_shape2d.queue_free();
         self.zombie_attack_area.queue_free();
         self.zombie_damage_area.queue_free();
@@ -438,6 +441,9 @@ impl RustZombie {
     }
 
     pub fn update_alarm_progress_hud(&mut self, delta: f64) {
+        if !self.hud.is_instance_valid() {
+            return;
+        }
         let mut alarm_progress = self.get_alarm_progress();
         if 0.0 == self.current_alarm_time || RustLevel::is_rampage() {
             alarm_progress.set_visible(false);
@@ -460,8 +466,8 @@ impl RustZombie {
             .set_value_no_signal(progress);
     }
 
-    pub fn get_alarm_progress(&mut self) -> Gd<Control> {
-        self.name_label.get_node_as::<Control>("AlarmProgress")
+    pub fn get_alarm_progress(&self) -> Gd<Control> {
+        self.hud.get_node_as::<Control>("AlarmProgress")
     }
 
     pub fn is_rampage_run(&self) -> bool {
