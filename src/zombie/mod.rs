@@ -140,27 +140,8 @@ impl ICharacterBody2D for RustZombie {
             //解决刷新僵尸导致的体积碰撞问题
             self.flash();
             return;
-        } else if distance <= ZOMBIE_PURSUIT_DISTANCE && self.is_face_to_user() {
-            self.current_alarm_time =
-                (self.current_alarm_time + delta as real).min(self.alarm_time);
-            let mut alarm_progress = self.get_alarm_progress();
-            if RustLevel::is_rampage() {
-                alarm_progress.set_visible(false);
-            } else {
-                let progress = if self.is_alarmed() {
-                    100.0
-                } else {
-                    (self.current_alarm_time / self.alarm_time) as f64 * 100.0
-                };
-                alarm_progress.set_visible(true);
-                alarm_progress
-                    .get_node_as::<ProgressBar>("ProgressBar")
-                    .set_value_no_signal(progress);
-            }
-        } else {
-            self.current_alarm_time = (self.current_alarm_time - delta as real).max(0.0);
-            self.get_alarm_progress().set_visible(false);
         }
+        self.update_alarm_progress_hud(delta);
         let to_player_dir = zombie_position.direction_to(player_position).normalized();
         let real_to_player_dir = if Vector2::ZERO != self.collision {
             self.collision
@@ -174,19 +155,27 @@ impl ICharacterBody2D for RustZombie {
             self.base_mut().look_at(player_position);
             real_to_player_dir * self.current_speed
         } else {
-            // 无目的移动
             if self.is_rampage_run() {
                 self.run();
             } else {
                 self.guard();
             }
             let now = Instant::now();
-            if now.duration_since(self.last_turn_time) >= self.turn_cooldown {
+            if distance <= ZOMBIE_PURSUIT_DISTANCE
+                && self.current_alarm_time > 0.0
+                && self.is_face_to_user()
+            {
+                // 向玩家移动，并累计警戒条
+                self.base_mut().look_at(player_position);
+                real_to_player_dir * self.current_speed
+            } else if now.duration_since(self.last_turn_time) >= self.turn_cooldown {
+                // 无目的移动
                 let direction = random_direction();
                 character_body2d.look_at(zombie_position + direction);
                 self.last_turn_time = now;
                 direction * self.current_speed
             } else {
+                self.guard();
                 Vector2::ZERO
             }
         };
@@ -448,6 +437,29 @@ impl RustZombie {
         self.current_alarm_time >= self.alarm_time
     }
 
+    pub fn update_alarm_progress_hud(&mut self, delta: f64) {
+        let mut alarm_progress = self.get_alarm_progress();
+        if 0.0 == self.current_alarm_time || RustLevel::is_rampage() {
+            alarm_progress.set_visible(false);
+        } else {
+            alarm_progress.set_visible(true);
+        }
+        if self.get_to_player_distance() <= ZOMBIE_PURSUIT_DISTANCE && self.is_face_to_user() {
+            self.current_alarm_time =
+                (self.current_alarm_time + delta as real).min(self.alarm_time);
+        } else {
+            self.current_alarm_time = (self.current_alarm_time - delta as real).max(0.0);
+        }
+        let progress = if 0.0 == self.current_alarm_time {
+            100.0
+        } else {
+            (self.current_alarm_time / self.alarm_time) as f64 * 100.0
+        };
+        alarm_progress
+            .get_node_as::<ProgressBar>("ProgressBar")
+            .set_value_no_signal(progress);
+    }
+
     pub fn get_alarm_progress(&mut self) -> Gd<Control> {
         self.name_label.get_node_as::<Control>("AlarmProgress")
     }
@@ -459,7 +471,7 @@ impl RustZombie {
         self.rampage_time <= 0.0
     }
 
-    pub fn get_distance(&self) -> real {
+    pub fn get_to_player_distance(&self) -> real {
         let zombie_position = self.base().get_global_position();
         let player_position = RustPlayer::get_position();
         zombie_position.distance_to(player_position)
