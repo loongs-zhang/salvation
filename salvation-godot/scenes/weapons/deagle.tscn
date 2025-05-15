@@ -1,12 +1,12 @@
-[gd_scene load_steps=16 format=3 uid="uid://cigcujmruac6u"]
+[gd_scene load_steps=16 format=3 uid="uid://bq5lki2s1pxuu"]
 
-[ext_resource type="Texture2D" uid="uid://3gspo02acfce" path="res://asserts/player/weapons/ak47/ak47.bmp" id="1_gsxud"]
-[ext_resource type="AudioStream" uid="uid://dxc0u3g1mcxtv" path="res://asserts/player/weapons/ak47/ak47-1.wav" id="2_hybat"]
-[ext_resource type="AudioStream" uid="uid://dxt6cog3aoh6e" path="res://asserts/player/weapons/ak47/ak47_clipout.wav" id="3_r88qr"]
-[ext_resource type="AudioStream" uid="uid://dovummnnaj5gj" path="res://asserts/player/weapons/ak47/ak47_clipin.wav" id="4_0jdrn"]
-[ext_resource type="AudioStream" uid="uid://d3frq75hvbhph" path="res://asserts/player/weapons/ak47/ak47_boltpull.wav" id="5_hybat"]
-[ext_resource type="Texture2D" uid="uid://dss75ntqn0toj" path="res://asserts/player/weapons/ak47/ak47_m.png" id="6_0jdrn"]
-[ext_resource type="FontFile" uid="uid://cly6s32f5pm4p" path="res://asserts/Xolonium-Regular.ttf" id="7_xxhh8"]
+[ext_resource type="Texture2D" uid="uid://vnovtrexaa47" path="res://asserts/player/weapons/deagle/deagle.bmp" id="1_opbco"]
+[ext_resource type="AudioStream" uid="uid://c7k87f2duy5wh" path="res://asserts/player/weapons/deagle/deagle-2.wav" id="2_opbco"]
+[ext_resource type="AudioStream" uid="uid://h64fkmjabyfd" path="res://asserts/player/weapons/deagle/dde_clipout.wav" id="3_6p0dp"]
+[ext_resource type="AudioStream" uid="uid://dgybjdybtx1v3" path="res://asserts/player/weapons/deagle/dde_clipin.wav" id="4_3d5af"]
+[ext_resource type="AudioStream" uid="uid://uhbnbepd4hja" path="res://asserts/player/weapons/deagle/dde_clipoff.wav" id="5_xlb1r"]
+[ext_resource type="Texture2D" uid="uid://31tnce2bv4lf" path="res://asserts/player/weapons/deagle/deagle_m.png" id="6_d5ty4"]
+[ext_resource type="FontFile" uid="uid://cly6s32f5pm4p" path="res://asserts/Xolonium-Regular.ttf" id="7_rx1qh"]
 
 [sub_resource type="Curve" id="Curve_ait51"]
 _data = [Vector2(0, 0.747967), 0.0, 0.0, 0, 0, Vector2(0.49635, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.5), 0.0, 0.0, 0, 0]
@@ -42,26 +42,28 @@ color_ramp = SubResource("GradientTexture1D_88lgy")
 alpha_curve = SubResource("CurveTexture_ad62i")
 
 [sub_resource type="Theme" id="Theme_qaptc"]
-default_font = ExtResource("7_xxhh8")
+default_font = ExtResource("7_rx1qh")
 default_font_size = 12
 
 [node name="RustWeapon" type="RustWeapon"]
-damage = 36
-penetrate = 2.5
-reload_time = 2.5
+damage = 54
+clip = 7
+pull_after_reload = true
+penetrate = 3.0
+fire_cooldown = 0.2
 
 [node name="BulletPoint" type="Node2D" parent="."]
-position = Vector2(23.5, 0)
+position = Vector2(18.5, 0)
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 z_index = 1
 position = Vector2(16, 0)
 rotation = 1.5708
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("1_gsxud")
+texture = ExtResource("1_opbco")
 
 [node name="GpuParticles2D" type="GPUParticles2D" parent="."]
-position = Vector2(23.5, 0)
+position = Vector2(18.5, 0)
 emitting = false
 amount = 16
 lifetime = 0.2
@@ -71,16 +73,16 @@ local_coords = true
 process_material = SubResource("ParticleProcessMaterial_ait51")
 
 [node name="FireAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("2_hybat")
+stream = ExtResource("2_opbco")
 
 [node name="ClipOutAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("3_r88qr")
+stream = ExtResource("3_6p0dp")
 
 [node name="ClipInAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("4_0jdrn")
+stream = ExtResource("4_3d5af")
 
 [node name="BoltPullAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("5_hybat")
+stream = ExtResource("5_xlb1r")
 
 [node name="WeaponHUD" type="WeaponHUD" parent="."]
 
@@ -105,7 +107,7 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -235.0
+offset_left = -100.0
 offset_top = -125.0
 grow_horizontal = 0
 grow_vertical = 0
@@ -115,11 +117,11 @@ alignment = 1
 [node name="WeaponName" type="Label" parent="WeaponHUD/Control/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 8
-text = "AK47"
+text = "DEAGLE"
 
 [node name="TextureRect" type="TextureRect" parent="WeaponHUD/Control/VBoxContainer"]
 layout_mode = 2
-texture = ExtResource("6_0jdrn")
+texture = ExtResource("6_d5ty4")
 
 [node name="Ammo" type="Label" parent="WeaponHUD/Control/VBoxContainer"]
 layout_mode = 2

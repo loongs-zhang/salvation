@@ -11,7 +11,6 @@ use godot::register::{GodotClass, godot_api};
 
 pub mod hud;
 
-// todo 完善武器场景的图标
 #[derive(GodotClass)]
 #[class(base=Node2D)]
 pub struct RustWeapon {
@@ -128,7 +127,9 @@ impl RustWeapon {
         if 0 == self.ammo || self.current_fire_cooldown > 0.0 {
             return;
         }
+        //todo 大狙开后后的拉栓音效
         if let Some(mut bullet) = self.bullet_scene.try_instantiate_as::<RustBullet>() {
+            //todo 加特林开火时多枪管轮询选点射击
             let bullet_point = self.bullet_point.get_global_position();
             let direction = self
                 .base()
@@ -158,7 +159,7 @@ impl RustWeapon {
     }
 
     pub fn reload(&mut self) -> bool {
-        if self.clip == self.ammo {
+        if self.is_reloaded() {
             return false;
         }
         self.clip_out_audio.play();
@@ -188,12 +189,16 @@ impl RustWeapon {
     }
 
     pub fn stop_reload(&mut self) {
-        if self.clip == self.ammo {
+        if self.is_reloaded() {
             return;
         }
         self.clip_in_audio.stop();
         self.clip_out_audio.stop();
         self.bolt_pull_audio.stop();
+    }
+
+    pub fn is_reloaded(&self) -> bool {
+        self.clip == self.ammo
     }
 
     pub fn get_mouse_position(&self) -> Vector2 {

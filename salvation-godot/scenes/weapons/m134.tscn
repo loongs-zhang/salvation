@@ -1,11 +1,11 @@
 [gd_scene load_steps=16 format=3 uid="uid://yk15efq3cmxx"]
 
-[ext_resource type="Texture2D" uid="uid://hydpacgpdhvd" path="res://asserts/player/weapons/m134/m134.png" id="1_8kmfu"]
-[ext_resource type="AudioStream" uid="uid://cmicrb1mnl6ue" path="res://asserts/player/weapons/m134/m134-1.wav" id="2_6lky8"]
-[ext_resource type="AudioStream" uid="uid://c2yuwy6uhsi8v" path="res://asserts/player/weapons/m134/m134_clipoff.wav" id="3_ui38b"]
-[ext_resource type="AudioStream" uid="uid://bbugtbvgrw8iw" path="res://asserts/player/weapons/m134/m134_clipon.wav" id="4_l50ha"]
-[ext_resource type="AudioStream" uid="uid://b5tdoax2fbbk1" path="res://asserts/player/weapons/m134/m134_pinpull.wav" id="5_i4k35"]
-[ext_resource type="Texture2D" uid="uid://d3e1ju7tew6im" path="res://asserts/player/weapons/m134/m134_m.png" id="6_ui38b"]
+[ext_resource type="Texture2D" uid="uid://ldthuqu2jnig" path="res://asserts/player/weapons/m134/m134.png" id="1_8kmfu"]
+[ext_resource type="AudioStream" uid="uid://b8m8t12n84c4h" path="res://asserts/player/weapons/m134/m134-1.wav" id="2_6lky8"]
+[ext_resource type="AudioStream" uid="uid://klj3h3e14vhh" path="res://asserts/player/weapons/m134/m134_clipoff.wav" id="3_ui38b"]
+[ext_resource type="AudioStream" uid="uid://cg5ohyjg64ray" path="res://asserts/player/weapons/m134/m134_clipon.wav" id="4_l50ha"]
+[ext_resource type="AudioStream" uid="uid://b68vh7xdh8t4d" path="res://asserts/player/weapons/m134/m134_pinpull.wav" id="5_i4k35"]
+[ext_resource type="Texture2D" uid="uid://dtv5hhpgg84q7" path="res://asserts/player/weapons/m134/m134_m.png" id="6_ui38b"]
 [ext_resource type="FontFile" uid="uid://cly6s32f5pm4p" path="res://asserts/Xolonium-Regular.ttf" id="7_l50ha"]
 
 [sub_resource type="Curve" id="Curve_ait51"]
@@ -46,11 +46,12 @@ default_font = ExtResource("7_l50ha")
 default_font_size = 12
 
 [node name="RustWeapon" type="RustWeapon"]
+damage = 30
 clip = 300
 pull_after_reload = true
 penetrate = 1.0
 fire_cooldown = 0.02
-reload_time = 3.0
+reload_time = 5.5
 
 [node name="BulletPoint" type="Node2D" parent="."]
 position = Vector2(38.5, 0)

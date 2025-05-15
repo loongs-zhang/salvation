@@ -34,11 +34,6 @@ layout_mode = 2
 theme = SubResource("Theme_g8j1n")
 text = "HP"
 
-[node name="Ammo" type="Label" parent="Control/VBoxContainer"]
-layout_mode = 2
-theme = SubResource("Theme_g8j1n")
-text = "Ammo"
-
 [node name="Damage" type="Label" parent="Control/VBoxContainer"]
 layout_mode = 2
 theme = SubResource("Theme_g8j1n")

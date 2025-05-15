@@ -24,9 +24,6 @@ static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
 static STATE: AtomicCell<PlayerState> = AtomicCell::new(PlayerState::Born);
 
-//todo refactor
-static RELOADING: AtomicCell<real> = AtomicCell::new(0.0);
-
 static IMPACT_POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
 static IMPACTING: AtomicCell<f64> = AtomicCell::new(0.0);
@@ -137,13 +134,8 @@ impl ICharacterBody2D for RustPlayer {
         hud.update_score_hud();
         hud.update_died_hud();
         drop(hud);
-        if PlayerState::Reload == self.state {
-            // 选择这种计时的方式是为了支持打断换弹
-            let reload_cost = RELOADING.load() + delta as real;
-            RELOADING.store(reload_cost);
-            if reload_cost >= self.get_current_weapon().bind().get_reload_time() {
-                self.reloaded();
-            }
+        if PlayerState::Reload == self.state && self.get_current_weapon().bind().is_reloaded() {
+            self.reloaded();
         } else if PlayerState::Impact == self.state {
             let impact_cost = IMPACTING.load() + delta;
             IMPACTING.store(impact_cost);
@@ -235,6 +227,10 @@ impl ICharacterBody2D for RustPlayer {
             self.change_weapon(2);
         } else if event.is_action_pressed("4") {
             self.change_weapon(3);
+        } else if event.is_action_pressed("5") {
+            self.change_weapon(4);
+        } else if event.is_action_pressed("6") {
+            self.change_weapon(5);
         }
     }
 }
@@ -328,7 +324,6 @@ impl RustPlayer {
         self.state = PlayerState::Run;
         STATE.store(self.state);
         //打断换弹
-        RELOADING.store(0.0);
         self.get_current_weapon().bind_mut().stop_reload();
         if !self.run_audio.is_playing() {
             self.run_audio.play();
@@ -378,8 +373,6 @@ impl RustPlayer {
         }
         self.state = PlayerState::Guard;
         self.guard();
-        RELOADING.store(0.0);
-        self.get_current_weapon().bind_mut().stop_reload();
     }
 
     pub fn change_weapon(&mut self, weapon_index: i32) {
@@ -408,8 +401,6 @@ impl RustPlayer {
         self.current_weapon_index = weapon_index;
         self.state = PlayerState::Guard;
         STATE.store(self.state);
-        //打断换弹
-        RELOADING.store(0.0);
         self.change_success_audio.play();
         // 更新HUD
         let mut rust_weapon = self.get_current_weapon();
