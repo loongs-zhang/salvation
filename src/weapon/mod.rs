@@ -1,13 +1,17 @@
 use crate::bullet::RustBullet;
+use crate::weapon::hud::WeaponHUD;
 use crate::{
     BULLET_DAMAGE, BULLET_DISTANCE, BULLET_PENETRATE, BULLET_REPEL, MAX_AMMO, RELOAD_TIME,
     WEAPON_FIRE_COOLDOWN,
 };
 use godot::builtin::{Vector2, real};
-use godot::classes::{AudioStreamPlayer2D, GpuParticles2D, INode2D, Node2D, PackedScene};
-use godot::obj::{Base, Gd, OnReady, WithBaseField};
+use godot::classes::{AudioStreamPlayer2D, GpuParticles2D, INode2D, Node2D, Object, PackedScene};
+use godot::obj::{Base, Gd, OnReady, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
 
+pub mod hud;
+
+// todo 完善武器场景的图标
 #[derive(GodotClass)]
 #[class(base=Node2D)]
 pub struct RustWeapon {
@@ -20,6 +24,8 @@ pub struct RustWeapon {
     //武器弹夹容量
     #[export]
     clip: i64,
+    #[export]
+    pull_after_reload: bool,
     //武器击退
     #[export]
     repel: real,
@@ -30,8 +36,11 @@ pub struct RustWeapon {
     fire_cooldown: real,
     #[export]
     reload_time: real,
+    //todo 加特林需要增加这个时间，不然换弹太快了
+    reloading: real,
     ammo: i64,
     current_fire_cooldown: real,
+    hud: OnReady<Gd<WeaponHUD>>,
     bullet_scene: OnReady<Gd<PackedScene>>,
     bullet_point: OnReady<Gd<Node2D>>,
     fire_flash: OnReady<Gd<GpuParticles2D>>,
@@ -49,12 +58,15 @@ impl INode2D for RustWeapon {
             damage: BULLET_DAMAGE,
             distance: BULLET_DISTANCE,
             clip: MAX_AMMO,
+            pull_after_reload: false,
             repel: BULLET_REPEL,
             penetrate: BULLET_PENETRATE,
             fire_cooldown: WEAPON_FIRE_COOLDOWN,
             reload_time: RELOAD_TIME,
+            reloading: 0.0,
             ammo: MAX_AMMO,
             current_fire_cooldown: WEAPON_FIRE_COOLDOWN,
+            hud: OnReady::from_node("WeaponHUD"),
             bullet_scene: OnReady::from_loaded("res://scenes/rust_bullet.tscn"),
             bullet_point: OnReady::from_node("BulletPoint"),
             fire_flash: OnReady::from_node("GpuParticles2D"),
@@ -72,11 +84,40 @@ impl INode2D for RustWeapon {
 
     fn ready(&mut self) {
         self.ammo = self.clip;
+        self.update_ammo_hud();
+        let gd = self.to_gd();
+        self.signals()
+            .visibility_changed()
+            .connect_self(|this: &mut Self| {
+                let visible = this.base().is_visible();
+                this.hud.set_visible(visible);
+            });
+        self.clip_out_audio
+            .signals()
+            .finished()
+            .connect_obj(&gd, Self::on_clip_out_finished);
+        self.clip_in_audio
+            .signals()
+            .finished()
+            .connect_obj(&gd, Self::on_clip_in_finished);
+        if self.pull_after_reload {
+            self.bolt_pull_audio
+                .signals()
+                .finished()
+                .connect_obj(&gd, Self::on_bolt_pull_finished);
+        }
     }
 }
 
 #[godot_api]
 impl RustWeapon {
+    #[signal]
+    pub fn sig();
+
+    pub fn update_ammo_hud(&mut self) {
+        self.hud.bind_mut().update_ammo_hud(self.ammo, self.clip);
+    }
+
     pub fn fire(
         &mut self,
         player_damage: i64,
@@ -110,6 +151,7 @@ impl RustWeapon {
                     self.fire_audio.play();
                     self.current_fire_cooldown = self.fire_cooldown;
                     self.ammo -= 1;
+                    self.update_ammo_hud();
                 }
             }
         }
@@ -123,15 +165,35 @@ impl RustWeapon {
         true
     }
 
-    pub fn reloaded(&mut self) -> i64 {
-        if self.clip == self.ammo {
-            return self.clip;
-        }
+    #[func]
+    pub fn on_clip_out_finished(&mut self) {
+        //todo 拔出弹夹后等待reload_time s的时间
         self.clip_in_audio.play();
-        //todo 后续需要重构，弹匣进来后，m4需要拉一下栓，ak不需要
-        self.bolt_pull_audio.play();
+    }
+
+    #[func]
+    pub fn on_clip_in_finished(&mut self) {
+        if self.pull_after_reload {
+            self.bolt_pull_audio.play();
+            return;
+        }
         self.ammo = self.clip;
-        self.ammo
+        self.update_ammo_hud();
+    }
+
+    #[func]
+    pub fn on_bolt_pull_finished(&mut self) {
+        self.ammo = self.clip;
+        self.update_ammo_hud();
+    }
+
+    pub fn stop_reload(&mut self) {
+        if self.clip == self.ammo {
+            return;
+        }
+        self.clip_in_audio.stop();
+        self.clip_out_audio.stop();
+        self.bolt_pull_audio.stop();
     }
 
     pub fn get_mouse_position(&self) -> Vector2 {

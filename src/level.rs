@@ -221,13 +221,8 @@ impl RustLevel {
         let boss_wait_time = boss_timer.get_wait_time();
         let mut label = self.get_right_container().get_node_as::<Label>("Refresh");
         label.set_text(&format!(
-            "REFRESH {} ZOMBIES IN {:.0}s {}\nREFRESH {} BOSS IN {:.0}s {}",
-            zombie_refresh_count,
-            zombie_wait_time,
-            !zombie_timer.is_stopped(),
-            boss_refresh_count,
-            boss_wait_time,
-            !boss_timer.is_stopped()
+            "REFRESH {} ZOMBIES IN {:.0}s\nREFRESH {} BOSS IN {:.0}s",
+            zombie_refresh_count, zombie_wait_time, boss_refresh_count, boss_wait_time,
         ));
         label.show();
     }

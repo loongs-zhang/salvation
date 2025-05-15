@@ -1,4 +1,4 @@
-[gd_scene load_steps=46 format=3 uid="uid://d2ryhlh122dqg"]
+[gd_scene load_steps=47 format=3 uid="uid://d2ryhlh122dqg"]
 
 [ext_resource type="Texture2D" uid="uid://djwl20ov5nkd0" path="res://asserts/player/player_idle.png" id="1_iwbmd"]
 [ext_resource type="Texture2D" uid="uid://bq0y2ulgigjad" path="res://asserts/player/player_run.png" id="2_0rh5x"]
@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://6mpjo4ff6g2a" path="res://scenes/player_hud.tscn" id="7_g8j1n"]
 [ext_resource type="AudioStream" uid="uid://bqojecsepa052" path="res://asserts/player/player_run.mp3" id="8_e5vhl"]
 [ext_resource type="PackedScene" uid="uid://k51310ir01y3" path="res://scenes/weapons/ak47long.tscn" id="8_x4rvw"]
+[ext_resource type="PackedScene" uid="uid://yk15efq3cmxx" path="res://scenes/weapons/m134.tscn" id="9_3nwbu"]
 [ext_resource type="AudioStream" uid="uid://b4po574gfc5ve" path="res://asserts/player/player_hurt1.mp3" id="9_dmfm0"]
 [ext_resource type="AudioStream" uid="uid://qj8khluetyfp" path="res://asserts/player/player_hurt2.mp3" id="10_dlpix"]
 [ext_resource type="AudioStream" uid="uid://0ekvxa03a6kp" path="res://asserts/player/player_scream.mp3" id="11_0hc44"]
@@ -296,6 +297,8 @@ position = Vector2(10, 2)
 [node name="M4A1" parent="Weapon" instance=ExtResource("7_dmfm0")]
 
 [node name="AK47Long" parent="Weapon" instance=ExtResource("8_x4rvw")]
+
+[node name="M134" parent="Weapon" instance=ExtResource("9_3nwbu")]
 
 [node name="GpuParticles2D" type="GPUParticles2D" parent="."]
 emitting = false

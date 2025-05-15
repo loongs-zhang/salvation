@@ -111,12 +111,6 @@ impl PlayerHUD {
         hp_hud.show();
     }
 
-    pub fn update_ammo_hud(&mut self, ammo: i64, clip: i64) {
-        let mut ammo_hud = self.get_vcontainer().get_node_as::<Label>("Ammo");
-        ammo_hud.set_text(&format!("AMMO {}/{}", ammo, clip));
-        ammo_hud.show();
-    }
-
     pub fn update_damage_hud(&mut self, damage: i64) {
         let mut damage_hud = self.get_vcontainer().get_node_as::<Label>("Damage");
         damage_hud.set_text(&format!("DAMAGE {}", damage));

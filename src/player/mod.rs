@@ -24,6 +24,7 @@ static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
 static STATE: AtomicCell<PlayerState> = AtomicCell::new(PlayerState::Born);
 
+//todo refactor
 static RELOADING: AtomicCell<real> = AtomicCell::new(0.0);
 
 static IMPACT_POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
@@ -206,7 +207,6 @@ impl ICharacterBody2D for RustPlayer {
         let mut hud = self.hud.bind_mut();
         hud.update_lives_hud(self.current_lives, self.lives);
         hud.update_hp_hud(self.current_health, self.health);
-        hud.update_ammo_hud(rust_weapon.bind().get_ammo(), rust_weapon.bind().get_clip());
         hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
         hud.update_distance_hud(self.distance + rust_weapon.bind().get_distance());
         hud.update_repel_hud(self.repel + rust_weapon.bind().get_repel());
@@ -233,6 +233,8 @@ impl ICharacterBody2D for RustPlayer {
             self.change_weapon(1);
         } else if event.is_action_pressed("3") {
             self.change_weapon(2);
+        } else if event.is_action_pressed("4") {
+            self.change_weapon(3);
         }
     }
 }
@@ -327,6 +329,7 @@ impl RustPlayer {
         STATE.store(self.state);
         //打断换弹
         RELOADING.store(0.0);
+        self.get_current_weapon().bind_mut().stop_reload();
         if !self.run_audio.is_playing() {
             self.run_audio.play();
         }
@@ -353,9 +356,6 @@ impl RustPlayer {
         rust_weapon
             .bind_mut()
             .fire(self.damage, self.distance, self.penetrate, self.repel);
-        self.hud
-            .bind_mut()
-            .update_ammo_hud(rust_weapon.bind().get_ammo(), rust_weapon.bind().get_clip());
     }
 
     pub fn reload(&mut self) {
@@ -377,13 +377,9 @@ impl RustPlayer {
             return;
         }
         self.state = PlayerState::Guard;
-        let mut rust_weapon = self.get_current_weapon();
-        let clip = rust_weapon.bind_mut().reloaded();
-        self.hud
-            .bind_mut()
-            .update_ammo_hud(rust_weapon.bind().get_ammo(), clip);
         self.guard();
         RELOADING.store(0.0);
+        self.get_current_weapon().bind_mut().stop_reload();
     }
 
     pub fn change_weapon(&mut self, weapon_index: i32) {
@@ -397,6 +393,8 @@ impl RustPlayer {
                     weapon.set_visible(true);
                 } else {
                     weapon.set_visible(false);
+                    // 打断其他武器的换弹
+                    weapon.bind_mut().stop_reload();
                 }
             }
         }
@@ -414,9 +412,9 @@ impl RustPlayer {
         RELOADING.store(0.0);
         self.change_success_audio.play();
         // 更新HUD
-        let rust_weapon = self.get_current_weapon();
+        let mut rust_weapon = self.get_current_weapon();
+        rust_weapon.bind_mut().update_ammo_hud();
         let mut hud = self.hud.bind_mut();
-        hud.update_ammo_hud(rust_weapon.bind().get_ammo(), rust_weapon.bind().get_clip());
         hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
         hud.update_distance_hud(self.distance + rust_weapon.bind().get_distance());
         hud.update_repel_hud(self.repel + rust_weapon.bind().get_repel());

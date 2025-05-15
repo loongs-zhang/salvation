@@ -1,13 +1,12 @@
-[gd_scene load_steps=17 format=3 uid="uid://bts1qj27g6gue"]
+[gd_scene load_steps=16 format=3 uid="uid://yk15efq3cmxx"]
 
-[ext_resource type="Texture2D" uid="uid://o2feqs2d60l2" path="res://asserts/player/weapons/m4a1/m4a1.bmp" id="1_dd6rc"]
-[ext_resource type="Texture2D" uid="uid://df2iaydp5ek6s" path="res://asserts/player/weapons/m4a1/m4a1_silenced.bmp" id="2_q7vt1"]
-[ext_resource type="AudioStream" uid="uid://sb1j8kjaeiom" path="res://asserts/player/weapons/m4a1/m4a1-1.wav" id="3_h3rn4"]
-[ext_resource type="AudioStream" uid="uid://dchnqe4xnfkdl" path="res://asserts/player/weapons/m4a1/m4a1_clipout.wav" id="4_er4ku"]
-[ext_resource type="AudioStream" uid="uid://mn33qfwep3kh" path="res://asserts/player/weapons/m4a1/m4a1_clipin.wav" id="5_4sdc6"]
-[ext_resource type="AudioStream" uid="uid://wy3e83wdn0ib" path="res://asserts/player/weapons/m4a1/m4a1_boltpull.wav" id="6_q7vt1"]
-[ext_resource type="Texture2D" uid="uid://bwadfuty0n0ew" path="res://asserts/player/weapons/ak47/ak47long_m.png" id="7_er4ku"]
-[ext_resource type="FontFile" uid="uid://cly6s32f5pm4p" path="res://asserts/Xolonium-Regular.ttf" id="8_4sdc6"]
+[ext_resource type="Texture2D" uid="uid://hydpacgpdhvd" path="res://asserts/player/weapons/m134/m134.png" id="1_8kmfu"]
+[ext_resource type="AudioStream" uid="uid://cmicrb1mnl6ue" path="res://asserts/player/weapons/m134/m134-1.wav" id="2_6lky8"]
+[ext_resource type="AudioStream" uid="uid://c2yuwy6uhsi8v" path="res://asserts/player/weapons/m134/m134_clipoff.wav" id="3_ui38b"]
+[ext_resource type="AudioStream" uid="uid://bbugtbvgrw8iw" path="res://asserts/player/weapons/m134/m134_clipon.wav" id="4_l50ha"]
+[ext_resource type="AudioStream" uid="uid://b5tdoax2fbbk1" path="res://asserts/player/weapons/m134/m134_pinpull.wav" id="5_i4k35"]
+[ext_resource type="Texture2D" uid="uid://d3e1ju7tew6im" path="res://asserts/player/weapons/m134/m134_m.png" id="6_ui38b"]
+[ext_resource type="FontFile" uid="uid://cly6s32f5pm4p" path="res://asserts/Xolonium-Regular.ttf" id="7_l50ha"]
 
 [sub_resource type="Curve" id="Curve_ait51"]
 _data = [Vector2(0, 0.747967), 0.0, 0.0, 0, 0, Vector2(0.49635, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.5), 0.0, 0.0, 0, 0]
@@ -32,9 +31,9 @@ curve = SubResource("Curve_fc1k3")
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ait51"]
 particle_flag_disable_z = true
-spread = 15.0
-initial_velocity_min = 25.0
-initial_velocity_max = 50.0
+spread = 30.0
+initial_velocity_min = 100.0
+initial_velocity_max = 200.0
 gravity = Vector3(100, 0, 0)
 scale_min = 2.0
 scale_max = 3.0
@@ -42,37 +41,78 @@ scale_curve = SubResource("CurveTexture_nrs26")
 color_ramp = SubResource("GradientTexture1D_88lgy")
 alpha_curve = SubResource("CurveTexture_ad62i")
 
-[sub_resource type="Theme" id="Theme_1mmyr"]
-default_font = ExtResource("8_4sdc6")
+[sub_resource type="Theme" id="Theme_i4k35"]
+default_font = ExtResource("7_l50ha")
 default_font_size = 12
 
 [node name="RustWeapon" type="RustWeapon"]
+clip = 300
 pull_after_reload = true
-repel = 10.0
-penetrate = 1.9
-fire_cooldown = 0.063
+penetrate = 1.0
+fire_cooldown = 0.02
+reload_time = 3.0
 
 [node name="BulletPoint" type="Node2D" parent="."]
-position = Vector2(28, 0)
+position = Vector2(38.5, 0)
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 z_index = 1
-position = Vector2(16, 0.2)
-rotation = 1.5708
-scale = Vector2(0.5, 0.5)
-texture = ExtResource("1_dd6rc")
+position = Vector2(10.5, 2.1)
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("1_8kmfu")
+flip_h = true
+region_enabled = true
+region_rect = Rect2(118, 16, 66, 62)
 
 [node name="Sprite2D2" type="Sprite2D" parent="."]
 z_index = 1
-position = Vector2(20, 0.2)
-rotation = 1.5708
-scale = Vector2(0.5, 0.5)
-texture = ExtResource("2_q7vt1")
+position = Vector2(28.25, -2.3)
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("1_8kmfu")
+flip_h = true
+region_enabled = true
+region_rect = Rect2(34, 29, 84, 3)
+
+[node name="Sprite2D3" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(28.25, -1.3)
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("1_8kmfu")
+flip_h = true
+region_enabled = true
+region_rect = Rect2(34, 32, 84, 5)
+
+[node name="Sprite2D4" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(28.25, -0.1)
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("1_8kmfu")
+flip_h = true
+region_enabled = true
+region_rect = Rect2(34, 32, 84, 5)
+
+[node name="Sprite2D5" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(28.25, 1.1)
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("1_8kmfu")
+flip_h = true
+region_enabled = true
+region_rect = Rect2(34, 32, 84, 5)
+
+[node name="Sprite2D6" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(28.25, 2.1)
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("1_8kmfu")
+flip_h = true
+flip_v = true
+region_enabled = true
+region_rect = Rect2(34, 29, 84, 3)
 
 [node name="GpuParticles2D" type="GPUParticles2D" parent="."]
-position = Vector2(28, 0)
+position = Vector2(38.5, 0)
 emitting = false
-amount = 16
 lifetime = 0.2
 one_shot = true
 explosiveness = 1.0
@@ -80,16 +120,16 @@ local_coords = true
 process_material = SubResource("ParticleProcessMaterial_ait51")
 
 [node name="FireAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("3_h3rn4")
+stream = ExtResource("2_6lky8")
 
 [node name="ClipOutAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("4_er4ku")
+stream = ExtResource("3_ui38b")
 
 [node name="ClipInAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("5_4sdc6")
+stream = ExtResource("4_l50ha")
 
 [node name="BoltPullAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("6_q7vt1")
+stream = ExtResource("5_i4k35")
 
 [node name="WeaponHUD" type="WeaponHUD" parent="."]
 
@@ -124,14 +164,14 @@ alignment = 1
 [node name="WeaponName" type="Label" parent="WeaponHUD/Control/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 8
-text = "M4A1"
+text = "M134"
 
 [node name="TextureRect" type="TextureRect" parent="WeaponHUD/Control/VBoxContainer"]
 layout_mode = 2
-texture = ExtResource("7_er4ku")
+texture = ExtResource("6_ui38b")
 
 [node name="Ammo" type="Label" parent="WeaponHUD/Control/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 8
-theme = SubResource("Theme_1mmyr")
+theme = SubResource("Theme_i4k35")
 text = "Ammo"
