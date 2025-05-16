@@ -1,5 +1,4 @@
 .idea
 /target
 */.godot
-**/**.import
 *.log

@@ -1,7 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://dncxlinats2qc"]
 
-[ext_resource type="AudioStream" uid="uid://co7k4bywchk6v" path="res://asserts/player/weapons/bullet_hit.mp3" id="1_nf83k"]
-
+[ext_resource type="AudioStream" uid="uid://bywdq2iow0jem" path="res://asserts/player/weapons/bullet_hit.mp3" id="1_nf83k"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h1aey"]
 size = Vector2(8.2, 3.2)
