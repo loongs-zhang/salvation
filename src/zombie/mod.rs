@@ -55,6 +55,7 @@ pub struct RustZombie {
     collision: Vector2,
     frame_counter: u128,
     pursuit_direction: bool,
+    current_flash_cooldown: f64,
     hud: OnReady<Gd<RemoteTransform2D>>,
     collision_shape2d: OnReady<Gd<CollisionShape2D>>,
     animated_sprite2d: OnReady<Gd<ZombieAnimation>>,
@@ -93,6 +94,7 @@ impl ICharacterBody2D for RustZombie {
             collision: Vector2::ZERO,
             frame_counter: 0,
             pursuit_direction: random_bool(),
+            current_flash_cooldown: 0.0,
             hud: OnReady::from_node("RemoteTransform2D"),
             collision_shape2d: OnReady::from_node("CollisionShape2D"),
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
@@ -134,6 +136,7 @@ impl ICharacterBody2D for RustZombie {
         if ZombieState::Attack == self.state || PlayerState::Impact == player_state {
             return;
         }
+        self.current_flash_cooldown -= delta;
         self.rampage_time = (self.rampage_time - delta as real).max(0.0);
         let zombie_position = self.base().get_global_position();
         let player_position = RustPlayer::get_position();
@@ -317,9 +320,12 @@ impl RustZombie {
         self.animated_sprite2d.play_ex().name("guard").done();
         self.current_speed = self.speed * 0.1;
         self.state = ZombieState::Hit;
-        self.blood_flash.set_global_position(hit_position);
-        self.blood_flash.look_at(hit_position - direction);
-        self.blood_flash.restart();
+        if self.current_flash_cooldown <= 0.0 {
+            self.blood_flash.set_global_position(hit_position);
+            self.blood_flash.look_at(hit_position - direction);
+            self.blood_flash.restart();
+            self.current_flash_cooldown = self.blood_flash.get_lifetime() * 0.25;
+        }
         if self.hit_audio.is_inside_tree() {
             self.hit_audio.play();
         }

@@ -41,6 +41,7 @@ pub struct RustWeapon {
     reloading: real,
     ammo: i32,
     current_fire_cooldown: real,
+    current_flash_cooldown: f64,
     hud: OnReady<Gd<WeaponHUD>>,
     bullet_scene: OnReady<Gd<PackedScene>>,
     bullet_points: OnReady<Gd<Control>>,
@@ -67,6 +68,7 @@ impl INode2D for RustWeapon {
             reloading: 0.0,
             ammo: MAX_AMMO,
             current_fire_cooldown: WEAPON_FIRE_COOLDOWN,
+            current_flash_cooldown: 0.0,
             hud: OnReady::from_node("WeaponHUD"),
             bullet_scene: OnReady::from_loaded("res://scenes/rust_bullet.tscn"),
             bullet_points: OnReady::from_node("BulletPoints"),
@@ -81,6 +83,7 @@ impl INode2D for RustWeapon {
 
     fn process(&mut self, delta: f64) {
         self.current_fire_cooldown -= delta as real;
+        self.current_flash_cooldown -= delta;
         if self.ammo < self.clip && self.reloading > 0.0 {
             self.reloading -= delta as real;
         } else if self.reloading < 0.0 && !self.clip_in_audio.is_playing() {
@@ -161,7 +164,10 @@ impl RustWeapon {
             if let Some(tree) = self.base().get_tree() {
                 if let Some(mut root) = tree.get_root() {
                     root.add_child(&bullet);
-                    self.fire_flash.restart();
+                    if self.current_flash_cooldown <= 0.0 {
+                        self.fire_flash.restart();
+                        self.current_flash_cooldown = self.fire_flash.get_lifetime() * 0.25;
+                    }
                     self.fire_audio.play();
                     self.current_fire_cooldown = self.fire_cooldown;
                     self.ammo -= 1;

@@ -145,6 +145,7 @@ region_rect = Rect2(34, 29, 84, 3)
 [node name="GpuParticles2D" type="GPUParticles2D" parent="."]
 position = Vector2(38.5, 0)
 emitting = false
+amount = 16
 lifetime = 0.2
 one_shot = true
 explosiveness = 1.0

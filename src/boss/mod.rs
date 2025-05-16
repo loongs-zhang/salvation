@@ -13,7 +13,7 @@ use crate::{
 use godot::builtin::{Vector2, real};
 use godot::classes::{
     AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, GpuParticles2D, ICharacterBody2D,
-    InputEvent, Node, PackedScene,
+    InputEvent, KinematicCollision2D, Node, PackedScene,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
@@ -138,16 +138,9 @@ impl ICharacterBody2D for RustBoss {
         if !self.moveable {
             return;
         }
-        #[allow(warnings)]
+        let speed = self.current_speed;
         if let Some(collision) = self.base_mut().move_and_collide(velocity) {
-            // 发出排斥力的方向
-            let from = collision.get_normal();
-            if let Some(object) = collision.get_collider() {
-                if object.is_class("RustZombie") {
-                    // todo BOSS撞到僵尸，僵尸要让路，问题是当BOSS被僵尸围时，需要扩散撞击
-                    let mut to_zombie = object.cast::<RustZombie>();
-                }
-            }
+            Self::zombie_collide(collision, speed, 10);
         }
     }
 
@@ -176,6 +169,26 @@ impl ICharacterBody2D for RustBoss {
 
 #[godot_api]
 impl RustBoss {
+    pub fn zombie_collide(collision: Gd<KinematicCollision2D>, speed: real, push_count: i32) {
+        if 0 == push_count {
+            return;
+        }
+        // 发出排斥力的方向
+        let from = collision.get_normal();
+        if let Some(object) = collision.get_collider() {
+            if object.is_class("RustZombie") {
+                let mut to_zombie = object.cast::<RustZombie>();
+                let dir = (from + from.orthogonal()).normalized();
+                let position = to_zombie.get_global_position();
+                to_zombie.set_global_position(position + dir * speed);
+                to_zombie.look_at(position + dir);
+                if let Some(another_collision) = to_zombie.move_and_collide(dir * speed) {
+                    Self::zombie_collide(another_collision, speed, push_count - 1);
+                }
+            }
+        }
+    }
+
     #[func]
     pub fn on_hit(&mut self, hit_val: i64, direction: Vector2, repel: real, hit_position: Vector2) {
         let zombie_position = self.base().get_global_position();
