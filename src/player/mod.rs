@@ -490,6 +490,7 @@ impl RustPlayer {
         self.state = PlayerState::Guard;
         self.blood_flash.set_one_shot(true);
         self.blood_flash.set_emitting(false);
+        self.blood_flash.restart();
         IMPACT_POSITION.store(Vector2::ZERO);
         IMPACTING.store(0.0);
         self.guard();

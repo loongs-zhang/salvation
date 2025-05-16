@@ -178,21 +178,31 @@ impl RustWeapon {
     }
 
     pub fn reload(&mut self) -> bool {
-        if self.is_reloaded() {
+        if self.is_reloaded()
+            || self.reloading > 0.0
+            || self.clip_out_audio.is_playing()
+            || self.clip_in_audio.is_playing()
+            || self.pull_after_reload && self.bolt_pull_audio.is_playing()
+        {
             return false;
         }
-        self.clip_out_audio.play();
-        true
-    }
-
-    #[func]
-    pub fn on_clip_out_finished(&mut self) {
         self.reloading = self.reload_time
             - self.clip_out_audio.get_stream().unwrap().get_length() as real
             - self.clip_in_audio.get_stream().unwrap().get_length() as real;
         if self.pull_after_reload {
             self.reloading -= self.clip_in_audio.get_stream().unwrap().get_length() as real;
         }
+        self.reloading = self.reloading.max(0.0);
+        self.clip_out_audio.play();
+        true
+    }
+
+    #[func]
+    pub fn on_clip_out_finished(&mut self) {
+        if self.reloading > 0.0 || self.clip_in_audio.is_playing() {
+            return;
+        }
+        self.clip_in_audio.play();
     }
 
     #[func]

@@ -143,7 +143,10 @@ impl ICharacterBody2D for RustBoss {
         }
         let speed = self.current_speed;
         if let Some(collision) = self.base_mut().move_and_collide(velocity) {
-            Self::zombie_collide(collision, speed, 10);
+            // 发出排斥力的方向
+            let from = collision.get_normal();
+            let dir = (from + from.orthogonal()).normalized();
+            Self::zombie_collide(collision, dir * speed, 10);
         }
     }
 
@@ -172,21 +175,18 @@ impl ICharacterBody2D for RustBoss {
 
 #[godot_api]
 impl RustBoss {
-    pub fn zombie_collide(collision: Gd<KinematicCollision2D>, speed: real, push_count: i32) {
+    pub fn zombie_collide(collision: Gd<KinematicCollision2D>, velocity: Vector2, push_count: i32) {
         if 0 == push_count {
             return;
         }
-        // 发出排斥力的方向
-        let from = collision.get_normal();
         if let Some(object) = collision.get_collider() {
             if object.is_class("RustZombie") {
                 let mut to_zombie = object.cast::<RustZombie>();
-                let dir = (from + from.orthogonal()).normalized();
                 let position = to_zombie.get_global_position();
-                to_zombie.set_global_position(position + dir * speed);
-                to_zombie.look_at(position + dir);
-                if let Some(another_collision) = to_zombie.move_and_collide(dir * speed) {
-                    Self::zombie_collide(another_collision, speed, push_count - 1);
+                to_zombie.set_global_position(position + velocity);
+                to_zombie.look_at(position + velocity);
+                if let Some(another_collision) = to_zombie.move_and_collide(velocity) {
+                    Self::zombie_collide(another_collision, velocity, push_count - 1);
                 }
             }
         }

@@ -52,6 +52,7 @@ clip = 7
 pull_after_reload = true
 penetrate = 3.0
 fire_cooldown = 0.2
+reload_time = 1.8
 
 [node name="BulletPoints" type="Control" parent="."]
 layout_mode = 3
