@@ -17,8 +17,8 @@
 [ext_resource type="AudioStream" uid="uid://qj8khluetyfp" path="res://asserts/player/player_hurt2.mp3" id="10_dlpix"]
 [ext_resource type="AudioStream" uid="uid://0ekvxa03a6kp" path="res://asserts/player/player_scream.mp3" id="11_0hc44"]
 [ext_resource type="AudioStream" uid="uid://dyrcax511s6ld" path="res://asserts/player/player_die.mp3" id="12_x4rvw"]
-[ext_resource type="AudioStream" uid="uid://u44nv8affc25" path="res://asserts/player/weapons/wpn_hudon.wav" id="14_0hc44"]
-[ext_resource type="AudioStream" uid="uid://c1vm253x12ll7" path="res://asserts/player/weapons/wpn_hudoff.wav" id="15_x4rvw"]
+[ext_resource type="AudioStream" uid="uid://c46b08priyb0v" path="res://asserts/player/weapons/wpn_hudon.wav" id="14_0hc44"]
+[ext_resource type="AudioStream" uid="uid://b1fttnx3e13g6" path="res://asserts/player/weapons/wpn_hudoff.wav" id="15_x4rvw"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_h4u8k"]
 radius = 18.0

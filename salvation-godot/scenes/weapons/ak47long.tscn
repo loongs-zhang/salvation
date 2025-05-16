@@ -1,13 +1,13 @@
 [gd_scene load_steps=17 format=3 uid="uid://k51310ir01y3"]
 
-[ext_resource type="AudioStream" uid="uid://4thotsu65lep" path="res://asserts/player/weapons/ak47/ak_long-1.wav" id="2_y0gyc"]
-[ext_resource type="AudioStream" uid="uid://dxt6cog3aoh6e" path="res://asserts/player/weapons/ak47/ak47_clipout.wav" id="3_oo337"]
-[ext_resource type="Texture2D" uid="uid://cx2svyup5aox" path="res://asserts/player/weapons/ak47/sg552.bmp" id="4_4dtln"]
-[ext_resource type="AudioStream" uid="uid://dovummnnaj5gj" path="res://asserts/player/weapons/ak47/ak47_clipin.wav" id="4_5813e"]
-[ext_resource type="AudioStream" uid="uid://d3frq75hvbhph" path="res://asserts/player/weapons/ak47/ak47_boltpull.wav" id="5_1qt6k"]
-[ext_resource type="Texture2D" uid="uid://3gspo02acfce" path="res://asserts/player/weapons/ak47/ak47.bmp" id="6_oo337"]
+[ext_resource type="AudioStream" uid="uid://bb8t7a7xioa72" path="res://asserts/player/weapons/ak47/ak_long-1.wav" id="2_y0gyc"]
+[ext_resource type="AudioStream" uid="uid://chu4pdq5cjhwx" path="res://asserts/player/weapons/ak47/ak47_clipout.wav" id="3_oo337"]
+[ext_resource type="Texture2D" uid="uid://bcmjw0a3tge7n" path="res://asserts/player/weapons/ak47/sg552.bmp" id="4_4dtln"]
+[ext_resource type="AudioStream" uid="uid://divq8lsveyisy" path="res://asserts/player/weapons/ak47/ak47_clipin.wav" id="4_5813e"]
+[ext_resource type="AudioStream" uid="uid://x4gv4vp7o1n6" path="res://asserts/player/weapons/ak47/ak47_boltpull.wav" id="5_1qt6k"]
+[ext_resource type="Texture2D" uid="uid://cktochc2qgshb" path="res://asserts/player/weapons/ak47/ak47.bmp" id="6_oo337"]
 [ext_resource type="FontFile" uid="uid://cly6s32f5pm4p" path="res://asserts/Xolonium-Regular.ttf" id="7_4dtln"]
-[ext_resource type="Texture2D" uid="uid://y6k6nhs5fi4d" path="res://asserts/player/weapons/ak47/ak47long_m.png" id="7_mb4ji"]
+[ext_resource type="Texture2D" uid="uid://bwadfuty0n0ew" path="res://asserts/player/weapons/ak47/ak47long_m.png" id="7_mb4ji"]
 
 [sub_resource type="Curve" id="Curve_ait51"]
 _data = [Vector2(0, 0.747967), 0.0, 0.0, 0, 0, Vector2(0.49635, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.5), 0.0, 0.0, 0, 0]
@@ -48,12 +48,19 @@ default_font_size = 12
 
 [node name="RustWeapon" type="RustWeapon"]
 damage = 40
+distance = 1000.0
 clip = 60
 penetrate = 3.0
+fire_cooldown = 0.08
 reload_time = 2.0
 
-[node name="BulletPoint" type="Node2D" parent="."]
-position = Vector2(23.5, 0)
+[node name="BulletPoints" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 23.5
+offset_right = 23.5
+
+[node name="BulletPoint" type="Node2D" parent="BulletPoints"]
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 position = Vector2(16, 0)

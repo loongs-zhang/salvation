@@ -1,11 +1,11 @@
 [gd_scene load_steps=16 format=3 uid="uid://cigcujmruac6u"]
 
-[ext_resource type="Texture2D" uid="uid://3gspo02acfce" path="res://asserts/player/weapons/ak47/ak47.bmp" id="1_gsxud"]
-[ext_resource type="AudioStream" uid="uid://dxc0u3g1mcxtv" path="res://asserts/player/weapons/ak47/ak47-1.wav" id="2_hybat"]
-[ext_resource type="AudioStream" uid="uid://dxt6cog3aoh6e" path="res://asserts/player/weapons/ak47/ak47_clipout.wav" id="3_r88qr"]
-[ext_resource type="AudioStream" uid="uid://dovummnnaj5gj" path="res://asserts/player/weapons/ak47/ak47_clipin.wav" id="4_0jdrn"]
-[ext_resource type="AudioStream" uid="uid://d3frq75hvbhph" path="res://asserts/player/weapons/ak47/ak47_boltpull.wav" id="5_hybat"]
-[ext_resource type="Texture2D" uid="uid://dss75ntqn0toj" path="res://asserts/player/weapons/ak47/ak47_m.png" id="6_0jdrn"]
+[ext_resource type="Texture2D" uid="uid://cktochc2qgshb" path="res://asserts/player/weapons/ak47/ak47.bmp" id="1_gsxud"]
+[ext_resource type="AudioStream" uid="uid://cx5kob3gwt02d" path="res://asserts/player/weapons/ak47/ak47-1.wav" id="2_hybat"]
+[ext_resource type="AudioStream" uid="uid://chu4pdq5cjhwx" path="res://asserts/player/weapons/ak47/ak47_clipout.wav" id="3_r88qr"]
+[ext_resource type="AudioStream" uid="uid://divq8lsveyisy" path="res://asserts/player/weapons/ak47/ak47_clipin.wav" id="4_0jdrn"]
+[ext_resource type="AudioStream" uid="uid://x4gv4vp7o1n6" path="res://asserts/player/weapons/ak47/ak47_boltpull.wav" id="5_hybat"]
+[ext_resource type="Texture2D" uid="uid://b01dksm33dgvo" path="res://asserts/player/weapons/ak47/ak47_m.png" id="6_0jdrn"]
 [ext_resource type="FontFile" uid="uid://cly6s32f5pm4p" path="res://asserts/Xolonium-Regular.ttf" id="7_xxhh8"]
 
 [sub_resource type="Curve" id="Curve_ait51"]
@@ -50,8 +50,13 @@ damage = 36
 penetrate = 2.5
 reload_time = 2.5
 
-[node name="BulletPoint" type="Node2D" parent="."]
-position = Vector2(23.5, 0)
+[node name="BulletPoints" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 23.5
+offset_right = 23.5
+
+[node name="BulletPoint" type="Node2D" parent="BulletPoints"]
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 z_index = 1

@@ -1,11 +1,11 @@
 [gd_scene load_steps=16 format=3 uid="uid://bq5lki2s1pxuu"]
 
-[ext_resource type="Texture2D" uid="uid://vnovtrexaa47" path="res://asserts/player/weapons/deagle/deagle.bmp" id="1_opbco"]
-[ext_resource type="AudioStream" uid="uid://c7k87f2duy5wh" path="res://asserts/player/weapons/deagle/deagle-2.wav" id="2_opbco"]
-[ext_resource type="AudioStream" uid="uid://h64fkmjabyfd" path="res://asserts/player/weapons/deagle/dde_clipout.wav" id="3_6p0dp"]
-[ext_resource type="AudioStream" uid="uid://dgybjdybtx1v3" path="res://asserts/player/weapons/deagle/dde_clipin.wav" id="4_3d5af"]
-[ext_resource type="AudioStream" uid="uid://uhbnbepd4hja" path="res://asserts/player/weapons/deagle/dde_clipoff.wav" id="5_xlb1r"]
-[ext_resource type="Texture2D" uid="uid://31tnce2bv4lf" path="res://asserts/player/weapons/deagle/deagle_m.png" id="6_d5ty4"]
+[ext_resource type="Texture2D" uid="uid://bup7mrr167w02" path="res://asserts/player/weapons/deagle/deagle.bmp" id="1_opbco"]
+[ext_resource type="AudioStream" uid="uid://cymyvdrj5s24k" path="res://asserts/player/weapons/deagle/deagle-2.wav" id="2_opbco"]
+[ext_resource type="AudioStream" uid="uid://opxn5utu6xvv" path="res://asserts/player/weapons/deagle/dde_clipout.wav" id="3_6p0dp"]
+[ext_resource type="AudioStream" uid="uid://bmg4xg3k8x0s4" path="res://asserts/player/weapons/deagle/dde_clipin.wav" id="4_3d5af"]
+[ext_resource type="AudioStream" uid="uid://bhuq11s71hrg4" path="res://asserts/player/weapons/deagle/dde_clipoff.wav" id="5_xlb1r"]
+[ext_resource type="Texture2D" uid="uid://b0bdxpxu0cv5n" path="res://asserts/player/weapons/deagle/deagle_m.png" id="6_d5ty4"]
 [ext_resource type="FontFile" uid="uid://cly6s32f5pm4p" path="res://asserts/Xolonium-Regular.ttf" id="7_rx1qh"]
 
 [sub_resource type="Curve" id="Curve_ait51"]
@@ -47,13 +47,19 @@ default_font_size = 12
 
 [node name="RustWeapon" type="RustWeapon"]
 damage = 54
+distance = 450.0
 clip = 7
 pull_after_reload = true
 penetrate = 3.0
 fire_cooldown = 0.2
 
-[node name="BulletPoint" type="Node2D" parent="."]
-position = Vector2(18.5, 0)
+[node name="BulletPoints" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 18.5
+offset_right = 18.5
+
+[node name="BulletPoint" type="Node2D" parent="BulletPoints"]
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 z_index = 1

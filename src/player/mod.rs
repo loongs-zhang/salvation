@@ -3,15 +3,16 @@ use crate::player::hud::PlayerHUD;
 use crate::weapon::RustWeapon;
 use crate::world::RustWorld;
 use crate::{
-    DEFAULT_SCREEN_SIZE, PLAYER_LEVEL_UP_BARRIER, PLAYER_LEVEL_UP_GROW_RATE, PLAYER_MAX_HEALTH,
-    PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState, PlayerUpgrade, random_bool,
+    AWP_INDEX, DEFAULT_SCREEN_SIZE, PLAYER_LEVEL_UP_BARRIER, PLAYER_LEVEL_UP_GROW_RATE,
+    PLAYER_MAX_HEALTH, PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState, PlayerUpgrade,
+    random_bool,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
-    AnimatedSprite2D, AudioStreamPlayer2D, CharacterBody2D, DisplayServer, GpuParticles2D,
-    ICharacterBody2D, Input, InputEvent, Node2D, PackedScene,
+    AnimatedSprite2D, AudioStreamPlayer2D, Camera2D, CharacterBody2D, DisplayServer,
+    GpuParticles2D, ICharacterBody2D, Input, InputEvent, Node2D, PackedScene,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -75,6 +76,7 @@ pub struct RustPlayer {
     state: PlayerState,
     current_speed: real,
     animated_sprite2d: OnReady<Gd<AnimatedSprite2D>>,
+    camera: OnReady<Gd<Camera2D>>,
     weapons: OnReady<Gd<Node2D>>,
     blood_flash: OnReady<Gd<GpuParticles2D>>,
     hud: OnReady<Gd<PlayerHUD>>,
@@ -109,6 +111,7 @@ impl ICharacterBody2D for RustPlayer {
             current_lives: PLAYER_MAX_LIVES,
             current_speed: PLAYER_MOVE_SPEED,
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
+            camera: OnReady::from_node("Camera2D"),
             weapons: OnReady::from_node("Weapon"),
             blood_flash: OnReady::from_node("GpuParticles2D"),
             hud: OnReady::from_node("PlayerHUD"),
@@ -134,9 +137,7 @@ impl ICharacterBody2D for RustPlayer {
         hud.update_score_hud();
         hud.update_died_hud();
         drop(hud);
-        if PlayerState::Reload == self.state && self.get_current_weapon().bind().is_reloaded() {
-            self.reloaded();
-        } else if PlayerState::Impact == self.state {
+        if PlayerState::Impact == self.state {
             let impact_cost = IMPACTING.load() + delta;
             IMPACTING.store(impact_cost);
             if impact_cost < 1.0 {
@@ -399,6 +400,11 @@ impl RustPlayer {
         self.animated_sprite2d.play_ex().name("guard").done();
         self.current_speed = self.speed * 0.75;
         self.current_weapon_index = weapon_index;
+        if AWP_INDEX == self.current_weapon_index {
+            self.camera.set_zoom(Vector2::new(0.4, 0.4));
+        } else {
+            self.camera.set_zoom(Vector2::new(1.0, 1.0));
+        }
         self.state = PlayerState::Guard;
         STATE.store(self.state);
         self.change_success_audio.play();

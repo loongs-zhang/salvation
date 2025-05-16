@@ -21,7 +21,7 @@ impl ICanvasLayer for WeaponHUD {
 
 #[godot_api]
 impl WeaponHUD {
-    pub fn update_ammo_hud(&mut self, ammo: i64, clip: i64) {
+    pub fn update_ammo_hud(&mut self, ammo: i32, clip: i32) {
         let mut ammo_hud = self
             .control
             .get_node_as::<VBoxContainer>("VBoxContainer")

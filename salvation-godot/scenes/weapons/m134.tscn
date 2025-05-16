@@ -1,11 +1,11 @@
 [gd_scene load_steps=16 format=3 uid="uid://yk15efq3cmxx"]
 
-[ext_resource type="Texture2D" uid="uid://ldthuqu2jnig" path="res://asserts/player/weapons/m134/m134.png" id="1_8kmfu"]
-[ext_resource type="AudioStream" uid="uid://b8m8t12n84c4h" path="res://asserts/player/weapons/m134/m134-1.wav" id="2_6lky8"]
-[ext_resource type="AudioStream" uid="uid://klj3h3e14vhh" path="res://asserts/player/weapons/m134/m134_clipoff.wav" id="3_ui38b"]
-[ext_resource type="AudioStream" uid="uid://cg5ohyjg64ray" path="res://asserts/player/weapons/m134/m134_clipon.wav" id="4_l50ha"]
-[ext_resource type="AudioStream" uid="uid://b68vh7xdh8t4d" path="res://asserts/player/weapons/m134/m134_pinpull.wav" id="5_i4k35"]
-[ext_resource type="Texture2D" uid="uid://dtv5hhpgg84q7" path="res://asserts/player/weapons/m134/m134_m.png" id="6_ui38b"]
+[ext_resource type="Texture2D" uid="uid://hydpacgpdhvd" path="res://asserts/player/weapons/m134/m134.png" id="1_8kmfu"]
+[ext_resource type="AudioStream" uid="uid://cmicrb1mnl6ue" path="res://asserts/player/weapons/m134/m134-1.wav" id="2_6lky8"]
+[ext_resource type="AudioStream" uid="uid://c2yuwy6uhsi8v" path="res://asserts/player/weapons/m134/m134_clipoff.wav" id="3_ui38b"]
+[ext_resource type="AudioStream" uid="uid://bbugtbvgrw8iw" path="res://asserts/player/weapons/m134/m134_clipon.wav" id="4_l50ha"]
+[ext_resource type="AudioStream" uid="uid://b5tdoax2fbbk1" path="res://asserts/player/weapons/m134/m134_pinpull.wav" id="5_i4k35"]
+[ext_resource type="Texture2D" uid="uid://d3e1ju7tew6im" path="res://asserts/player/weapons/m134/m134_m.png" id="6_ui38b"]
 [ext_resource type="FontFile" uid="uid://cly6s32f5pm4p" path="res://asserts/Xolonium-Regular.ttf" id="7_l50ha"]
 
 [sub_resource type="Curve" id="Curve_ait51"]
@@ -47,14 +47,36 @@ default_font_size = 12
 
 [node name="RustWeapon" type="RustWeapon"]
 damage = 30
+distance = 666.0
 clip = 300
 pull_after_reload = true
 penetrate = 1.0
 fire_cooldown = 0.02
 reload_time = 5.5
 
-[node name="BulletPoint" type="Node2D" parent="."]
-position = Vector2(38.5, 0)
+[node name="BulletPoints" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 38.5
+offset_right = 38.5
+
+[node name="BulletPoint1" type="Node2D" parent="BulletPoints"]
+position = Vector2(0, -2.5)
+
+[node name="BulletPoint2" type="Node2D" parent="BulletPoints"]
+position = Vector2(0, -1.5)
+
+[node name="BulletPoint3" type="Node2D" parent="BulletPoints"]
+position = Vector2(0, -0.5)
+
+[node name="BulletPoint4" type="Node2D" parent="BulletPoints"]
+position = Vector2(0, 0.5)
+
+[node name="BulletPoint5" type="Node2D" parent="BulletPoints"]
+position = Vector2(0, 1.5)
+
+[node name="BulletPoint6" type="Node2D" parent="BulletPoints"]
+position = Vector2(0, 2.5)
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 z_index = 1
@@ -67,7 +89,7 @@ region_rect = Rect2(118, 16, 66, 62)
 
 [node name="Sprite2D2" type="Sprite2D" parent="."]
 z_index = 1
-position = Vector2(28.25, -2.3)
+position = Vector2(28.25, -2.6)
 scale = Vector2(0.25, 0.25)
 texture = ExtResource("1_8kmfu")
 flip_h = true
@@ -76,7 +98,7 @@ region_rect = Rect2(34, 29, 84, 3)
 
 [node name="Sprite2D3" type="Sprite2D" parent="."]
 z_index = 1
-position = Vector2(28.25, -1.3)
+position = Vector2(28.25, -1.6)
 scale = Vector2(0.25, 0.25)
 texture = ExtResource("1_8kmfu")
 flip_h = true
@@ -85,7 +107,7 @@ region_rect = Rect2(34, 32, 84, 5)
 
 [node name="Sprite2D4" type="Sprite2D" parent="."]
 z_index = 1
-position = Vector2(28.25, -0.1)
+position = Vector2(28.25, -0.6)
 scale = Vector2(0.25, 0.25)
 texture = ExtResource("1_8kmfu")
 flip_h = true
@@ -94,7 +116,7 @@ region_rect = Rect2(34, 32, 84, 5)
 
 [node name="Sprite2D5" type="Sprite2D" parent="."]
 z_index = 1
-position = Vector2(28.25, 1.1)
+position = Vector2(28.25, 0.6)
 scale = Vector2(0.25, 0.25)
 texture = ExtResource("1_8kmfu")
 flip_h = true
@@ -103,7 +125,16 @@ region_rect = Rect2(34, 32, 84, 5)
 
 [node name="Sprite2D6" type="Sprite2D" parent="."]
 z_index = 1
-position = Vector2(28.25, 2.1)
+position = Vector2(28.25, 1.6)
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("1_8kmfu")
+flip_h = true
+region_enabled = true
+region_rect = Rect2(34, 32, 84, 5)
+
+[node name="Sprite2D7" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(28.25, 2.5)
 scale = Vector2(0.25, 0.25)
 texture = ExtResource("1_8kmfu")
 flip_h = true

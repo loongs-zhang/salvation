@@ -1,11 +1,14 @@
 use crate::bullet::RustBullet;
+use crate::player::RustPlayer;
 use crate::weapon::hud::WeaponHUD;
 use crate::{
     BULLET_DAMAGE, BULLET_DISTANCE, BULLET_PENETRATE, BULLET_REPEL, MAX_AMMO, RELOAD_TIME,
     WEAPON_FIRE_COOLDOWN,
 };
 use godot::builtin::{Vector2, real};
-use godot::classes::{AudioStreamPlayer2D, GpuParticles2D, INode2D, Node2D, Object, PackedScene};
+use godot::classes::{
+    AudioStreamPlayer2D, Control, GpuParticles2D, INode2D, Node, Node2D, Object, PackedScene,
+};
 use godot::obj::{Base, Gd, OnReady, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
 
@@ -22,7 +25,7 @@ pub struct RustWeapon {
     distance: real,
     //武器弹夹容量
     #[export]
-    clip: i64,
+    clip: i32,
     #[export]
     pull_after_reload: bool,
     //武器击退
@@ -35,13 +38,12 @@ pub struct RustWeapon {
     fire_cooldown: real,
     #[export]
     reload_time: real,
-    //todo 加特林需要增加这个时间，不然换弹太快了
     reloading: real,
-    ammo: i64,
+    ammo: i32,
     current_fire_cooldown: real,
     hud: OnReady<Gd<WeaponHUD>>,
     bullet_scene: OnReady<Gd<PackedScene>>,
-    bullet_point: OnReady<Gd<Node2D>>,
+    bullet_points: OnReady<Gd<Control>>,
     fire_flash: OnReady<Gd<GpuParticles2D>>,
     fire_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     clip_out_audio: OnReady<Gd<AudioStreamPlayer2D>>,
@@ -67,7 +69,7 @@ impl INode2D for RustWeapon {
             current_fire_cooldown: WEAPON_FIRE_COOLDOWN,
             hud: OnReady::from_node("WeaponHUD"),
             bullet_scene: OnReady::from_loaded("res://scenes/rust_bullet.tscn"),
-            bullet_point: OnReady::from_node("BulletPoint"),
+            bullet_points: OnReady::from_node("BulletPoints"),
             fire_flash: OnReady::from_node("GpuParticles2D"),
             fire_audio: OnReady::from_node("FireAudio"),
             clip_out_audio: OnReady::from_node("ClipOutAudio"),
@@ -79,6 +81,12 @@ impl INode2D for RustWeapon {
 
     fn process(&mut self, delta: f64) {
         self.current_fire_cooldown -= delta as real;
+        if self.ammo < self.clip && self.reloading > 0.0 {
+            self.reloading -= delta as real;
+        } else if self.reloading < 0.0 && !self.clip_in_audio.is_playing() {
+            self.reloading = 0.0;
+            self.clip_in_audio.play();
+        }
     }
 
     fn ready(&mut self) {
@@ -127,10 +135,15 @@ impl RustWeapon {
         if 0 == self.ammo || self.current_fire_cooldown > 0.0 {
             return;
         }
-        //todo 大狙开后后的拉栓音效
         if let Some(mut bullet) = self.bullet_scene.try_instantiate_as::<RustBullet>() {
-            //todo 加特林开火时多枪管轮询选点射击
-            let bullet_point = self.bullet_point.get_global_position();
+            //加特林开火时多枪管轮询选点射击
+            let bullet_point = self
+                .bullet_points
+                .get_children()
+                .pick_random()
+                .unwrap()
+                .cast::<Node2D>()
+                .get_global_position();
             let direction = self
                 .base()
                 .get_global_position()
@@ -168,8 +181,12 @@ impl RustWeapon {
 
     #[func]
     pub fn on_clip_out_finished(&mut self) {
-        //todo 拔出弹夹后等待reload_time s的时间
-        self.clip_in_audio.play();
+        self.reloading = self.reload_time
+            - self.clip_out_audio.get_stream().unwrap().get_length() as real
+            - self.clip_in_audio.get_stream().unwrap().get_length() as real;
+        if self.pull_after_reload {
+            self.reloading -= self.clip_in_audio.get_stream().unwrap().get_length() as real;
+        }
     }
 
     #[func]
@@ -178,14 +195,15 @@ impl RustWeapon {
             self.bolt_pull_audio.play();
             return;
         }
-        self.ammo = self.clip;
-        self.update_ammo_hud();
+        // 无需拉栓
+        self.on_bolt_pull_finished();
     }
 
     #[func]
     pub fn on_bolt_pull_finished(&mut self) {
         self.ammo = self.clip;
         self.update_ammo_hud();
+        self.get_rust_player().bind_mut().reloaded();
     }
 
     pub fn stop_reload(&mut self) {
@@ -210,11 +228,18 @@ impl RustWeapon {
                 .get_mouse_position()
     }
 
-    pub fn must_reload(&self) -> bool {
-        0 == self.ammo
+    pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {
+        if let Some(tree) = self.base().get_tree() {
+            if let Some(root) = tree.get_root() {
+                return root
+                    .get_node_as::<Node>("RustWorld")
+                    .get_node_as::<RustPlayer>("RustPlayer");
+            }
+        }
+        panic!("RustPlayer not found");
     }
 
-    pub fn get_ammo(&self) -> i64 {
-        self.ammo
+    pub fn must_reload(&self) -> bool {
+        0 == self.ammo
     }
 }
