@@ -35,6 +35,8 @@ pub struct RustZombie {
     #[export]
     name: GString,
     #[export]
+    invincible: bool,
+    #[export]
     moveable: bool,
     #[export]
     attackable: bool,
@@ -79,6 +81,7 @@ impl ICharacterBody2D for RustZombie {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
             name: GString::new(),
+            invincible: false,
             moveable: true,
             attackable: true,
             speed: ZOMBIE_MOVE_SPEED,
@@ -251,12 +254,14 @@ impl RustZombie {
                 }
             }
         }
-        let health = self.health;
-        self.health = if hit_val > 0 {
-            health.saturating_sub(hit_val as u32)
-        } else {
-            health.saturating_add(-hit_val as u32)
-        };
+        if !self.invincible {
+            let health = self.health;
+            self.health = if hit_val > 0 {
+                health.saturating_sub(hit_val as u32)
+            } else {
+                health.saturating_add(-hit_val as u32)
+            };
+        }
         let speed = self.current_speed;
         let moved = direction * repel;
         let new_position = zombie_position + moved;

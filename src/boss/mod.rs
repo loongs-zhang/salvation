@@ -28,6 +28,8 @@ static BODY_COUNT: AtomicU32 = AtomicU32::new(0);
 #[class(base=CharacterBody2D)]
 pub struct RustBoss {
     #[export]
+    invincible: bool,
+    #[export]
     moveable: bool,
     #[export]
     attackable: bool,
@@ -62,6 +64,7 @@ pub struct RustBoss {
 impl ICharacterBody2D for RustBoss {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
+            invincible: false,
             moveable: true,
             attackable: true,
             speed: BOSS_MOVE_SPEED,
@@ -201,12 +204,14 @@ impl RustBoss {
                 }
             }
         }
-        let health = self.health;
-        self.health = if hit_val > 0 {
-            health.saturating_sub(hit_val as u32)
-        } else {
-            health.saturating_add(-hit_val as u32)
-        };
+        if !self.invincible {
+            let health = self.health;
+            self.health = if hit_val > 0 {
+                health.saturating_sub(hit_val as u32)
+            } else {
+                health.saturating_add(-hit_val as u32)
+            };
+        }
         let speed = self.current_speed;
         //面对BOSS击退力下降50%
         let moved = direction * repel * 0.5;
