@@ -17,6 +17,8 @@ pub mod weapon;
 
 pub mod bullet;
 
+pub mod grenade;
+
 pub mod zombie;
 
 pub mod boss;

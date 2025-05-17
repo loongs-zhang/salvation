@@ -1,78 +1,81 @@
-[gd_scene load_steps=16 format=3 uid="uid://bq5lki2s1pxuu"]
+[gd_scene load_steps=16 format=3 uid="uid://ckikdyjginfce"]
 
-[ext_resource type="Texture2D" uid="uid://cdgbcw4mrrijp" path="res://asserts/player/weapons/deagle/deagle.bmp" id="1_opbco"]
-[ext_resource type="AudioStream" uid="uid://dhhminiyujdul" path="res://asserts/player/weapons/deagle/deagle-2.wav" id="2_opbco"]
-[ext_resource type="AudioStream" uid="uid://dstjhvvitwylp" path="res://asserts/player/weapons/deagle/dde_clipout.wav" id="3_6p0dp"]
-[ext_resource type="AudioStream" uid="uid://bmctk3f5sidey" path="res://asserts/player/weapons/deagle/dde_clipin.wav" id="4_3d5af"]
-[ext_resource type="AudioStream" uid="uid://cqr3j54kro43i" path="res://asserts/player/weapons/deagle/dde_clipoff.wav" id="5_xlb1r"]
-[ext_resource type="Texture2D" uid="uid://4cp1ek7egcwm" path="res://asserts/player/weapons/deagle/deagle_m.png" id="6_d5ty4"]
-[ext_resource type="FontFile" uid="uid://ctt8sqtdr60ln" path="res://asserts/Xolonium-Regular.ttf" id="7_rx1qh"]
+[ext_resource type="PackedScene" uid="uid://dgavaa1gfepoa" path="res://scenes/rust_grenade.tscn" id="1_peu4v"]
+[ext_resource type="AudioStream" uid="uid://5kde4ei5ikjl" path="res://asserts/player/weapons/m79/m79-1.wav" id="2_y5g1i"]
+[ext_resource type="AudioStream" uid="uid://wxs2hvjjf31w" path="res://asserts/player/weapons/m79/m79_clipout.wav" id="3_peu4v"]
+[ext_resource type="AudioStream" uid="uid://0dnqbyebg1m4" path="res://asserts/player/weapons/m79/m79_clipin.wav" id="4_lb87w"]
+[ext_resource type="AudioStream" uid="uid://da51xwl2fl08u" path="res://asserts/player/weapons/m79/m79_clipon.wav" id="5_b5r84"]
+[ext_resource type="Texture2D" uid="uid://cy2sbcg16yq7h" path="res://asserts/player/weapons/m79/m79_m.png" id="6_peu4v"]
+[ext_resource type="FontFile" uid="uid://ctt8sqtdr60ln" path="res://asserts/Xolonium-Regular.ttf" id="7_12xp6"]
 
 [sub_resource type="Curve" id="Curve_ait51"]
 _data = [Vector2(0, 0.747967), 0.0, 0.0, 0, 0, Vector2(0.49635, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.5), 0.0, 0.0, 0, 0]
 point_count = 3
 
-[sub_resource type="CurveTexture" id="CurveTexture_ad62i"]
+[sub_resource type="CurveTexture" id="CurveTexture_peu4v"]
 curve = SubResource("Curve_ait51")
 
 [sub_resource type="Gradient" id="Gradient_bmmep"]
 offsets = PackedFloat32Array(0, 0.513072, 1)
 colors = PackedColorArray(1, 1, 0.588235, 1, 1, 0.705882, 0.196078, 1, 0.313726, 0.117647, 0, 1)
 
-[sub_resource type="GradientTexture1D" id="GradientTexture1D_88lgy"]
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_lb87w"]
 gradient = SubResource("Gradient_bmmep")
 
 [sub_resource type="Curve" id="Curve_fc1k3"]
 _data = [Vector2(0, 0.747967), 0.0, 0.0, 0, 0, Vector2(0.492701, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.495935), 0.0, 0.0, 0, 0]
 point_count = 3
 
-[sub_resource type="CurveTexture" id="CurveTexture_nrs26"]
+[sub_resource type="CurveTexture" id="CurveTexture_b5r84"]
 curve = SubResource("Curve_fc1k3")
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ait51"]
 particle_flag_disable_z = true
 spread = 30.0
-initial_velocity_min = 100.0
-initial_velocity_max = 200.0
+initial_velocity_min = 150.0
+initial_velocity_max = 300.0
 gravity = Vector3(100, 0, 0)
 scale_min = 2.0
 scale_max = 3.0
-scale_curve = SubResource("CurveTexture_nrs26")
-color_ramp = SubResource("GradientTexture1D_88lgy")
-alpha_curve = SubResource("CurveTexture_ad62i")
+scale_curve = SubResource("CurveTexture_b5r84")
+color_ramp = SubResource("GradientTexture1D_lb87w")
+alpha_curve = SubResource("CurveTexture_peu4v")
 
 [sub_resource type="Theme" id="Theme_qaptc"]
-default_font = ExtResource("7_rx1qh")
+default_font = ExtResource("7_12xp6")
 default_font_size = 12
 
 [node name="RustWeapon" type="RustWeapon"]
-damage = 54
-distance = 400.0
-clip = 7
+damage = 200
+distance = 325.0
+clip = 1
+bullet_scenes = Array[PackedScene]([ExtResource("1_peu4v")])
 pull_after_reload = true
-penetrate = 3.0
-fire_cooldown = 0.2
-reload_time = 1.8
+repel = 100.0
+penetrate = -9999.0
+fire_cooldown = 3.0
+reload_time = 3.0
 
 [node name="BulletPoints" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 18.5
-offset_right = 18.5
+offset_left = 18.25
+offset_right = 18.25
 
 [node name="BulletPoint" type="Node2D" parent="BulletPoints"]
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 z_index = 1
-position = Vector2(16, 0)
-rotation = 1.5708
-scale = Vector2(0.5, 0.5)
-texture = ExtResource("1_opbco")
+position = Vector2(13.5, 2.38419e-07)
+scale = Vector2(0.1, 0.2)
+texture = ExtResource("6_peu4v")
+region_enabled = true
+region_rect = Rect2(38, 23, 96, 12)
 
 [node name="GpuParticles2D" type="GPUParticles2D" parent="."]
-position = Vector2(18.5, 0)
+position = Vector2(18.25, 0)
 emitting = false
-amount = 16
+amount = 64
 lifetime = 0.2
 one_shot = true
 explosiveness = 1.0
@@ -80,16 +83,16 @@ local_coords = true
 process_material = SubResource("ParticleProcessMaterial_ait51")
 
 [node name="FireAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("2_opbco")
+stream = ExtResource("2_y5g1i")
 
 [node name="ClipOutAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("3_6p0dp")
+stream = ExtResource("3_peu4v")
 
 [node name="ClipInAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("4_3d5af")
+stream = ExtResource("4_lb87w")
 
 [node name="BoltPullAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("5_xlb1r")
+stream = ExtResource("5_b5r84")
 
 [node name="WeaponHUD" type="WeaponHUD" parent="."]
 
@@ -114,7 +117,7 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -100.0
+offset_left = -135.0
 offset_top = -125.0
 grow_horizontal = 0
 grow_vertical = 0
@@ -124,11 +127,11 @@ alignment = 1
 [node name="WeaponName" type="Label" parent="WeaponHUD/Control/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 8
-text = "DEAGLE"
+text = "M79"
 
 [node name="TextureRect" type="TextureRect" parent="WeaponHUD/Control/VBoxContainer"]
 layout_mode = 2
-texture = ExtResource("6_d5ty4")
+texture = ExtResource("6_peu4v")
 
 [node name="Ammo" type="Label" parent="WeaponHUD/Control/VBoxContainer"]
 layout_mode = 2

@@ -1,13 +1,13 @@
 [gd_scene load_steps=46 format=3 uid="uid://b8ou2gd7qcb4n"]
 
-[ext_resource type="Texture2D" uid="uid://b0iko5y4ocllp" path="res://asserts/zombie/zombie.png" id="1_4lcne"]
-[ext_resource type="AudioStream" uid="uid://cmrqyjcdujjjv" path="res://asserts/zombie/zombie_hit.mp3" id="2_xgxvb"]
-[ext_resource type="AudioStream" uid="uid://b7xt3dmbm6mui" path="res://asserts/zombie/zombie_scream.mp3" id="3_ojx4y"]
-[ext_resource type="AudioStream" uid="uid://dewl1306cphll" path="res://asserts/zombie/zombie_guard.mp3" id="4_ollki"]
-[ext_resource type="AudioStream" uid="uid://cny01wkcrhegk" path="res://asserts/zombie/zombie_rampage.mp3" id="6_72vyj"]
-[ext_resource type="AudioStream" uid="uid://bcnhffrg5qxh6" path="res://asserts/zombie/zombie_attack.mp3" id="7_4y265"]
-[ext_resource type="AudioStream" uid="uid://dc37ofk5eturh" path="res://asserts/zombie/zombie_attack_scream.mp3" id="8_5l3r1"]
-[ext_resource type="AudioStream" uid="uid://dmdxayn7g648c" path="res://asserts/zombie/zombie_die.mp3" id="9_pgect"]
+[ext_resource type="Texture2D" uid="uid://dl2e2alxr88ti" path="res://asserts/zombie/zombie.png" id="1_4lcne"]
+[ext_resource type="AudioStream" uid="uid://b2fcg5mkceji3" path="res://asserts/zombie/zombie_hit.mp3" id="2_xgxvb"]
+[ext_resource type="AudioStream" uid="uid://ddacchun7ngjm" path="res://asserts/zombie/zombie_scream.mp3" id="3_ojx4y"]
+[ext_resource type="AudioStream" uid="uid://cfil3c60xh0jr" path="res://asserts/zombie/zombie_guard.mp3" id="4_ollki"]
+[ext_resource type="AudioStream" uid="uid://coegfy2jkym2a" path="res://asserts/zombie/zombie_rampage.mp3" id="6_72vyj"]
+[ext_resource type="AudioStream" uid="uid://x2ky867rgsc1" path="res://asserts/zombie/zombie_attack.mp3" id="7_4y265"]
+[ext_resource type="AudioStream" uid="uid://dukpy5xk3txlv" path="res://asserts/zombie/zombie_attack_scream.mp3" id="8_5l3r1"]
+[ext_resource type="AudioStream" uid="uid://dw7k7gprqva86" path="res://asserts/zombie/zombie_die.mp3" id="9_pgect"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_xgxvb"]
 radius = 36.0

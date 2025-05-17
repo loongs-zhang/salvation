@@ -1,16 +1,18 @@
 use crate::bullet::RustBullet;
+use crate::grenade::RustGrenade;
 use crate::player::RustPlayer;
 use crate::weapon::hud::WeaponHUD;
 use crate::{
     BULLET_DAMAGE, BULLET_DISTANCE, BULLET_PENETRATE, BULLET_REPEL, MAX_AMMO, RELOAD_TIME,
     WEAPON_FIRE_COOLDOWN,
 };
-use godot::builtin::{Vector2, real};
+use godot::builtin::{Array, Vector2, real};
 use godot::classes::{
     AudioStreamPlayer2D, Control, GpuParticles2D, INode2D, Node, Node2D, Object, PackedScene,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
+use godot::tools::load;
 
 pub mod hud;
 
@@ -26,6 +28,8 @@ pub struct RustWeapon {
     //武器弹夹容量
     #[export]
     clip: i32,
+    #[export]
+    bullet_scenes: Array<Gd<PackedScene>>,
     #[export]
     pull_after_reload: bool,
     //武器击退
@@ -43,7 +47,6 @@ pub struct RustWeapon {
     current_fire_cooldown: real,
     current_flash_cooldown: f64,
     hud: OnReady<Gd<WeaponHUD>>,
-    bullet_scene: OnReady<Gd<PackedScene>>,
     bullet_points: OnReady<Gd<Control>>,
     fire_flash: OnReady<Gd<GpuParticles2D>>,
     fire_audio: OnReady<Gd<AudioStreamPlayer2D>>,
@@ -70,7 +73,7 @@ impl INode2D for RustWeapon {
             current_fire_cooldown: WEAPON_FIRE_COOLDOWN,
             current_flash_cooldown: 0.0,
             hud: OnReady::from_node("WeaponHUD"),
-            bullet_scene: OnReady::from_loaded("res://scenes/rust_bullet.tscn"),
+            bullet_scenes: Array::new(),
             bullet_points: OnReady::from_node("BulletPoints"),
             fire_flash: OnReady::from_node("GpuParticles2D"),
             fire_audio: OnReady::from_node("FireAudio"),
@@ -116,6 +119,10 @@ impl INode2D for RustWeapon {
                 .finished()
                 .connect_obj(&gd, Self::on_bolt_pull_finished);
         }
+        if self.bullet_scenes.is_empty() {
+            self.bullet_scenes
+                .push(&load::<PackedScene>("res://scenes/rust_bullet.tscn"));
+        }
     }
 }
 
@@ -138,7 +145,7 @@ impl RustWeapon {
         if 0 == self.ammo || self.current_fire_cooldown > 0.0 {
             return;
         }
-        if let Some(mut bullet) = self.bullet_scene.try_instantiate_as::<RustBullet>() {
+        for bullet_scene in self.bullet_scenes.iter_shared() {
             //加特林开火时多枪管轮询选点射击
             let bullet_point = self
                 .bullet_points
@@ -152,28 +159,54 @@ impl RustWeapon {
                 .get_global_position()
                 .direction_to(self.get_mouse_position())
                 .normalized();
-            bullet.set_global_position(bullet_point);
-            let mut gd_mut = bullet.bind_mut();
-            gd_mut.set_bullet_point(bullet_point);
-            gd_mut.set_final_distance(player_distance + self.distance);
-            gd_mut.set_final_damage(player_damage.saturating_add(self.damage));
-            gd_mut.set_final_penetrate(player_penetrate + self.penetrate);
-            gd_mut.set_final_repel(player_repel + self.repel);
-            gd_mut.set_direction(direction);
-            drop(gd_mut);
-            if let Some(tree) = self.base().get_tree() {
-                if let Some(mut root) = tree.get_root() {
-                    root.add_child(&bullet);
-                    if self.current_flash_cooldown <= 0.0 {
-                        self.fire_flash.restart();
-                        self.current_flash_cooldown = self.fire_flash.get_lifetime() * 0.25;
+            if let Some(mut bullet) = bullet_scene.try_instantiate_as::<RustBullet>() {
+                bullet.set_global_position(bullet_point);
+                let mut gd_mut = bullet.bind_mut();
+                gd_mut.set_bullet_point(bullet_point);
+                gd_mut.set_final_distance(player_distance + self.distance);
+                gd_mut.set_final_damage(player_damage.saturating_add(self.damage));
+                gd_mut.set_final_penetrate(player_penetrate + self.penetrate);
+                gd_mut.set_final_repel(player_repel + self.repel);
+                gd_mut.set_direction(direction);
+                drop(gd_mut);
+                if let Some(tree) = self.base().get_tree() {
+                    if let Some(mut root) = tree.get_root() {
+                        root.add_child(&bullet);
+                        if self.current_flash_cooldown <= 0.0 {
+                            self.fire_flash.restart();
+                            self.current_flash_cooldown = self.fire_flash.get_lifetime() * 0.25;
+                        }
+                        self.fire_audio.play();
+                        self.current_fire_cooldown = self.fire_cooldown;
+                        self.ammo -= 1;
                     }
-                    self.fire_audio.play();
-                    self.current_fire_cooldown = self.fire_cooldown;
-                    self.ammo -= 1;
-                    self.update_ammo_hud();
+                }
+            } else if let Some(mut grenade) = bullet_scene.try_instantiate_as::<RustGrenade>() {
+                grenade.set_global_position(bullet_point);
+                let mut gd_mut = grenade.bind_mut();
+                gd_mut.set_bullet_point(bullet_point);
+                gd_mut.set_final_distance(player_distance + self.distance);
+                gd_mut.set_final_damage(player_damage.saturating_add(self.damage));
+                gd_mut.set_final_repel(player_repel + self.repel);
+                gd_mut.throw(direction);
+                drop(gd_mut);
+                if let Some(tree) = self.base().get_tree() {
+                    if let Some(mut root) = tree.get_root() {
+                        root.add_child(&grenade);
+                        if self.current_flash_cooldown <= 0.0 {
+                            self.fire_flash.restart();
+                            self.current_flash_cooldown = self.fire_flash.get_lifetime() * 0.25;
+                        }
+                        self.fire_audio.play();
+                        self.current_fire_cooldown = self.fire_cooldown;
+                        self.ammo -= 1;
+                    }
                 }
             }
+            self.base()
+                .get_node_as::<WeaponHUD>("WeaponHUD")
+                .bind_mut()
+                .update_ammo_hud(self.ammo, self.clip);
         }
     }
 

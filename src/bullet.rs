@@ -17,7 +17,7 @@ pub struct RustBullet {
     final_repel: real,
     final_damage: i64,
     final_penetrate: real,
-    hit_count: u8,
+    hit_count: i16,
     direction: Vector2,
     base: Base<Node2D>,
 }
@@ -103,7 +103,7 @@ impl RustBullet {
 
     fn on_hit(&mut self) {
         self.hit_count += 1;
-        if self.hit_count >= self.final_penetrate as u8 {
+        if self.hit_count >= self.final_penetrate as i16 {
             //达到最大穿透上限
             self.base_mut().queue_free()
         }

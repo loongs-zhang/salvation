@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://dncxlinats2qc"]
 
-[ext_resource type="AudioStream" uid="uid://bywdq2iow0jem" path="res://asserts/player/weapons/bullet_hit.mp3" id="1_nf83k"]
+[ext_resource type="AudioStream" uid="uid://crncwty554tu1" path="res://asserts/player/weapons/bullet_hit.mp3" id="1_nf83k"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h1aey"]
 size = Vector2(8.2, 3.2)
@@ -23,13 +23,13 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(1, 1, 0.501961, 1)
 
-[node name="Area2D" type="BulletDamageArea" parent="."]
+[node name="BulletDamageArea" type="BulletDamageArea" parent="."]
 position = Vector2(0.1, -0.4)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BulletDamageArea"]
 shape = SubResource("RectangleShape2D_h1aey")
 
-[node name="HitAudio" type="AudioStreamPlayer2D" parent="Area2D"]
+[node name="HitAudio" type="AudioStreamPlayer2D" parent="BulletDamageArea"]
 stream = ExtResource("1_nf83k")
 volume_db = 12.0
 max_distance = 4096.0

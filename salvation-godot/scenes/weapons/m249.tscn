@@ -1,12 +1,12 @@
-[gd_scene load_steps=16 format=3 uid="uid://b7fu2bm60ctdv"]
+[gd_scene load_steps=16 format=3 uid="uid://dmjpe0q08ydxe"]
 
-[ext_resource type="Texture2D" uid="uid://fp8mrn14h8ao" path="res://asserts/player/weapons/m249/m249.bmp" id="1_swbgb"]
-[ext_resource type="AudioStream" uid="uid://dec6p4wph3pew" path="res://asserts/player/weapons/m249/m249-1.wav" id="2_4ea5e"]
-[ext_resource type="AudioStream" uid="uid://bpym6irw02sr0" path="res://asserts/player/weapons/m249/m249_boxout.wav" id="3_iofny"]
-[ext_resource type="AudioStream" uid="uid://dlnxuemo6gqtr" path="res://asserts/player/weapons/m249/m249_boxin.wav" id="4_q3r0a"]
-[ext_resource type="AudioStream" uid="uid://cqdudixaybkb0" path="res://asserts/player/weapons/m249/m249_coverup.wav" id="5_hgjf6"]
-[ext_resource type="Texture2D" uid="uid://c2ehk0fo4egw6" path="res://asserts/player/weapons/m249/m249_m.png" id="6_n6dx5"]
-[ext_resource type="FontFile" uid="uid://eyts2ldx42th" path="res://asserts/Xolonium-Regular.ttf" id="8_sg4tm"]
+[ext_resource type="Texture2D" uid="uid://bvy7kyvu5bp7v" path="res://asserts/player/weapons/m249/m249.bmp" id="1_swbgb"]
+[ext_resource type="AudioStream" uid="uid://61i1q32d3l05" path="res://asserts/player/weapons/m249/m249-1.wav" id="2_4ea5e"]
+[ext_resource type="AudioStream" uid="uid://eh6bf017xhvp" path="res://asserts/player/weapons/m249/m249_boxout.wav" id="3_iofny"]
+[ext_resource type="AudioStream" uid="uid://dib6hgv263x85" path="res://asserts/player/weapons/m249/m249_boxin.wav" id="4_q3r0a"]
+[ext_resource type="AudioStream" uid="uid://bwiyq5o6eyrpu" path="res://asserts/player/weapons/m249/m249_coverup.wav" id="5_hgjf6"]
+[ext_resource type="Texture2D" uid="uid://dsyr0551xh3ac" path="res://asserts/player/weapons/m249/m249_m.png" id="6_n6dx5"]
+[ext_resource type="FontFile" uid="uid://ctt8sqtdr60ln" path="res://asserts/Xolonium-Regular.ttf" id="8_sg4tm"]
 
 [sub_resource type="Curve" id="Curve_ait51"]
 _data = [Vector2(0, 0.747967), 0.0, 0.0, 0, 0, Vector2(0.49635, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.5), 0.0, 0.0, 0, 0]
@@ -49,7 +49,6 @@ default_font_size = 12
 damage = 32
 clip = 100
 pull_after_reload = true
-repel = 10.0
 penetrate = 1.0
 fire_cooldown = 0.06
 reload_time = 5.7

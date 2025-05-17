@@ -1,27 +1,28 @@
-[gd_scene load_steps=52 format=3 uid="uid://d2ryhlh122dqg"]
+[gd_scene load_steps=53 format=3 uid="uid://d2ryhlh122dqg"]
 
-[ext_resource type="Texture2D" uid="uid://dj2bcx4s60ukp" path="res://asserts/player/player_idle.png" id="1_iwbmd"]
-[ext_resource type="Texture2D" uid="uid://c1cgtyqye5lob" path="res://asserts/player/player_run.png" id="2_0rh5x"]
-[ext_resource type="Texture2D" uid="uid://dp751hrrlut2m" path="res://asserts/zombie/zombie.png" id="2_53o8o"]
-[ext_resource type="Texture2D" uid="uid://b2fxinam55rl7" path="res://asserts/player/player_walk.png" id="3_53o8o"]
-[ext_resource type="Texture2D" uid="uid://brdw3e3s7expd" path="res://asserts/player/player_gun_reload.png" id="3_g8j1n"]
+[ext_resource type="Texture2D" uid="uid://bqvfrl504qx0y" path="res://asserts/player/player_idle.png" id="1_iwbmd"]
+[ext_resource type="Texture2D" uid="uid://corkdmhx227i8" path="res://asserts/player/player_run.png" id="2_0rh5x"]
+[ext_resource type="Texture2D" uid="uid://dl2e2alxr88ti" path="res://asserts/zombie/zombie.png" id="2_53o8o"]
+[ext_resource type="Texture2D" uid="uid://b4ohe06jqwoww" path="res://asserts/player/player_walk.png" id="3_53o8o"]
+[ext_resource type="Texture2D" uid="uid://bwhbmsgxcswh" path="res://asserts/player/player_gun_reload.png" id="3_g8j1n"]
 [ext_resource type="PackedScene" uid="uid://cigcujmruac6u" path="res://scenes/weapons/ak47.tscn" id="4_0rh5x"]
 [ext_resource type="PackedScene" uid="uid://bq5lki2s1pxuu" path="res://scenes/weapons/deagle.tscn" id="6_xpqh4"]
 [ext_resource type="PackedScene" uid="uid://bts1qj27g6gue" path="res://scenes/weapons/m4a1.tscn" id="7_dmfm0"]
 [ext_resource type="PackedScene" uid="uid://dmvaupviw4lk8" path="res://scenes/weapons/awp.tscn" id="7_fpnfn"]
 [ext_resource type="PackedScene" uid="uid://6mpjo4ff6g2a" path="res://scenes/player_hud.tscn" id="7_g8j1n"]
-[ext_resource type="AudioStream" uid="uid://e4n2epih70wb" path="res://asserts/player/player_run.mp3" id="8_e5vhl"]
-[ext_resource type="PackedScene" uid="uid://k51310ir01y3" path="res://scenes/weapons/ak47-60r.tscn" id="8_x4rvw"]
+[ext_resource type="PackedScene" uid="uid://ckikdyjginfce" path="res://scenes/weapons/m79.tscn" id="7_h80fl"]
+[ext_resource type="AudioStream" uid="uid://dxkj5niiqothq" path="res://asserts/player/player_run.mp3" id="8_e5vhl"]
 [ext_resource type="PackedScene" uid="uid://yk15efq3cmxx" path="res://scenes/weapons/m134.tscn" id="9_3nwbu"]
-[ext_resource type="AudioStream" uid="uid://pumca8yx838" path="res://asserts/player/player_hurt1.mp3" id="9_dmfm0"]
-[ext_resource type="AudioStream" uid="uid://cbq4ugjib6bth" path="res://asserts/player/player_hurt2.mp3" id="10_dlpix"]
-[ext_resource type="AudioStream" uid="uid://dr44t3jmlw8jv" path="res://asserts/player/player_scream.mp3" id="11_0hc44"]
-[ext_resource type="PackedScene" uid="uid://b7fu2bm60ctdv" path="res://scenes/weapons/m249.tscn" id="11_xfvbh"]
-[ext_resource type="PackedScene" uid="uid://mchu4og43s5k" path="res://scenes/weapons/mg3.tscn" id="12_21vya"]
-[ext_resource type="AudioStream" uid="uid://cvqqaqyutth0n" path="res://asserts/player/player_die.mp3" id="12_x4rvw"]
-[ext_resource type="AudioStream" uid="uid://c5uvjmde6pdu7" path="res://asserts/player/weapons/wpn_hudon.wav" id="14_0hc44"]
-[ext_resource type="AudioStream" uid="uid://cq65fhtwgapqj" path="res://asserts/player/weapons/wpn_hudoff.wav" id="15_x4rvw"]
-[ext_resource type="AudioStream" uid="uid://dgrslkhcvdlov" path="res://asserts/player/weapons/zoom.wav" id="21_h5itx"]
+[ext_resource type="AudioStream" uid="uid://rxfjna7uyc3n" path="res://asserts/player/player_hurt1.mp3" id="9_dmfm0"]
+[ext_resource type="AudioStream" uid="uid://b0y6ev0meuplf" path="res://asserts/player/player_hurt2.mp3" id="10_dlpix"]
+[ext_resource type="AudioStream" uid="uid://bvg2twk6l78iy" path="res://asserts/player/player_scream.mp3" id="11_0hc44"]
+[ext_resource type="PackedScene" uid="uid://b0c5a38wvdtx" path="res://scenes/weapons/ak47-60r.tscn" id="11_h80fl"]
+[ext_resource type="PackedScene" uid="uid://dmjpe0q08ydxe" path="res://scenes/weapons/m249.tscn" id="11_xfvbh"]
+[ext_resource type="PackedScene" uid="uid://c5kfqnhoa8v6w" path="res://scenes/weapons/mg3.tscn" id="12_21vya"]
+[ext_resource type="AudioStream" uid="uid://cosa5vkr4rl56" path="res://asserts/player/player_die.mp3" id="12_x4rvw"]
+[ext_resource type="AudioStream" uid="uid://wj1cfkemtkf6" path="res://asserts/player/weapons/wpn_hudon.wav" id="14_0hc44"]
+[ext_resource type="AudioStream" uid="uid://bswhxk7meyul0" path="res://asserts/player/weapons/wpn_hudoff.wav" id="15_x4rvw"]
+[ext_resource type="AudioStream" uid="uid://dcmp03pf4jcqv" path="res://asserts/player/weapons/zoom.wav" id="21_h5itx"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_h4u8k"]
 radius = 18.0
@@ -301,11 +302,13 @@ position = Vector2(10, 2)
 
 [node name="AWP" parent="Weapon" instance=ExtResource("7_fpnfn")]
 
+[node name="M79" parent="Weapon" instance=ExtResource("7_h80fl")]
+
 [node name="M4A1" parent="Weapon" instance=ExtResource("7_dmfm0")]
 
 [node name="AK47" parent="Weapon" instance=ExtResource("4_0rh5x")]
 
-[node name="AK47-60R" parent="Weapon" instance=ExtResource("8_x4rvw")]
+[node name="AK47-60R" parent="Weapon" instance=ExtResource("11_h80fl")]
 
 [node name="M249" parent="Weapon" instance=ExtResource("11_xfvbh")]
 
@@ -346,4 +349,4 @@ stream = ExtResource("15_x4rvw")
 
 [node name="ZoomAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("21_h5itx")
-volume_db = 12.0
+volume_db = 16.0
