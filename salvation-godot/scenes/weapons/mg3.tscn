@@ -1,0 +1,157 @@
+[gd_scene load_steps=16 format=3 uid="uid://mchu4og43s5k"]
+
+[ext_resource type="Texture2D" uid="uid://fp8mrn14h8ao" path="res://asserts/player/weapons/m249/m249.bmp" id="1_5e7xg"]
+[ext_resource type="AudioStream" uid="uid://dkg6a1583uv1l" path="res://asserts/player/weapons/mg3/mg3-1.wav" id="2_5e7xg"]
+[ext_resource type="AudioStream" uid="uid://dtwp2k0c5e1sv" path="res://asserts/player/weapons/mg3/mg3_clipout.wav" id="3_f7gl5"]
+[ext_resource type="AudioStream" uid="uid://cgrshkrqhhsxr" path="res://asserts/player/weapons/mg3/mg3_clipin.wav" id="4_evr1t"]
+[ext_resource type="AudioStream" uid="uid://citoyd2h8rpta" path="res://asserts/player/weapons/mg3/mg3_cliplock.wav" id="5_wu6gr"]
+[ext_resource type="Texture2D" uid="uid://biamgh18sp03c" path="res://asserts/player/weapons/mg3/mg3_m.png" id="6_5e7xg"]
+[ext_resource type="FontFile" uid="uid://eyts2ldx42th" path="res://asserts/Xolonium-Regular.ttf" id="7_7jwk2"]
+
+[sub_resource type="Curve" id="Curve_ait51"]
+_data = [Vector2(0, 0.747967), 0.0, 0.0, 0, 0, Vector2(0.49635, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.5), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_ad62i"]
+curve = SubResource("Curve_ait51")
+
+[sub_resource type="Gradient" id="Gradient_bmmep"]
+offsets = PackedFloat32Array(0, 0.513072, 1)
+colors = PackedColorArray(1, 1, 0.588235, 1, 1, 0.705882, 0.196078, 1, 0.313726, 0.117647, 0, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_88lgy"]
+gradient = SubResource("Gradient_bmmep")
+
+[sub_resource type="Curve" id="Curve_fc1k3"]
+_data = [Vector2(0, 0.747967), 0.0, 0.0, 0, 0, Vector2(0.492701, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.495935), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_nrs26"]
+curve = SubResource("Curve_fc1k3")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ait51"]
+particle_flag_disable_z = true
+spread = 15.0
+initial_velocity_min = 100.0
+initial_velocity_max = 200.0
+gravity = Vector3(100, 0, 0)
+scale_min = 2.0
+scale_max = 3.0
+scale_curve = SubResource("CurveTexture_nrs26")
+color_ramp = SubResource("GradientTexture1D_88lgy")
+alpha_curve = SubResource("CurveTexture_ad62i")
+
+[sub_resource type="Theme" id="Theme_1mmyr"]
+default_font = ExtResource("7_7jwk2")
+default_font_size = 12
+
+[node name="RustWeapon" type="RustWeapon"]
+damage = 33
+clip = 200
+pull_after_reload = true
+repel = 10.0
+penetrate = 1.0
+fire_cooldown = 0.05
+reload_time = 6.2
+
+[node name="BulletPoints" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 27.5
+offset_right = 27.5
+
+[node name="BulletPoint" type="Node2D" parent="BulletPoints"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(16, 0)
+rotation = 1.5708
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("1_5e7xg")
+flip_h = true
+region_rect = Rect2(23.0936, 0, 12.6211, 64)
+
+[node name="Sprite2D2" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(16, 4.4)
+rotation = 1.5708
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("1_5e7xg")
+region_enabled = true
+region_rect = Rect2(36.8547, 0, 5.82858, 64)
+
+[node name="Sprite2D3" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(16, 3)
+rotation = 1.5708
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("1_5e7xg")
+region_enabled = true
+region_rect = Rect2(36.8547, 0, 2.98176, 64)
+
+[node name="GpuParticles2D" type="GPUParticles2D" parent="."]
+position = Vector2(27.5, 0)
+emitting = false
+amount = 16
+lifetime = 0.2
+one_shot = true
+explosiveness = 1.0
+local_coords = true
+process_material = SubResource("ParticleProcessMaterial_ait51")
+
+[node name="FireAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("2_5e7xg")
+
+[node name="ClipOutAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("3_f7gl5")
+
+[node name="ClipInAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("4_evr1t")
+
+[node name="BoltPullAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("5_wu6gr")
+
+[node name="WeaponHUD" type="WeaponHUD" parent="."]
+
+[node name="Control" type="Control" parent="WeaponHUD"]
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -10.0
+offset_top = -10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="WeaponHUD/Control"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -235.0
+offset_top = -125.0
+grow_horizontal = 0
+grow_vertical = 0
+size_flags_horizontal = 8
+alignment = 1
+
+[node name="WeaponName" type="Label" parent="WeaponHUD/Control/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+text = "MG3"
+
+[node name="TextureRect" type="TextureRect" parent="WeaponHUD/Control/VBoxContainer"]
+layout_mode = 2
+texture = ExtResource("6_5e7xg")
+
+[node name="Ammo" type="Label" parent="WeaponHUD/Control/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme = SubResource("Theme_1mmyr")
+text = "Ammo"

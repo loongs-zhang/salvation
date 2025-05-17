@@ -87,6 +87,7 @@ pub struct RustPlayer {
     die_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     change_success_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     change_fail_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    zoom_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     level_up_scene: OnReady<Gd<PackedScene>>,
     base: Base<CharacterBody2D>,
 }
@@ -122,6 +123,7 @@ impl ICharacterBody2D for RustPlayer {
             die_audio: OnReady::from_node("DieAudio"),
             change_success_audio: OnReady::from_node("ChangeWeaponSuccess"),
             change_fail_audio: OnReady::from_node("ChangeWeaponFail"),
+            zoom_audio: OnReady::from_node("ZoomAudio"),
             level_up_scene: OnReady::from_loaded("res://scenes/rust_message.tscn"),
             base,
         }
@@ -232,6 +234,12 @@ impl ICharacterBody2D for RustPlayer {
             self.change_weapon(4);
         } else if event.is_action_pressed("6") {
             self.change_weapon(5);
+        } else if event.is_action_pressed("7") {
+            self.change_weapon(6);
+        } else if event.is_action_pressed("8") {
+            self.change_weapon(7);
+        } else if event.is_action_pressed("9") {
+            self.change_weapon(8);
         }
     }
 }
@@ -401,6 +409,7 @@ impl RustPlayer {
         self.current_speed = self.speed * 0.75;
         self.current_weapon_index = weapon_index;
         if AWP_INDEX == self.current_weapon_index {
+            self.zoom_audio.play();
             self.camera.set_zoom(Vector2::new(0.4, 0.4));
         } else {
             self.camera.set_zoom(Vector2::new(1.0, 1.0));
