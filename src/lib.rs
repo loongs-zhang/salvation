@@ -104,6 +104,7 @@ pub enum PlayerState {
     Run,
     Shoot,
     Reload,
+    Reloading,
     Hit,
     Impact,
     Dead,

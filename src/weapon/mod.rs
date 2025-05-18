@@ -323,7 +323,7 @@ impl RustWeapon {
         self.ammo += 1;
         self.ammo = self.ammo.min(self.clip);
         self.update_ammo_hud();
-        self.get_rust_player().bind_mut().reload_part();
+        self.get_rust_player().call_deferred("reloading", &[]);
         if self.ammo == self.clip {
             self.clip_in_audio.play();
             return;
@@ -345,7 +345,7 @@ impl RustWeapon {
     pub fn on_bolt_pull_finished(&mut self) {
         self.ammo = self.clip;
         self.update_ammo_hud();
-        self.get_rust_player().bind_mut().reloaded();
+        self.get_rust_player().call_deferred("reloaded", &[]);
     }
 
     pub fn stop_reload(&mut self) {

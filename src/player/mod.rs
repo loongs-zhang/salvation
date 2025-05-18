@@ -314,6 +314,7 @@ impl RustPlayer {
         if PlayerState::Dead == self.state
             || PlayerState::Impact == self.state
             || PlayerState::Reload == self.state
+            || PlayerState::Reloading == self.state
         {
             return;
         }
@@ -379,16 +380,18 @@ impl RustPlayer {
         STATE.store(self.state);
     }
 
-    pub fn reload_part(&mut self) {
+    #[func]
+    pub fn reloading(&mut self) {
         if PlayerState::Dead == self.state || PlayerState::Impact == self.state {
             return;
         }
-        self.state = PlayerState::Guard;
-        self.guard();
         self.animated_sprite2d.play_ex().name("reload").done();
         self.current_speed = self.speed * 0.75;
+        self.state = PlayerState::Reloading;
+        STATE.store(self.state);
     }
 
+    #[func]
     pub fn reloaded(&mut self) {
         if PlayerState::Dead == self.state || PlayerState::Impact == self.state {
             return;
@@ -529,6 +532,8 @@ impl RustPlayer {
         self.current_speed = 0.0;
         self.state = PlayerState::Dead;
         STATE.store(self.state);
+        //打断换弹
+        self.get_current_weapon().bind_mut().stop_reload();
         self.die_audio.play();
         DIED.fetch_add(1, Ordering::Release);
         if 0 == self.current_lives {
