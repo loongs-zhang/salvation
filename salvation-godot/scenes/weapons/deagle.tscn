@@ -86,6 +86,8 @@ stream = ExtResource("2_opbco")
 [node name="ClipOutAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_6p0dp")
 
+[node name="ClipPartInAudio" type="AudioStreamPlayer2D" parent="."]
+
 [node name="ClipInAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("4_3d5af")
 

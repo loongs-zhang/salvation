@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://b45bpbabiv23r"]
 
-[ext_resource type="AudioStream" uid="uid://djnytju7bequ" path="res://asserts/bgm/Horizon.mp3" id="1_uh0c4"]
+[ext_resource type="AudioStream" uid="uid://b62h06y6vdvl1" path="res://asserts/bgm/Horizon.mp3" id="1_uh0c4"]
 
 [node name="RustEntrance" type="RustEntrance"]
 anchors_preset = 15

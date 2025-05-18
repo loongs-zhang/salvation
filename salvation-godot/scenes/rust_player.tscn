@@ -1,4 +1,4 @@
-[gd_scene load_steps=53 format=3 uid="uid://d2ryhlh122dqg"]
+[gd_scene load_steps=54 format=3 uid="uid://d2ryhlh122dqg"]
 
 [ext_resource type="Texture2D" uid="uid://bqvfrl504qx0y" path="res://asserts/player/player_idle.png" id="1_iwbmd"]
 [ext_resource type="Texture2D" uid="uid://corkdmhx227i8" path="res://asserts/player/player_run.png" id="2_0rh5x"]
@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" uid="uid://dmvaupviw4lk8" path="res://scenes/weapons/awp.tscn" id="7_fpnfn"]
 [ext_resource type="PackedScene" uid="uid://6mpjo4ff6g2a" path="res://scenes/player_hud.tscn" id="7_g8j1n"]
 [ext_resource type="PackedScene" uid="uid://ckikdyjginfce" path="res://scenes/weapons/m79.tscn" id="7_h80fl"]
+[ext_resource type="PackedScene" uid="uid://cjqspps1mdrvr" path="res://scenes/weapons/xm1014.tscn" id="7_xxdm6"]
 [ext_resource type="AudioStream" uid="uid://dxkj5niiqothq" path="res://asserts/player/player_run.mp3" id="8_e5vhl"]
 [ext_resource type="PackedScene" uid="uid://yk15efq3cmxx" path="res://scenes/weapons/m134.tscn" id="9_3nwbu"]
 [ext_resource type="AudioStream" uid="uid://rxfjna7uyc3n" path="res://asserts/player/player_hurt1.mp3" id="9_dmfm0"]
@@ -299,6 +300,8 @@ autoplay = "guard"
 position = Vector2(10, 2)
 
 [node name="DEAGLE" parent="Weapon" instance=ExtResource("6_xpqh4")]
+
+[node name="XM1014" parent="Weapon" instance=ExtResource("7_xxdm6")]
 
 [node name="AWP" parent="Weapon" instance=ExtResource("7_fpnfn")]
 

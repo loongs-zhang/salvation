@@ -3,9 +3,8 @@ use crate::player::hud::PlayerHUD;
 use crate::weapon::RustWeapon;
 use crate::world::RustWorld;
 use crate::{
-    AWP_INDEX, DEFAULT_SCREEN_SIZE, PLAYER_LEVEL_UP_BARRIER, PLAYER_LEVEL_UP_GROW_RATE,
-    PLAYER_MAX_HEALTH, PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState, PlayerUpgrade,
-    random_bool,
+    DEFAULT_SCREEN_SIZE, PLAYER_LEVEL_UP_BARRIER, PLAYER_LEVEL_UP_GROW_RATE, PLAYER_MAX_HEALTH,
+    PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState, PlayerUpgrade, random_bool,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Vector2, real};
@@ -240,6 +239,8 @@ impl ICharacterBody2D for RustPlayer {
             self.change_weapon(7);
         } else if event.is_action_pressed("9") {
             self.change_weapon(8);
+        } else if event.is_action_pressed("0") {
+            self.change_weapon(9);
         }
     }
 }
@@ -357,6 +358,8 @@ impl RustPlayer {
         self.current_speed = self.speed * 0.5;
         self.state = PlayerState::Shoot;
         STATE.store(self.state);
+        //打断正在持续的换弹
+        rust_weapon.bind_mut().stop_reload();
         rust_weapon
             .bind_mut()
             .fire(self.damage, self.distance, self.penetrate, self.repel);
@@ -374,6 +377,16 @@ impl RustPlayer {
         self.current_speed = self.speed * 0.75;
         self.state = PlayerState::Reload;
         STATE.store(self.state);
+    }
+
+    pub fn reload_part(&mut self) {
+        if PlayerState::Dead == self.state || PlayerState::Impact == self.state {
+            return;
+        }
+        self.state = PlayerState::Guard;
+        self.guard();
+        self.animated_sprite2d.play_ex().name("reload").done();
+        self.current_speed = self.speed * 0.75;
     }
 
     pub fn reloaded(&mut self) {
@@ -408,7 +421,7 @@ impl RustPlayer {
         self.animated_sprite2d.play_ex().name("guard").done();
         self.current_speed = self.speed * 0.75;
         self.current_weapon_index = weapon_index;
-        if AWP_INDEX == self.current_weapon_index {
+        if self.get_current_weapon().get_name() == "AWP".into() {
             self.zoom_audio.play();
             self.camera.set_zoom(Vector2::new(0.4, 0.4));
         } else {
@@ -473,8 +486,9 @@ impl RustPlayer {
         self.blood_flash.set_emitting(true);
         self.blood_flash.restart();
         STATE.store(self.state);
+        //打断正在持续的换弹
+        self.get_current_weapon().bind_mut().stop_reload();
         IMPACT_POSITION.store(impact_position);
-        STATE.store(self.state);
     }
 
     pub fn impacting(&mut self) {

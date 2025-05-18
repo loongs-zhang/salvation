@@ -52,8 +52,6 @@ const MAX_AMMO: i32 = 30;
 
 const RELOAD_TIME: real = 1.0;
 
-const AWP_INDEX: i32 = 1;
-
 //level
 const LEVEL_GROW_RATE: real = 1.1;
 
