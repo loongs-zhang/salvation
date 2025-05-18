@@ -173,11 +173,9 @@ max_distance = 4096.0
 attenuation = 1e-05
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
-position = Vector2(-8, -70)
 scale = Vector2(1.2, 1.2)
 sprite_frames = SubResource("SpriteFrames_xlnxk")
-frame = 16
-frame_progress = 1.0
+offset = Vector2(0, -50)
 
 [node name="HitArea" type="Area2D" parent="."]
 

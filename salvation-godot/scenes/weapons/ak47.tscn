@@ -1,7 +1,6 @@
-[gd_scene load_steps=17 format=3 uid="uid://cigcujmruac6u"]
+[gd_scene load_steps=16 format=3 uid="uid://cigcujmruac6u"]
 
 [ext_resource type="Texture2D" uid="uid://cm3tl1oocqth0" path="res://asserts/player/weapons/ak47/ak47.bmp" id="1_gsxud"]
-[ext_resource type="PackedScene" uid="uid://dncxlinats2qc" path="res://scenes/rust_bullet.tscn" id="1_xxhh8"]
 [ext_resource type="AudioStream" uid="uid://cc2rrfrplhytr" path="res://asserts/player/weapons/ak47/ak47-1.wav" id="2_hybat"]
 [ext_resource type="AudioStream" uid="uid://cgkki21wkrgmi" path="res://asserts/player/weapons/ak47/ak47_clipout.wav" id="3_r88qr"]
 [ext_resource type="AudioStream" uid="uid://cdgs588ra2q1n" path="res://asserts/player/weapons/ak47/ak47_clipin.wav" id="4_0jdrn"]
@@ -46,8 +45,9 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 default_font = ExtResource("7_xxhh8")
 default_font_size = 12
 
-[node name="RustWeapon" type="RustWeapon"]
+[node name="Ak47" type="RustWeapon"]
 damage = 36
+repel = 24.0
 penetrate = 2.5
 reload_time = 2.5
 

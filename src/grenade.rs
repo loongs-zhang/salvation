@@ -65,6 +65,7 @@ impl IRigidBody2D for RustGrenade {
     }
 
     fn ready(&mut self) {
+        self.explode_flash.set_visible(false);
         self.base_mut()
             .set_physics_interpolation_mode(PhysicsInterpolationMode::ON);
         let mouse_position = self.get_mouse_position();
@@ -142,7 +143,8 @@ impl RustGrenade {
             self.explode_flash.set_visible(true);
             self.explode_flash.set_global_rotation_degrees(0.0);
             self.explode_flash.play_ex().name("default").done();
-            self.texture_rect.set_visible(false);
+            self.hit_area.queue_free();
+            self.texture_rect.queue_free();
         }
         let position = self.base().get_global_position();
         for body in self.damage_area.get_overlapping_bodies().iter_shared() {

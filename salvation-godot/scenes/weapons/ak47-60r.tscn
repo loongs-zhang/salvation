@@ -46,11 +46,11 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 default_font = ExtResource("7_4dtln")
 default_font_size = 12
 
-[node name="RustWeapon" type="RustWeapon"]
+[node name="Ak47-60R" type="RustWeapon"]
 damage = 40
 distance = 1000.0
 clip = 60
-repel = 16.0
+repel = 30.0
 penetrate = 3.0
 fire_cooldown = 0.08
 reload_time = 2.0

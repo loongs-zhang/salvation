@@ -1,6 +1,5 @@
-[gd_scene load_steps=18 format=3 uid="uid://bts1qj27g6gue"]
+[gd_scene load_steps=17 format=3 uid="uid://bts1qj27g6gue"]
 
-[ext_resource type="PackedScene" uid="uid://dncxlinats2qc" path="res://scenes/rust_bullet.tscn" id="1_4sdc6"]
 [ext_resource type="Texture2D" uid="uid://chl2irkr141su" path="res://asserts/player/weapons/m4a1/m4a1.bmp" id="1_dd6rc"]
 [ext_resource type="Texture2D" uid="uid://csll18c6kywh1" path="res://asserts/player/weapons/m4a1/m4a1_silenced.bmp" id="2_q7vt1"]
 [ext_resource type="AudioStream" uid="uid://b3rehc0q6h8pn" path="res://asserts/player/weapons/m4a1/m4a1-1.wav" id="3_h3rn4"]
@@ -47,7 +46,7 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 default_font = ExtResource("8_4sdc6")
 default_font_size = 12
 
-[node name="RustWeapon" type="RustWeapon"]
+[node name="M4A1" type="RustWeapon"]
 damage = 33
 distance = 1000.0
 pull_after_reload = true

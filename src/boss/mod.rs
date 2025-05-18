@@ -310,6 +310,13 @@ impl RustBoss {
         self.zombie_attack_area.queue_free();
         self.zombie_damage_area.queue_free();
         self.notify_animation();
+        // 45S后自动清理尸体
+        BODY_COUNT.fetch_add(1, Ordering::Release);
+        if let Some(mut tree) = self.base().get_tree() {
+            if let Some(mut timer) = tree.create_timer(45.0) {
+                timer.connect("timeout", &self.base().callable("clean_body"));
+            }
+        }
         // 击杀僵尸确认
         self.base()
             .get_tree()
@@ -320,13 +327,6 @@ impl RustBoss {
             .get_node_as::<RustLevel>("RustLevel")
             .bind_mut()
             .kill_boss_confirmed();
-        BODY_COUNT.fetch_add(1, Ordering::Release);
-        // 45S后自动清理尸体
-        if let Some(mut tree) = self.base().get_tree() {
-            if let Some(mut timer) = tree.create_timer(45.0) {
-                timer.connect("timeout", &self.base().callable("clean_body"));
-            }
-        }
     }
 
     #[func]

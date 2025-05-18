@@ -45,11 +45,12 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 default_font = ExtResource("7_rx1qh")
 default_font_size = 12
 
-[node name="RustWeapon" type="RustWeapon"]
+[node name="DEAGLE" type="RustWeapon"]
 damage = 54
 distance = 400.0
 clip = 7
 pull_after_reload = true
+repel = 36.0
 penetrate = 3.0
 fire_cooldown = 0.2
 reload_time = 1.8

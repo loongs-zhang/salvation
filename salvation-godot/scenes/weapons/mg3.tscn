@@ -45,11 +45,11 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 default_font = ExtResource("7_7jwk2")
 default_font_size = 12
 
-[node name="RustWeapon" type="RustWeapon"]
+[node name="MG3" type="RustWeapon"]
 damage = 33
 clip = 200
 pull_after_reload = true
-repel = 12.0
+repel = 25.0
 penetrate = 1.0
 fire_cooldown = 0.05
 reload_time = 6.2

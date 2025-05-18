@@ -1,6 +1,5 @@
-[gd_scene load_steps=17 format=3 uid="uid://dmvaupviw4lk8"]
+[gd_scene load_steps=16 format=3 uid="uid://dmvaupviw4lk8"]
 
-[ext_resource type="PackedScene" uid="uid://dncxlinats2qc" path="res://scenes/rust_bullet.tscn" id="1_ni56q"]
 [ext_resource type="Texture2D" uid="uid://bjkiehpdgbhg" path="res://asserts/player/weapons/awp/awp.bmp" id="1_yo5vo"]
 [ext_resource type="AudioStream" uid="uid://bpvaoalyb6h5s" path="res://asserts/player/weapons/awp/awp1.wav" id="2_ni56q"]
 [ext_resource type="AudioStream" uid="uid://sbrg0urtqwx5" path="res://asserts/player/weapons/awp/awp_clipout.wav" id="3_rwgbk"]
@@ -46,7 +45,7 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 default_font = ExtResource("7_wdtic")
 default_font_size = 12
 
-[node name="RustWeapon" type="RustWeapon"]
+[node name="AWP" type="RustWeapon"]
 damage = 115
 distance = 2000.0
 clip = 10
