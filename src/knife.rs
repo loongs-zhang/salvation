@@ -3,7 +3,7 @@ use crate::player::RustPlayer;
 use crate::zombie::RustZombie;
 use godot::builtin::{Array, real};
 use godot::classes::tween::{EaseType, TransitionType};
-use godot::classes::{Area2D, AudioStream, AudioStreamPlayer2D, IArea2D, Node2D};
+use godot::classes::{Area2D, AudioStream, AudioStreamPlayer2D, IArea2D, Node, Node2D};
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::prelude::load;
@@ -13,10 +13,9 @@ use godot::register::{GodotClass, godot_api};
 #[class(base=Area2D)]
 pub struct RustKnife {
     #[export]
-    chop_cooldown: real,
+    max_attack_angle: real,
     final_repel: real,
     final_damage: i64,
-    current_chop_cooldown: f64,
     damage_area: OnReady<Gd<Area2D>>,
     chop_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     hit_audio: OnReady<Gd<AudioStreamPlayer2D>>,
@@ -28,10 +27,9 @@ pub struct RustKnife {
 impl IArea2D for RustKnife {
     fn init(base: Base<Area2D>) -> Self {
         Self {
-            chop_cooldown: 0.5,
+            max_attack_angle: 60.0,
             final_repel: 0.0,
             final_damage: 0,
-            current_chop_cooldown: 0.0,
             damage_area: OnReady::from_node("DamageArea"),
             chop_audio: OnReady::from_node("ChopAudio"),
             hit_audio: OnReady::from_node("HitAudio"),
@@ -55,22 +53,19 @@ impl IArea2D for RustKnife {
             .body_entered()
             .connect_obj(&gd, Self::on_area_2d_body_entered);
     }
-
-    fn process(&mut self, delta: f64) {
-        self.current_chop_cooldown -= delta;
-    }
 }
 
 #[godot_api]
 impl RustKnife {
     pub fn chop(&mut self, final_damage: i64, final_repel: real) {
-        if self.current_chop_cooldown > 0.0 {
+        if self.base().is_visible() {
             return;
         }
-        self.current_chop_cooldown = self.chop_cooldown as f64;
         self.final_damage = final_damage;
         self.final_repel = final_repel;
-        self.base_mut().set_global_rotation_degrees(-60.0);
+        let max_attack_angle = self.max_attack_angle;
+        self.base_mut()
+            .set_global_rotation_degrees(-max_attack_angle);
         self.base_mut().set_visible(true);
         let mut tween = self
             .base_mut()
@@ -82,17 +77,20 @@ impl RustKnife {
             .tween_property(
                 &self.base.to_gd(),
                 "rotation",
-                &60.0f32.to_radians().to_variant(),
+                &max_attack_angle.to_radians().to_variant(),
                 0.2,
             )
             .expect("tween failed")
-            .from(&(-60.0f32).to_radians().to_variant());
+            .from(&(-max_attack_angle).to_radians().to_variant());
         tween.tween_callback(&self.base().callable("hide"));
         self.chop_audio.play();
     }
 
     #[func]
     pub fn on_area_2d_body_entered(&mut self, body: Gd<Node2D>) {
+        if !self.base().is_visible() {
+            return;
+        }
         let position = self.base().get_global_position();
         if body.is_class("RustZombie") {
             if let Some(audio) = self.hit_audios.pick_random() {
@@ -134,10 +132,17 @@ impl RustKnife {
     #[func]
     pub fn hide(&mut self) {
         self.base_mut().set_visible(false);
-        if let Some(parent) = self.base().get_parent() {
-            if parent.is_class("RustPlayer") {
-                parent.cast::<RustPlayer>().call_deferred("chopped", &[]);
+        self.get_rust_player().bind_mut().chopped();
+    }
+
+    pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {
+        if let Some(tree) = self.base().get_tree() {
+            if let Some(root) = tree.get_root() {
+                return root
+                    .get_node_as::<Node>("RustWorld")
+                    .get_node_as::<RustPlayer>("RustPlayer");
             }
-        };
+        }
+        panic!("RustPlayer not found");
     }
 }

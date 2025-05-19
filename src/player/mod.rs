@@ -78,6 +78,9 @@ pub struct RustPlayer {
     // 手雷类型
     #[export]
     grenade_scenes: Array<Gd<PackedScene>>,
+    #[export]
+    chop_cooldown: real,
+    current_chop_cooldown: f64,
     current_grenade_cooldown: real,
     current_level_up_barrier: u64,
     current_lives: u32,
@@ -122,6 +125,8 @@ impl ICharacterBody2D for RustPlayer {
             grenade_cooldown: 10.0,
             current_grenade_cooldown: 0.0,
             grenade_scenes: Array::new(),
+            chop_cooldown: 0.5,
+            current_chop_cooldown: 0.0,
             current_level_up_barrier: PLAYER_LEVEL_UP_BARRIER as u64,
             current_lives: PLAYER_MAX_LIVES,
             current_speed: PLAYER_MOVE_SPEED,
@@ -150,6 +155,7 @@ impl ICharacterBody2D for RustPlayer {
             return;
         }
         self.current_grenade_cooldown -= delta as real;
+        self.current_chop_cooldown -= delta;
         self.level_up();
         let mut hud = self.hud.bind_mut();
         hud.update_killed_hud();
@@ -172,7 +178,7 @@ impl ICharacterBody2D for RustPlayer {
         let input = Input::singleton();
         if input.is_action_pressed("mouse_left") {
             self.shoot();
-        } else if input.is_action_pressed("e") || input.is_action_pressed("mouse_middle") {
+        } else if input.is_action_pressed("e") {
             self.chop();
         } else if (input.is_action_pressed("shift") || input.is_action_pressed("mouse_right"))
             && (input.is_action_pressed("move_left")
@@ -239,14 +245,16 @@ impl ICharacterBody2D for RustPlayer {
         if RustWorld::is_paused() {
             return;
         }
-        if event.is_action_pressed("r") {
+        if event.is_action_pressed("e") {
+            self.chop();
+        } else if event.is_action_pressed("r") {
             self.reload();
         } else if event.is_action_released("shift")
             || event.is_action_released("mouse_left")
             || event.is_action_released("mouse_right")
         {
             self.guard();
-        } else if event.is_action_pressed("q") {
+        } else if event.is_action_pressed("q") || event.is_action_pressed("mouse_middle") {
             self.throw_grenade();
         } else if event.is_action_pressed("1") {
             self.change_weapon(0);
@@ -632,9 +640,13 @@ impl RustPlayer {
     }
 
     pub fn chop(&mut self) {
-        if PlayerState::Dead == self.state || PlayerState::Impact == self.state {
+        if PlayerState::Dead == self.state
+            || PlayerState::Impact == self.state
+            || self.current_chop_cooldown > 0.0
+        {
             return;
         }
+        self.current_chop_cooldown = self.chop_cooldown as f64;
         self.weapons.set_visible(false);
         self.animated_sprite2d.play_ex().name("chop").done();
         self.current_speed = self.speed * 0.75;

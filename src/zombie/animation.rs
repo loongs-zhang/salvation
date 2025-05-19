@@ -92,7 +92,7 @@ impl ZombieAnimation {
         }
     }
 
-    fn get_rust_player(&mut self) -> Gd<RustPlayer> {
+    pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {
         if let Some(tree) = self.base().get_tree() {
             if let Some(root) = tree.get_root() {
                 return root
