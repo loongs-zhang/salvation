@@ -1,4 +1,5 @@
 use crate::common::RustMessage;
+use crate::grenade::RustGrenade;
 use crate::player::hud::PlayerHUD;
 use crate::weapon::RustWeapon;
 use crate::world::RustWorld;
@@ -7,13 +8,14 @@ use crate::{
     PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState, PlayerUpgrade, random_bool,
 };
 use crossbeam_utils::atomic::AtomicCell;
-use godot::builtin::{Vector2, real};
+use godot::builtin::{Array, Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
     AnimatedSprite2D, AudioStreamPlayer2D, Camera2D, CharacterBody2D, DisplayServer,
     GpuParticles2D, ICharacterBody2D, Input, InputEvent, Node2D, PackedScene,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
+use godot::prelude::load;
 use godot::register::{GodotClass, godot_api};
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -67,8 +69,15 @@ pub struct RustPlayer {
     // 玩家移动速度
     #[export]
     speed: real,
+    // 升级所需的分数
     #[export]
     level_up_barrier: u32,
+    #[export]
+    grenade_cooldown: real,
+    // 手雷类型
+    #[export]
+    grenade_scenes: Array<Gd<PackedScene>>,
+    current_grenade_cooldown: real,
     current_level_up_barrier: u64,
     current_lives: u32,
     current_health: u32,
@@ -88,6 +97,7 @@ pub struct RustPlayer {
     change_fail_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     zoom_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     level_up_scene: OnReady<Gd<PackedScene>>,
+    grenade_point: OnReady<Gd<Node2D>>,
     base: Base<CharacterBody2D>,
 }
 
@@ -107,6 +117,9 @@ impl ICharacterBody2D for RustPlayer {
             state: PlayerState::Born,
             speed: PLAYER_MOVE_SPEED,
             level_up_barrier: PLAYER_LEVEL_UP_BARRIER,
+            grenade_cooldown: 10.0,
+            current_grenade_cooldown: 0.0,
+            grenade_scenes: Array::new(),
             current_level_up_barrier: PLAYER_LEVEL_UP_BARRIER as u64,
             current_lives: PLAYER_MAX_LIVES,
             current_speed: PLAYER_MOVE_SPEED,
@@ -124,6 +137,7 @@ impl ICharacterBody2D for RustPlayer {
             change_fail_audio: OnReady::from_node("ChangeWeaponFail"),
             zoom_audio: OnReady::from_node("ZoomAudio"),
             level_up_scene: OnReady::from_loaded("res://scenes/rust_message.tscn"),
+            grenade_point: OnReady::from_node("GrenadePoint"),
             base,
         }
     }
@@ -132,6 +146,7 @@ impl ICharacterBody2D for RustPlayer {
         if PlayerState::Dead == self.state || RustWorld::is_paused() {
             return;
         }
+        self.current_grenade_cooldown -= delta as real;
         self.level_up();
         let mut hud = self.hud.bind_mut();
         hud.update_killed_hud();
@@ -208,6 +223,10 @@ impl ICharacterBody2D for RustPlayer {
         hud.update_killed_hud();
         hud.update_score_hud();
         hud.update_died_hud();
+        if self.grenade_scenes.is_empty() {
+            self.grenade_scenes
+                .push(&load::<PackedScene>("res://scenes/rust_grenade.tscn"));
+        }
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
@@ -221,6 +240,10 @@ impl ICharacterBody2D for RustPlayer {
             || event.is_action_released("mouse_right")
         {
             self.guard();
+        } else if event.is_action_pressed("q") {
+            self.throw_grenade();
+        } else if event.is_action_pressed("e") {
+            //todo 挥刀
         } else if event.is_action_pressed("1") {
             self.change_weapon(0);
         } else if event.is_action_pressed("2") {
@@ -514,8 +537,8 @@ impl RustPlayer {
             return;
         }
         self.state = PlayerState::Guard;
-        self.blood_flash.set_one_shot(true);
         self.blood_flash.set_emitting(false);
+        self.blood_flash.set_one_shot(true);
         self.blood_flash.restart();
         IMPACT_POSITION.store(Vector2::ZERO);
         IMPACTING.store(0.0);
@@ -550,6 +573,50 @@ impl RustPlayer {
         if let Some(mut tree) = self.base().get_tree() {
             if let Some(mut timer) = tree.create_timer(3.0) {
                 timer.connect("timeout", &self.base().callable("born"));
+            }
+        }
+    }
+
+    pub fn throw_grenade(&mut self) {
+        if self.current_grenade_cooldown > 0.0 {
+            if let Some(mut grenade_cooldown_label) =
+                self.level_up_scene.try_instantiate_as::<RustMessage>()
+            {
+                grenade_cooldown_label.set_global_position(RustPlayer::get_position());
+                if let Some(tree) = self.base().get_tree() {
+                    if let Some(mut root) = tree.get_root() {
+                        root.add_child(&grenade_cooldown_label);
+                        grenade_cooldown_label.bind_mut().show_message(&format!(
+                            "GRENADE READY IN {:.1}S",
+                            self.current_grenade_cooldown
+                        ));
+                    }
+                }
+            }
+            return;
+        }
+        let direction = self
+            .base()
+            .get_global_position()
+            .direction_to(self.get_mouse_position())
+            .normalized();
+        let grenade_point = self.grenade_point.get_global_position();
+        for grenade_scene in self.grenade_scenes.iter_shared() {
+            if let Some(mut grenade) = grenade_scene.try_instantiate_as::<RustGrenade>() {
+                grenade.set_global_position(grenade_point);
+                let mut gd_mut = grenade.bind_mut();
+                gd_mut.set_bullet_point(grenade_point);
+                gd_mut.set_final_distance(400.0 + self.distance);
+                gd_mut.set_final_damage(240 + self.damage);
+                gd_mut.set_final_repel(120.0 + self.repel);
+                gd_mut.throw(direction);
+                drop(gd_mut);
+                if let Some(tree) = self.base().get_tree() {
+                    if let Some(mut root) = tree.get_root() {
+                        root.add_child(&grenade);
+                        self.current_grenade_cooldown = self.grenade_cooldown;
+                    }
+                }
             }
         }
     }

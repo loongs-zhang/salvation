@@ -50,6 +50,24 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 8
 
+[node name="Weapons" type="Label" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
+text = "Weapons
+1: DEAGLE
+2: XM1014
+3: AWP
+4: M79
+5: M4A1
+6: AK47
+7: AK47-60R
+8: M249
+9: MG3
+0: M134"
+vertical_alignment = 1
+
 [node name="Fight" type="Label" parent="HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 0
@@ -57,6 +75,7 @@ size_flags_vertical = 0
 theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
 text = "Fight
 Shoot: mouseLeft
+Grenade: Q
 Reload: R
 Run: mouseRight or shift
 MoveUp: W or ↑

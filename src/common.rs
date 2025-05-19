@@ -24,8 +24,12 @@ impl INode2D for RustMessage {
 #[godot_api]
 impl RustMessage {
     pub fn show_level_up(&mut self, value: PlayerUpgrade) {
+        self.show_message(&format!("{:?} Upgraded", value))
+    }
+
+    pub fn show_message(&mut self, value: &str) {
         let position = self.base().get_global_position();
-        self.message.set_text(&format!("{:?} Upgraded", value));
+        self.message.set_text(value);
         self.message.show();
         let mut tween = self
             .base_mut()

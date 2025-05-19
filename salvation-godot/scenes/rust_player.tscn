@@ -353,3 +353,6 @@ stream = ExtResource("15_x4rvw")
 [node name="ZoomAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("21_h5itx")
 volume_db = 16.0
+
+[node name="GrenadePoint" type="Node2D" parent="."]
+position = Vector2(20, 0)
