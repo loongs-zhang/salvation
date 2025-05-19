@@ -1,5 +1,6 @@
 use crate::common::RustMessage;
 use crate::grenade::RustGrenade;
+use crate::knife::RustKnife;
 use crate::player::hud::PlayerHUD;
 use crate::weapon::RustWeapon;
 use crate::world::RustWorld;
@@ -85,6 +86,7 @@ pub struct RustPlayer {
     current_speed: real,
     animated_sprite2d: OnReady<Gd<AnimatedSprite2D>>,
     camera: OnReady<Gd<Camera2D>>,
+    knife: OnReady<Gd<RustKnife>>,
     weapons: OnReady<Gd<Node2D>>,
     blood_flash: OnReady<Gd<GpuParticles2D>>,
     hud: OnReady<Gd<PlayerHUD>>,
@@ -96,7 +98,7 @@ pub struct RustPlayer {
     change_success_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     change_fail_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     zoom_audio: OnReady<Gd<AudioStreamPlayer2D>>,
-    level_up_scene: OnReady<Gd<PackedScene>>,
+    message_scene: OnReady<Gd<PackedScene>>,
     grenade_point: OnReady<Gd<Node2D>>,
     base: Base<CharacterBody2D>,
 }
@@ -125,6 +127,7 @@ impl ICharacterBody2D for RustPlayer {
             current_speed: PLAYER_MOVE_SPEED,
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             camera: OnReady::from_node("Camera2D"),
+            knife: OnReady::from_node("Knife"),
             weapons: OnReady::from_node("Weapon"),
             blood_flash: OnReady::from_node("GpuParticles2D"),
             hud: OnReady::from_node("PlayerHUD"),
@@ -136,7 +139,7 @@ impl ICharacterBody2D for RustPlayer {
             change_success_audio: OnReady::from_node("ChangeWeaponSuccess"),
             change_fail_audio: OnReady::from_node("ChangeWeaponFail"),
             zoom_audio: OnReady::from_node("ZoomAudio"),
-            level_up_scene: OnReady::from_loaded("res://scenes/rust_message.tscn"),
+            message_scene: OnReady::from_loaded("res://scenes/rust_message.tscn"),
             grenade_point: OnReady::from_node("GrenadePoint"),
             base,
         }
@@ -169,6 +172,8 @@ impl ICharacterBody2D for RustPlayer {
         let input = Input::singleton();
         if input.is_action_pressed("mouse_left") {
             self.shoot();
+        } else if input.is_action_pressed("e") || input.is_action_pressed("mouse_middle") {
+            self.chop();
         } else if (input.is_action_pressed("shift") || input.is_action_pressed("mouse_right"))
             && (input.is_action_pressed("move_left")
                 || input.is_action_pressed("move_right")
@@ -209,6 +214,7 @@ impl ICharacterBody2D for RustPlayer {
     }
 
     fn ready(&mut self) {
+        self.knife.set_visible(false);
         self.change_weapon(self.current_weapon_index);
         self.base_mut()
             .set_physics_interpolation_mode(PhysicsInterpolationMode::ON);
@@ -242,8 +248,6 @@ impl ICharacterBody2D for RustPlayer {
             self.guard();
         } else if event.is_action_pressed("q") {
             self.throw_grenade();
-        } else if event.is_action_pressed("e") {
-            //todo 挥刀
         } else if event.is_action_pressed("1") {
             self.change_weapon(0);
         } else if event.is_action_pressed("2") {
@@ -338,6 +342,7 @@ impl RustPlayer {
             || PlayerState::Impact == self.state
             || PlayerState::Reload == self.state
             || PlayerState::Reloading == self.state
+            || PlayerState::Chop == self.state
         {
             return;
         }
@@ -349,7 +354,10 @@ impl RustPlayer {
     }
 
     pub fn run(&mut self) {
-        if PlayerState::Dead == self.state || PlayerState::Impact == self.state {
+        if PlayerState::Dead == self.state
+            || PlayerState::Impact == self.state
+            || PlayerState::Chop == self.state
+        {
             return;
         }
         self.weapons.set_visible(false);
@@ -368,6 +376,7 @@ impl RustPlayer {
         if PlayerState::Dead == self.state
             || PlayerState::Impact == self.state
             || PlayerState::Reload == self.state
+            || PlayerState::Chop == self.state
         {
             return;
         }
@@ -392,6 +401,7 @@ impl RustPlayer {
     pub fn reload(&mut self) {
         if PlayerState::Dead == self.state
             || PlayerState::Impact == self.state
+            || PlayerState::Chop == self.state
             || !self.get_current_weapon().bind_mut().reload()
         {
             return;
@@ -424,7 +434,7 @@ impl RustPlayer {
     }
 
     pub fn change_weapon(&mut self, weapon_index: i32) {
-        if PlayerState::Dead == self.state || PlayerState::Impact == self.state {
+        if PlayerState::Dead == self.state {
             return;
         }
         for i in 0..self.weapons.get_child_count() {
@@ -580,7 +590,7 @@ impl RustPlayer {
     pub fn throw_grenade(&mut self) {
         if self.current_grenade_cooldown > 0.0 {
             if let Some(mut grenade_cooldown_label) =
-                self.level_up_scene.try_instantiate_as::<RustMessage>()
+                self.message_scene.try_instantiate_as::<RustMessage>()
             {
                 grenade_cooldown_label.set_global_position(RustPlayer::get_position());
                 if let Some(tree) = self.base().get_tree() {
@@ -619,6 +629,31 @@ impl RustPlayer {
                 }
             }
         }
+    }
+
+    pub fn chop(&mut self) {
+        if PlayerState::Dead == self.state || PlayerState::Impact == self.state {
+            return;
+        }
+        self.weapons.set_visible(false);
+        self.animated_sprite2d.play_ex().name("chop").done();
+        self.current_speed = self.speed * 0.75;
+        self.state = PlayerState::Chop;
+        STATE.store(self.state);
+        //打断换弹
+        self.get_current_weapon().bind_mut().stop_reload();
+        let damage = 80 + self.damage;
+        let repel = 30.0 + self.repel;
+        self.knife.bind_mut().chop(damage, repel);
+    }
+
+    #[func]
+    pub fn chopped(&mut self) {
+        if PlayerState::Chop != self.state {
+            return;
+        }
+        self.state = PlayerState::Guard;
+        self.guard();
     }
 
     pub fn level_up(&mut self) {
@@ -698,7 +733,7 @@ impl RustPlayer {
 
     fn show_upgrade_label(&mut self, what: PlayerUpgrade) {
         self.hud.bind_mut().set_upgrade_visible(false);
-        if let Some(mut level_up_label) = self.level_up_scene.try_instantiate_as::<RustMessage>() {
+        if let Some(mut level_up_label) = self.message_scene.try_instantiate_as::<RustMessage>() {
             level_up_label.set_global_position(RustPlayer::get_position());
             if let Some(tree) = self.base().get_tree() {
                 if let Some(mut root) = tree.get_root() {

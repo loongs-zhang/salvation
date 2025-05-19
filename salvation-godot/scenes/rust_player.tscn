@@ -1,4 +1,4 @@
-[gd_scene load_steps=54 format=3 uid="uid://d2ryhlh122dqg"]
+[gd_scene load_steps=55 format=3 uid="uid://d2ryhlh122dqg"]
 
 [ext_resource type="Texture2D" uid="uid://bqvfrl504qx0y" path="res://asserts/player/player_idle.png" id="1_iwbmd"]
 [ext_resource type="Texture2D" uid="uid://corkdmhx227i8" path="res://asserts/player/player_run.png" id="2_0rh5x"]
@@ -24,6 +24,7 @@
 [ext_resource type="AudioStream" uid="uid://wj1cfkemtkf6" path="res://asserts/player/weapons/wpn_hudon.wav" id="14_0hc44"]
 [ext_resource type="AudioStream" uid="uid://bswhxk7meyul0" path="res://asserts/player/weapons/wpn_hudoff.wav" id="15_x4rvw"]
 [ext_resource type="AudioStream" uid="uid://dcmp03pf4jcqv" path="res://asserts/player/weapons/zoom.wav" id="21_h5itx"]
+[ext_resource type="PackedScene" uid="uid://sjqrgw2hktci" path="res://scenes/katana.tscn" id="25_1pfbi"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_h4u8k"]
 radius = 18.0
@@ -31,6 +32,14 @@ radius = 18.0
 [sub_resource type="AtlasTexture" id="AtlasTexture_jej6c"]
 atlas = ExtResource("3_53o8o")
 region = Rect2(0, 0, 35, 57)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f1ej7"]
+atlas = ExtResource("3_53o8o")
+region = Rect2(35, 0, 35, 57)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_oprun"]
+atlas = ExtResource("3_53o8o")
+region = Rect2(70, 0, 35, 57)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_h4u8k"]
 atlas = ExtResource("2_53o8o")
@@ -96,14 +105,6 @@ region = Rect2(320, 0, 80, 87)
 atlas = ExtResource("2_0rh5x")
 region = Rect2(400, 0, 80, 87)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_f1ej7"]
-atlas = ExtResource("3_53o8o")
-region = Rect2(35, 0, 35, 57)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_oprun"]
-atlas = ExtResource("3_53o8o")
-region = Rect2(70, 0, 35, 57)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_a8ls1"]
 atlas = ExtResource("3_53o8o")
 region = Rect2(105, 0, 35, 57)
@@ -125,6 +126,23 @@ animations = [{
 "loop": false,
 "name": &"bump",
 "speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jej6c")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_f1ej7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_oprun")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jej6c")
+}],
+"loop": false,
+"name": &"chop",
+"speed": 8.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -291,10 +309,12 @@ shape = SubResource("CircleShape2D_h4u8k")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_g8j1n")
-animation = &"guard"
+animation = &"chop"
 autoplay = "guard"
 
 [node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="Knife" parent="." instance=ExtResource("25_1pfbi")]
 
 [node name="Weapon" type="Node2D" parent="."]
 position = Vector2(10, 2)

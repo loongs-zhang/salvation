@@ -19,6 +19,8 @@ pub mod bullet;
 
 pub mod grenade;
 
+pub mod knife;
+
 pub mod zombie;
 
 pub mod boss;
@@ -102,6 +104,7 @@ pub enum PlayerState {
     Born,
     Guard,
     Run,
+    Chop,
     Shoot,
     Reload,
     Reloading,

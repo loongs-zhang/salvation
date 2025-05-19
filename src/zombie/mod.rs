@@ -90,7 +90,7 @@ impl ICharacterBody2D for RustZombie {
             alarm_time: ZOMBIE_ALARM_TIME,
             current_alarm_time: 0.0,
             last_turn_time: Instant::now(),
-            turn_cooldown: Duration::from_secs(5),
+            turn_cooldown: Duration::from_secs(8),
             state: ZombieState::Guard,
             current_speed: ZOMBIE_MOVE_SPEED * 0.2,
             hurt_frames: vec![2, 3, 4, 5],

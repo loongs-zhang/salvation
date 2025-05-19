@@ -35,12 +35,14 @@ impl RustMessage {
             .base_mut()
             .create_tween()
             .expect("Failed to create tween");
-        tween.tween_property(
-            &self.base.to_gd(),
-            "position:y",
-            &(position.y - 50.0).to_variant(),
-            5.0,
-        );
+        tween
+            .tween_property(
+                &self.base.to_gd(),
+                "position:y",
+                &(position.y - 50.0).to_variant(),
+                5.0,
+            )
+            .expect("tween failed");
         tween
             .parallel()
             .expect("tween parallel failed")
@@ -56,12 +58,14 @@ impl RustMessage {
             .base_mut()
             .create_tween()
             .expect("Failed to create tween");
-        tween.tween_property(
-            &self.base.to_gd(),
-            "position:y",
-            &(position.y - 25.0).to_variant(),
-            0.5,
-        );
+        tween
+            .tween_property(
+                &self.base.to_gd(),
+                "position:y",
+                &(position.y - 25.0).to_variant(),
+                0.5,
+            )
+            .expect("tween failed");
         tween.tween_property(
             &self.base.to_gd(),
             "position:y",

@@ -231,6 +231,7 @@ impl RustWeapon {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn do_fire(
         &mut self,
         player_damage: i64,
