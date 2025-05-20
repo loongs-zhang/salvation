@@ -62,14 +62,14 @@ impl RustMessage {
             .tween_property(
                 &self.base.to_gd(),
                 "position:y",
-                &(position.y - 25.0).to_variant(),
+                &(position.y - 50.0).to_variant(),
                 0.5,
             )
             .expect("tween failed");
         tween.tween_property(
             &self.base.to_gd(),
             "position:y",
-            &(position.y - 10.0).to_variant(),
+            &(position.y - 35.0).to_variant(),
             0.3,
         );
         tween

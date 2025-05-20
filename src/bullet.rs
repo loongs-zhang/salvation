@@ -3,7 +3,9 @@ use crate::player::RustPlayer;
 use crate::zombie::RustZombie;
 use godot::builtin::{Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
-use godot::classes::{Area2D, AudioStreamPlayer2D, IArea2D, INode2D, Node2D, Object};
+use godot::classes::{
+    Area2D, AudioStreamPlayer2D, IArea2D, INode2D, Node, Node2D, Object, RayCast2D,
+};
 use godot::obj::{Base, Gd, OnReady, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
 
@@ -113,6 +115,7 @@ impl RustBullet {
 #[derive(GodotClass)]
 #[class(base=Area2D)]
 pub struct BulletDamageArea {
+    ray_cast2d: OnReady<Gd<RayCast2D>>,
     hit_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     base: Base<Area2D>,
 }
@@ -121,6 +124,7 @@ pub struct BulletDamageArea {
 impl IArea2D for BulletDamageArea {
     fn init(base: Base<Area2D>) -> Self {
         Self {
+            ray_cast2d: OnReady::from_node("RayCast2D"),
             hit_audio: OnReady::from_node("HitAudio"),
             base,
         }
@@ -147,8 +151,12 @@ impl BulletDamageArea {
                 .get_parent()
                 .expect("RustBullet not found")
                 .cast::<RustBullet>();
-            let damage = rust_bullet.bind().final_damage;
+            let mut damage = rust_bullet.bind().final_damage;
             rust_bullet.bind_mut().on_hit();
+            if self.ray_cast2d.is_colliding() {
+                self.get_rust_player().bind_mut().headshot();
+                damage *= 3;
+            }
             body.cast::<RustZombie>().bind_mut().on_hit(
                 damage,
                 rust_bullet.bind().direction,
@@ -165,8 +173,12 @@ impl BulletDamageArea {
                 .get_parent()
                 .expect("RustBullet not found")
                 .cast::<RustBullet>();
-            let damage = rust_bullet.bind().final_damage;
+            let mut damage = rust_bullet.bind().final_damage;
             rust_bullet.bind_mut().on_hit();
+            if self.ray_cast2d.is_colliding() {
+                self.get_rust_player().bind_mut().headshot();
+                damage *= 3;
+            }
             body.cast::<RustBoss>().bind_mut().on_hit(
                 damage,
                 rust_bullet.bind().direction,
@@ -177,5 +189,16 @@ impl BulletDamageArea {
                 RustPlayer::add_score(damage as u64);
             }
         }
+    }
+
+    pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {
+        if let Some(tree) = self.base().get_tree() {
+            if let Some(root) = tree.get_root() {
+                return root
+                    .get_node_as::<Node>("RustWorld")
+                    .get_node_as::<RustPlayer>("RustPlayer");
+            }
+        }
+        panic!("RustPlayer not found");
     }
 }

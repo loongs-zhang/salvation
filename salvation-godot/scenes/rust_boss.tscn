@@ -1,4 +1,4 @@
-[gd_scene load_steps=46 format=3 uid="uid://b8ou2gd7qcb4n"]
+[gd_scene load_steps=47 format=3 uid="uid://b8ou2gd7qcb4n"]
 
 [ext_resource type="Texture2D" uid="uid://dl2e2alxr88ti" path="res://asserts/zombie/zombie.png" id="1_4lcne"]
 [ext_resource type="AudioStream" uid="uid://b2fcg5mkceji3" path="res://asserts/zombie/zombie_hit.mp3" id="2_xgxvb"]
@@ -8,6 +8,9 @@
 [ext_resource type="AudioStream" uid="uid://x2ky867rgsc1" path="res://asserts/zombie/zombie_attack.mp3" id="7_4y265"]
 [ext_resource type="AudioStream" uid="uid://dukpy5xk3txlv" path="res://asserts/zombie/zombie_attack_scream.mp3" id="8_5l3r1"]
 [ext_resource type="AudioStream" uid="uid://dw7k7gprqva86" path="res://asserts/zombie/zombie_die.mp3" id="9_pgect"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_1tx4n"]
+radius = 12.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_xgxvb"]
 radius = 36.0
@@ -267,6 +270,12 @@ color_ramp = SubResource("GradientTexture1D_fuakc")
 
 [node name="RustBoss" type="RustBoss"]
 z_index = 3
+
+[node name="HeadShape2D" type="CollisionShape2D" parent="."]
+light_mask = 4096
+visibility_layer = 0
+position = Vector2(16, 4)
+shape = SubResource("CircleShape2D_1tx4n")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 light_mask = 4

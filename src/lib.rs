@@ -83,7 +83,7 @@ const ZOMBIE_ALARM_TIME: real = 1.5;
 const ZOMBIE_RAMPAGE_TIME: real = 30.0;
 
 //boss
-const BOSS_MAX_HEALTH: u32 = 3600;
+const BOSS_MAX_HEALTH: u32 = 7200;
 
 const BOSS_MOVE_SPEED: real = 2.5;
 

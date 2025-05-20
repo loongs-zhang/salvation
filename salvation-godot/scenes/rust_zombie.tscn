@@ -1,4 +1,4 @@
-[gd_scene load_steps=49 format=3 uid="uid://5koe2fd6n3fc"]
+[gd_scene load_steps=50 format=3 uid="uid://5koe2fd6n3fc"]
 
 [ext_resource type="Texture2D" uid="uid://dl2e2alxr88ti" path="res://asserts/zombie/zombie.png" id="1_4lcne"]
 [ext_resource type="AudioStream" uid="uid://b2fcg5mkceji3" path="res://asserts/zombie/zombie_hit.mp3" id="2_xgxvb"]
@@ -16,6 +16,9 @@ corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_pgect"]
+radius = 6.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_xgxvb"]
 radius = 18.0
@@ -345,6 +348,12 @@ theme_override_font_sizes/font_size = 8
 text = "ALARM"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="HeadShape2D" type="CollisionShape2D" parent="."]
+light_mask = 4096
+visibility_layer = 0
+position = Vector2(8, 2)
+shape = SubResource("CircleShape2D_pgect")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 light_mask = 4

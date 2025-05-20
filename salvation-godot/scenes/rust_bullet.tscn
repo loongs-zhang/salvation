@@ -29,6 +29,11 @@ position = Vector2(0.1, -0.4)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="BulletDamageArea"]
 shape = SubResource("RectangleShape2D_h1aey")
 
+[node name="RayCast2D" type="RayCast2D" parent="BulletDamageArea"]
+light_mask = 0
+visibility_layer = 4096
+target_position = Vector2(6, 0)
+
 [node name="HitAudio" type="AudioStreamPlayer2D" parent="BulletDamageArea"]
 stream = ExtResource("1_nf83k")
 volume_db = 12.0

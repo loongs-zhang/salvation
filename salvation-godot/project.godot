@@ -163,6 +163,7 @@ l={
 2d_render/layer_2="player"
 2d_render/layer_3="zombie"
 2d_render/layer_4="bullet"
+2d_render/layer_13="zombie head"
 
 [physics]
 

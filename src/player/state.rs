@@ -86,6 +86,10 @@ impl RustPlayer {
             .fire(self.damage, self.distance, self.penetrate, self.repel);
     }
 
+    pub fn headshot(&mut self) {
+        self.headshot_audio.play();
+    }
+
     pub fn chop(&mut self) {
         if PlayerState::Dead == self.state
             || PlayerState::Impact == self.state
