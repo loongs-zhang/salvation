@@ -279,6 +279,25 @@ impl RustLevel {
         self.update_level_hud();
         self.update_refresh_hud();
         self.update_progress_hud();
+        if self.level >= 27 {
+            self.get_rust_player().bind_mut().unlock_m134();
+        } else if self.level >= 24 {
+            self.get_rust_player().bind_mut().unlock_mg3();
+        } else if self.level >= 21 {
+            self.get_rust_player().bind_mut().unlock_m249();
+        } else if self.level >= 18 {
+            self.get_rust_player().bind_mut().unlock_ak47_60r();
+        } else if self.level >= 15 {
+            self.get_rust_player().bind_mut().unlock_ak47();
+        } else if self.level >= 12 {
+            self.get_rust_player().bind_mut().unlock_m4a1();
+        } else if self.level >= 9 {
+            self.get_rust_player().bind_mut().unlock_m79();
+        } else if self.level >= 6 {
+            self.get_rust_player().bind_mut().unlock_awp();
+        } else if self.level >= 3 {
+            self.get_rust_player().bind_mut().unlock_xm1014();
+        }
     }
 
     pub fn play_bgm(&mut self) {
@@ -311,6 +330,17 @@ impl RustLevel {
     pub fn start(&mut self) {
         self.zombie_generator.bind_mut().start_timer();
         self.boss_generator.bind_mut().start_timer();
+    }
+
+    pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {
+        if let Some(tree) = self.base().get_tree() {
+            if let Some(root) = tree.get_root() {
+                return root
+                    .get_node_as::<Node>("RustWorld")
+                    .get_node_as::<RustPlayer>("RustPlayer");
+            }
+        }
+        panic!("RustPlayer not found");
     }
 
     pub fn is_rampage() -> bool {

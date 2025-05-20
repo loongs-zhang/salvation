@@ -2,11 +2,10 @@ use crate::common::RustMessage;
 use crate::grenade::RustGrenade;
 use crate::knife::RustKnife;
 use crate::player::hud::PlayerHUD;
-use crate::weapon::RustWeapon;
 use crate::world::RustWorld;
 use crate::{
-    DEFAULT_SCREEN_SIZE, PLAYER_LEVEL_UP_BARRIER, PLAYER_LEVEL_UP_GROW_RATE, PLAYER_MAX_HEALTH,
-    PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState, PlayerUpgrade, random_bool,
+    DEFAULT_SCREEN_SIZE, PLAYER_LEVEL_UP_BARRIER, PLAYER_MAX_HEALTH, PLAYER_MAX_LIVES,
+    PLAYER_MOVE_SPEED, PlayerState,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Array, Vector2, real};
@@ -16,16 +15,20 @@ use godot::classes::{
     GpuParticles2D, ICharacterBody2D, Input, InputEvent, Node2D, PackedScene,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
-use godot::prelude::load;
 use godot::register::{GodotClass, godot_api};
+use godot::tools::load;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub mod hud;
 
-static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
+pub mod state;
 
-static STATE: AtomicCell<PlayerState> = AtomicCell::new(PlayerState::Born);
+pub mod weapon;
+
+pub mod upgrade;
+
+static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
 static IMPACT_POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
@@ -324,292 +327,13 @@ impl RustPlayer {
         self.born();
     }
 
-    #[func]
-    pub fn born(&mut self) {
-        if PlayerState::Dead != self.state || 0 == self.current_lives {
-            return;
-        }
-        self.current_lives -= 1;
-        self.weapons.set_visible(true);
-        self.animated_sprite2d.play_ex().name("guard").done();
-        self.current_speed = self.speed;
-        self.state = PlayerState::Born;
-        self.current_health = self.health;
-        STATE.store(self.state);
-        self.hud
-            .bind_mut()
-            .update_lives_hud(self.current_lives, self.lives);
-        self.hud
-            .bind_mut()
-            .update_hp_hud(self.current_health, self.health);
-    }
-
-    #[func]
-    pub fn guard(&mut self) {
-        if PlayerState::Dead == self.state
-            || PlayerState::Impact == self.state
-            || PlayerState::Reload == self.state
-            || PlayerState::Reloading == self.state
-            || PlayerState::Chop == self.state
-        {
-            return;
-        }
-        self.weapons.set_visible(true);
-        self.animated_sprite2d.play_ex().name("guard").done();
-        self.current_speed = self.speed;
-        self.state = PlayerState::Guard;
-        STATE.store(self.state);
-    }
-
-    pub fn run(&mut self) {
-        if PlayerState::Dead == self.state
-            || PlayerState::Impact == self.state
-            || PlayerState::Chop == self.state
-        {
-            return;
-        }
-        self.weapons.set_visible(false);
-        self.animated_sprite2d.play_ex().name("run").done();
-        self.current_speed = self.speed * 1.5;
-        self.state = PlayerState::Run;
-        STATE.store(self.state);
-        //打断换弹
-        self.get_current_weapon().bind_mut().stop_reload();
-        if !self.run_audio.is_playing() {
-            self.run_audio.play();
-        }
-    }
-
-    pub fn shoot(&mut self) {
-        if PlayerState::Dead == self.state
-            || PlayerState::Impact == self.state
-            || PlayerState::Reload == self.state
-            || PlayerState::Chop == self.state
-        {
-            return;
-        }
-        let mut rust_weapon = self.get_current_weapon();
-        if rust_weapon.bind().must_reload() {
-            // 没子弹时自动装填
-            self.reload();
-            return;
-        }
-        rust_weapon.set_visible(true);
-        self.animated_sprite2d.play_ex().name("guard").done();
-        self.current_speed = self.speed * 0.5;
-        self.state = PlayerState::Shoot;
-        STATE.store(self.state);
-        //打断正在持续的换弹
-        rust_weapon.bind_mut().stop_reload();
-        rust_weapon
-            .bind_mut()
-            .fire(self.damage, self.distance, self.penetrate, self.repel);
-    }
-
-    pub fn reload(&mut self) {
-        if PlayerState::Dead == self.state
-            || PlayerState::Impact == self.state
-            || PlayerState::Chop == self.state
-            || !self.get_current_weapon().bind_mut().reload()
-        {
-            return;
-        }
-        self.weapons.set_visible(true);
-        self.animated_sprite2d.play_ex().name("reload").done();
-        self.current_speed = self.speed * 0.75;
-        self.state = PlayerState::Reload;
-        STATE.store(self.state);
-    }
-
-    #[func]
-    pub fn reloading(&mut self) {
-        if PlayerState::Dead == self.state || PlayerState::Impact == self.state {
-            return;
-        }
-        self.animated_sprite2d.play_ex().name("reload").done();
-        self.current_speed = self.speed * 0.75;
-        self.state = PlayerState::Reloading;
-        STATE.store(self.state);
-    }
-
-    #[func]
-    pub fn reloaded(&mut self) {
-        if PlayerState::Dead == self.state || PlayerState::Impact == self.state {
-            return;
-        }
-        self.state = PlayerState::Guard;
-        self.guard();
-    }
-
-    pub fn change_weapon(&mut self, weapon_index: i32) {
-        if PlayerState::Dead == self.state {
-            return;
-        }
-        for i in 0..self.weapons.get_child_count() {
-            if let Some(node) = self.weapons.get_child(i) {
-                let mut weapon = node.cast::<RustWeapon>();
-                if weapon_index == i {
-                    weapon.set_visible(true);
-                } else {
-                    weapon.set_visible(false);
-                    // 打断其他武器的换弹
-                    weapon.bind_mut().stop_reload();
-                }
-            }
-        }
-        self.weapons.set_visible(true);
-        if weapon_index == self.current_weapon_index {
-            self.change_fail_audio.play();
-            return;
-        }
-        self.animated_sprite2d.play_ex().name("guard").done();
-        self.current_speed = self.speed * 0.75;
-        self.current_weapon_index = weapon_index;
-        if self.get_current_weapon().get_name() == "AWP".into() {
-            self.zoom_audio.play();
-            self.camera.set_zoom(Vector2::new(0.4, 0.4));
-        } else {
-            self.camera.set_zoom(Vector2::new(1.0, 1.0));
-        }
-        self.state = PlayerState::Guard;
-        STATE.store(self.state);
-        self.change_success_audio.play();
-        // 更新HUD
-        let mut rust_weapon = self.get_current_weapon();
-        rust_weapon.bind_mut().update_ammo_hud();
-        let mut hud = self.hud.bind_mut();
-        hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
-        hud.update_distance_hud(self.distance + rust_weapon.bind().get_distance());
-        hud.update_repel_hud(self.repel + rust_weapon.bind().get_repel());
-        hud.update_penetrate_hud(self.penetrate + rust_weapon.bind().get_penetrate());
-    }
-
-    pub fn hit(&mut self, hit_position: Vector2) {
-        if PlayerState::Dead == self.state {
-            return;
-        }
-        self.weapons.set_visible(false);
-        self.animated_sprite2d.play_ex().name("hit").done();
-        self.current_speed = self.speed * 0.5;
-        self.state = PlayerState::Hit;
-        let player_position = self.base().get_global_position();
-        self.blood_flash.set_global_position(
-            player_position + player_position.direction_to(hit_position).normalized() * 18.0,
-        );
-        self.blood_flash.look_at(hit_position);
-        self.blood_flash.restart();
-        STATE.store(self.state);
-        if random_bool() {
-            self.body_hurt.play();
-        } else {
-            self.bone_hurt.play();
-        }
-        if !self.scream_audio.is_playing() {
-            self.scream_audio.play();
-        }
-    }
-
-    pub fn on_impact(&mut self, hit_val: i64, impact_position: Vector2) {
-        if PlayerState::Dead == self.state {
-            return;
-        }
-        self.on_hit(hit_val, impact_position);
-        if PlayerState::Dead == self.state {
-            return;
-        }
-        self.weapons.set_visible(false);
-        self.animated_sprite2d.play_ex().name("bump").done();
-        self.current_speed = self.speed * 1.25;
-        self.state = PlayerState::Impact;
-        let player_position = self.base().get_global_position();
-        self.blood_flash.set_global_position(
-            player_position + player_position.direction_to(impact_position).normalized() * 18.0,
-        );
-        self.blood_flash.look_at(impact_position);
-        self.blood_flash.set_one_shot(false);
-        self.blood_flash.set_emitting(true);
-        self.blood_flash.restart();
-        STATE.store(self.state);
-        //打断正在持续的换弹
-        self.get_current_weapon().bind_mut().stop_reload();
-        IMPACT_POSITION.store(impact_position);
-    }
-
-    pub fn impacting(&mut self) {
-        if PlayerState::Impact != self.state {
-            return;
-        }
-        self.animated_sprite2d.play_ex().name("bump").done();
-        self.current_speed = self.speed * 1.25;
-        self.state = PlayerState::Impact;
-        STATE.store(self.state);
-        let hit_position = IMPACT_POSITION.load();
-        self.base_mut().look_at(hit_position);
-        if !self.scream_audio.is_playing() {
-            self.scream_audio.play();
-        }
-    }
-
-    pub fn impacted(&mut self) {
-        if PlayerState::Impact != self.state {
-            return;
-        }
-        self.state = PlayerState::Guard;
-        self.blood_flash.set_emitting(false);
-        self.blood_flash.set_one_shot(true);
-        self.blood_flash.restart();
-        IMPACT_POSITION.store(Vector2::ZERO);
-        IMPACTING.store(0.0);
-        self.guard();
-    }
-
-    pub fn die(&mut self, hit_position: Vector2) {
-        if PlayerState::Dead == self.state {
-            return;
-        }
-        self.weapons.set_visible(false);
-        self.animated_sprite2d.look_at(hit_position);
-        self.animated_sprite2d.play_ex().name("die").done();
-        self.current_speed = 0.0;
-        self.state = PlayerState::Dead;
-        STATE.store(self.state);
-        //打断换弹
-        self.get_current_weapon().bind_mut().stop_reload();
-        self.die_audio.play();
-        DIED.fetch_add(1, Ordering::Release);
-        if 0 == self.current_lives {
-            if let Some(tree) = self.base().get_tree() {
-                if let Some(root) = tree.get_root() {
-                    root.get_node_as::<RustWorld>("RustWorld")
-                        .signals()
-                        .player_dead()
-                        .emit();
-                }
-            }
-            return;
-        }
-        if let Some(mut tree) = self.base().get_tree() {
-            if let Some(mut timer) = tree.create_timer(3.0) {
-                timer.connect("timeout", &self.base().callable("born"));
-            }
-        }
-    }
-
     pub fn throw_grenade(&mut self) {
         if self.current_grenade_cooldown > 0.0 {
-            if let Some(mut grenade_cooldown_label) =
-                self.message_scene.try_instantiate_as::<RustMessage>()
-            {
-                grenade_cooldown_label.set_global_position(RustPlayer::get_position());
-                if let Some(tree) = self.base().get_tree() {
-                    if let Some(mut root) = tree.get_root() {
-                        root.add_child(&grenade_cooldown_label);
-                        grenade_cooldown_label.bind_mut().show_message(&format!(
-                            "GRENADE READY IN {:.1}S",
-                            self.current_grenade_cooldown
-                        ));
-                    }
-                }
+            if let Some(mut grenade_cooldown_label) = self.create_message() {
+                grenade_cooldown_label.bind_mut().show_message(&format!(
+                    "GRENADE READY IN {:.1}S",
+                    self.current_grenade_cooldown
+                ));
             }
             return;
         }
@@ -639,122 +363,17 @@ impl RustPlayer {
         }
     }
 
-    pub fn chop(&mut self) {
-        if PlayerState::Dead == self.state
-            || PlayerState::Impact == self.state
-            || self.current_chop_cooldown > 0.0
-        {
-            return;
-        }
-        self.current_chop_cooldown = self.chop_cooldown as f64;
-        self.weapons.set_visible(false);
-        self.animated_sprite2d.play_ex().name("chop").done();
-        self.current_speed = self.speed * 0.75;
-        self.state = PlayerState::Chop;
-        STATE.store(self.state);
-        //打断换弹
-        self.get_current_weapon().bind_mut().stop_reload();
-        let damage = 80 + self.damage;
-        let repel = 30.0 + self.repel;
-        self.knife.bind_mut().chop(damage, repel);
-    }
-
-    #[func]
-    pub fn chopped(&mut self) {
-        if PlayerState::Chop != self.state {
-            return;
-        }
-        self.state = PlayerState::Guard;
-        self.guard();
-    }
-
-    pub fn level_up(&mut self) {
-        if Self::get_score() < self.current_level_up_barrier {
-            return;
-        }
-        //防止重复触发升级
-        let damage = self
-            .damage
-            .saturating_add(self.get_current_weapon().bind().get_damage());
-        RustPlayer::add_score(damage as u64);
-        self.level_up_barrier = (self.level_up_barrier as real * PLAYER_LEVEL_UP_GROW_RATE) as u32;
-        self.current_level_up_barrier += self.level_up_barrier as u64;
-        RustWorld::pause();
-        self.hud.bind_mut().set_upgrade_visible(true);
-    }
-
-    #[func]
-    pub fn upgrade_penetrate(&mut self) {
-        //穿透力升级
-        self.penetrate += 0.1;
-        let new_penetrate = self.penetrate + self.get_current_weapon().bind().get_penetrate();
-        self.hud.bind_mut().update_penetrate_hud(new_penetrate);
-        self.show_upgrade_label(PlayerUpgrade::Penetrate);
-    }
-
-    #[func]
-    pub fn upgrade_damage(&mut self) {
-        //伤害升级
-        self.damage = self.damage.saturating_add(2);
-        let new_damage = self
-            .damage
-            .saturating_add(self.get_current_weapon().bind().get_damage());
-        self.hud.bind_mut().update_damage_hud(new_damage);
-        self.show_upgrade_label(PlayerUpgrade::Damage);
-    }
-
-    #[func]
-    pub fn upgrade_repel(&mut self) {
-        //击退力升级
-        self.repel += 1.0;
-        let new_repel = self.repel + self.get_current_weapon().bind().get_repel();
-        self.hud.bind_mut().update_repel_hud(new_repel);
-        self.show_upgrade_label(PlayerUpgrade::Repel);
-    }
-
-    #[func]
-    pub fn upgrade_lives(&mut self) {
-        //奖励生命数
-        self.lives = self.lives.saturating_add(1);
-        self.current_lives = self.current_lives.saturating_add(1);
-        self.hud
-            .bind_mut()
-            .update_lives_hud(self.current_lives, self.lives);
-        self.show_upgrade_label(PlayerUpgrade::Lives);
-    }
-
-    #[func]
-    pub fn upgrade_distance(&mut self) {
-        //射击距离升级
-        self.distance += 20.0;
-        let new_distance = self.distance + self.get_current_weapon().bind().get_distance();
-        self.hud.bind_mut().update_distance_hud(new_distance);
-        self.show_upgrade_label(PlayerUpgrade::Distance);
-    }
-
-    #[func]
-    pub fn upgrade_health(&mut self) {
-        //生命值升级
-        self.health = self.health.saturating_add(10);
-        self.current_health = self.current_health.saturating_add(10);
-        self.hud
-            .bind_mut()
-            .update_hp_hud(self.current_health, self.health);
-        self.show_upgrade_label(PlayerUpgrade::Health);
-    }
-
-    fn show_upgrade_label(&mut self, what: PlayerUpgrade) {
-        self.hud.bind_mut().set_upgrade_visible(false);
-        if let Some(mut level_up_label) = self.message_scene.try_instantiate_as::<RustMessage>() {
-            level_up_label.set_global_position(RustPlayer::get_position());
+    pub fn create_message(&self) -> Option<Gd<RustMessage>> {
+        if let Some(mut message_label) = self.message_scene.try_instantiate_as::<RustMessage>() {
+            message_label.set_global_position(RustPlayer::get_position());
             if let Some(tree) = self.base().get_tree() {
                 if let Some(mut root) = tree.get_root() {
-                    root.add_child(&level_up_label);
-                    level_up_label.bind_mut().show_level_up(what);
+                    root.add_child(&message_label);
+                    return Some(message_label);
                 }
             }
         }
-        RustWorld::resume();
+        None
     }
 
     pub fn get_mouse_position(&self) -> Vector2 {
@@ -764,13 +383,6 @@ impl RustPlayer {
                 .get_viewport()
                 .expect("Viewport not found")
                 .get_mouse_position()
-    }
-
-    pub fn get_current_weapon(&self) -> Gd<RustWeapon> {
-        self.weapons
-            .get_child(self.current_weapon_index)
-            .expect("Weapon not configured")
-            .cast::<RustWeapon>()
     }
 
     pub fn add_kill_count() {
@@ -817,9 +429,5 @@ impl RustPlayer {
 
     pub fn get_position() -> Vector2 {
         POSITION.load()
-    }
-
-    pub fn get_state() -> PlayerState {
-        STATE.load()
     }
 }

@@ -1,13 +1,9 @@
-use crate::player::RustPlayer;
-use godot::builtin::real;
+use super::*;
 use godot::classes::input::MouseMode;
 use godot::classes::notify::NodeNotification;
 use godot::classes::{
-    Button, CanvasLayer, Control, HBoxContainer, ICanvasLayer, Input, Label, TextureRect,
-    VBoxContainer,
+    Button, CanvasLayer, Control, HBoxContainer, ICanvasLayer, Label, TextureRect, VBoxContainer,
 };
-use godot::obj::{Base, Gd, OnReady, WithBaseField};
-use godot::register::{GodotClass, godot_api};
 
 #[derive(GodotClass)]
 #[class(base=CanvasLayer)]
