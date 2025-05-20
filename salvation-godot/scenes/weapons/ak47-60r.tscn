@@ -135,7 +135,7 @@ alignment = 1
 [node name="WeaponName" type="Label" parent="WeaponHUD/Control/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 8
-text = "AK47 60R"
+text = "AK47-60R"
 
 [node name="TextureRect" type="TextureRect" parent="WeaponHUD/Control/VBoxContainer"]
 layout_mode = 2

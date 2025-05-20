@@ -4,27 +4,27 @@
 [ext_resource type="AudioStream" uid="uid://dwb7kqer206s6" path="res://asserts/player/knifes/katana/katana_stapmiss.wav" id="2_reoij"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mlkmf"]
-size = Vector2(30, 3)
+size = Vector2(40, 4)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wuom7"]
-size = Vector2(36, 4)
+size = Vector2(42, 6)
 
 [node name="Katana" type="RustKnife"]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(30, 0)
+position = Vector2(35, 0)
 shape = SubResource("RectangleShape2D_mlkmf")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(30, 0)
-scale = Vector2(0.15, 0.15)
+position = Vector2(35, 0)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("1_wuom7")
 
 [node name="DamageArea" type="Area2D" parent="."]
 position = Vector2(15, 0)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="DamageArea"]
-position = Vector2(18, 0)
+position = Vector2(21, 0)
 shape = SubResource("RectangleShape2D_wuom7")
 
 [node name="ChopAudio" type="AudioStreamPlayer2D" parent="."]

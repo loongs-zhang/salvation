@@ -95,7 +95,7 @@ const BOSS_MAX_BODY_COUNT: u32 = 20;
 
 const BOSS_MAX_SCREEN_COUNT: u32 = 6;
 
-const BOSS_REFRESH_BARRIER: u32 = 3;
+const BOSS_REFRESH_BARRIER: u32 = 6;
 
 #[derive(GodotConvert, Default, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
 #[godot(via = GString)]

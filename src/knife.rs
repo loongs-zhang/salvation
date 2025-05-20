@@ -1,9 +1,12 @@
 use crate::boss::RustBoss;
+use crate::common::RustMessage;
 use crate::player::RustPlayer;
 use crate::zombie::RustZombie;
 use godot::builtin::{Array, real};
 use godot::classes::tween::{EaseType, TransitionType};
-use godot::classes::{Area2D, AudioStream, AudioStreamPlayer2D, IArea2D, Node, Node2D};
+use godot::classes::{
+    Area2D, AudioStream, AudioStreamPlayer2D, IArea2D, Node, Node2D, PackedScene,
+};
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::prelude::load;
@@ -20,6 +23,7 @@ pub struct RustKnife {
     chop_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     hit_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     hit_audios: Array<Gd<AudioStream>>,
+    message_scene: OnReady<Gd<PackedScene>>,
     base: Base<Area2D>,
 }
 
@@ -34,6 +38,7 @@ impl IArea2D for RustKnife {
             chop_audio: OnReady::from_node("ChopAudio"),
             hit_audio: OnReady::from_node("HitAudio"),
             hit_audios: Array::new(),
+            message_scene: OnReady::from_loaded("res://scenes/rust_message.tscn"),
             base,
         }
     }
@@ -92,6 +97,7 @@ impl RustKnife {
             return;
         }
         let position = self.base().get_global_position();
+        let mut damage = self.final_damage;
         if body.is_class("RustZombie") {
             if let Some(audio) = self.hit_audios.pick_random() {
                 self.hit_audio.set_stream(&audio);
@@ -100,14 +106,29 @@ impl RustKnife {
             let mut zombie = body.cast::<RustZombie>();
             let zombie_position = zombie.get_global_position();
             let direction = position.direction_to(zombie_position);
+            // 暗杀判定
+            if self.try_assassinate(&zombie) {
+                damage *= 3;
+                if let Some(mut assassinate_label) =
+                    self.message_scene.try_instantiate_as::<RustMessage>()
+                {
+                    assassinate_label.set_global_position(position);
+                    if let Some(tree) = self.base().get_tree() {
+                        if let Some(mut root) = tree.get_root() {
+                            root.add_child(&assassinate_label);
+                            assassinate_label.bind_mut().show_message("ASSASSINATE");
+                        }
+                    }
+                }
+            }
             zombie.bind_mut().on_hit(
-                self.final_damage,
+                damage,
                 direction,
                 self.final_repel,
                 zombie_position + direction,
             );
-            if self.final_damage > 0 {
-                RustPlayer::add_score(self.final_damage as u64);
+            if damage > 0 {
+                RustPlayer::add_score(damage as u64);
             }
         } else if body.is_class("RustBoss") {
             if let Some(audio) = self.hit_audios.pick_random() {
@@ -118,13 +139,13 @@ impl RustKnife {
             let boss_position = boss.get_global_position();
             let direction = position.direction_to(boss_position);
             boss.bind_mut().on_hit(
-                self.final_damage,
+                damage,
                 direction,
                 self.final_repel,
                 boss_position + direction,
             );
-            if self.final_damage > 0 {
-                RustPlayer::add_score(self.final_damage as u64);
+            if damage > 0 {
+                RustPlayer::add_score(damage as u64);
             }
         }
     }
@@ -133,6 +154,19 @@ impl RustKnife {
     pub fn hide(&mut self) {
         self.base_mut().set_visible(false);
         self.get_rust_player().bind_mut().chopped();
+    }
+
+    // 僵尸背对玩家，则判定可暗杀
+    pub fn try_assassinate(&self, zombie: &Gd<RustZombie>) -> bool {
+        let zombie_position = zombie.get_global_position();
+        let player_position = RustPlayer::get_position();
+        let to_player_dir = player_position.direction_to(zombie_position).normalized();
+        let angle = zombie
+            .bind()
+            .get_current_direction()
+            .angle_to(to_player_dir)
+            .to_degrees();
+        (-60.0..=60.0).contains(&angle)
     }
 
     pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {

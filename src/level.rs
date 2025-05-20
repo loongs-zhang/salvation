@@ -9,13 +9,14 @@ use godot::classes::{
     AudioStreamPlayer2D, CanvasLayer, Engine, INode, InputEvent, Label, Node, Node2D, PackedScene,
     Timer, VBoxContainer,
 };
-use godot::global::godot_print;
+use godot::global::{godot_error, godot_print, godot_warn};
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::prelude::ToGodot;
 use godot::register::{GodotClass, godot_api};
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+//todo 僵尸对象池优化，僵尸被清理后不是free而是返回对象池
 static RAMPAGE: AtomicBool = AtomicBool::new(false);
 
 static KILL_COUNT: AtomicU32 = AtomicU32::new(0);
@@ -93,21 +94,23 @@ impl INode for RustLevel {
         {
             RustPlayer::reset_last_score_update();
             //30s内玩家未造成任何伤害，认为卡关了，实际上玩家击杀数足够，但击杀统计少了，强制刷新一批僵尸
-            for _ in 0..zombie_total
+            let refresh_zombie_count = zombie_total
                 .saturating_sub(zombie_killed)
-                .min(boss_refresh_count)
-            {
+                .min(boss_refresh_count);
+            let refresh_boss_count = boss_total
+                .saturating_sub(boss_killed)
+                .min(zombie_refresh_count);
+            for _ in 0..refresh_zombie_count {
                 zombie_generator.generate_zombie();
             }
-            for _ in 0..boss_total
-                .saturating_sub(boss_killed)
-                .min(zombie_refresh_count)
-            {
+            for _ in 0..refresh_boss_count {
                 boss_generator.generate_zombie();
             }
-            godot_print!(
-                "Level{} is blocked, forcing a batch of zombies to be refreshed",
-                self.level
+            godot_warn!(
+                "Level{} is blocked, forcing refresh {} zombies and {} bosses",
+                self.level,
+                refresh_zombie_count,
+                refresh_boss_count
             );
         }
         KILL_COUNT.store(zombie_killed, Ordering::Release);
@@ -213,10 +216,18 @@ impl RustLevel {
 
     #[func]
     pub fn update_refresh_hud(&mut self) {
-        let zombie_refresh_count = self.zombie_generator.bind().current_refresh_count;
+        let zombie_refresh_count = self
+            .zombie_generator
+            .bind()
+            .current_refresh_count
+            .min(self.zombie_generator.bind().refresh_barrier);
         let zombie_timer = self.zombie_generator.get_node_as::<Timer>("Timer");
         let zombie_wait_time = zombie_timer.get_wait_time();
-        let boss_refresh_count = self.boss_generator.bind().current_refresh_count;
+        let boss_refresh_count = self
+            .boss_generator
+            .bind()
+            .current_refresh_count
+            .min(self.boss_generator.bind().refresh_barrier);
         let boss_timer = self.boss_generator.get_node_as::<Timer>("Timer");
         let boss_wait_time = boss_timer.get_wait_time();
         let mut label = self.get_right_container().get_node_as::<Label>("Refresh");
@@ -392,7 +403,7 @@ impl INode for ZombieGenerator {
         } else if event.is_action_pressed("l") {
             RustPlayer::reset_last_score_update();
             while self.current < self.current_total
-                && self.current.saturating_sub(RustLevel::get_kill_count()) < self.max_screen_count
+                && self.current.saturating_sub(self.get_kill_count()) < self.max_screen_count
             {
                 self.generate();
             }
@@ -412,6 +423,7 @@ impl ZombieGenerator {
     ) {
         self.current = 0;
         self.boss = boss;
+        self.refresh_barrier = refresh_barrier;
         self.current_refresh_barrier = refresh_barrier;
         self.max_screen_count = max_screen_count;
         self.current_total = (self.total as f32 * rate) as u32;
@@ -429,18 +441,13 @@ impl ZombieGenerator {
         self.base()
             .get_parent()
             .unwrap()
-            .cast::<Node>()
             .call_deferred("update_refresh_hud", &[]);
     }
 
     #[func]
     pub fn generate(&mut self) {
         for _ in 0..self.current_refresh_count {
-            let kill_count = if self.boss {
-                RustLevel::get_kill_boss_count()
-            } else {
-                RustLevel::get_kill_count()
-            };
+            let kill_count = self.get_kill_count();
             if 0 < kill_count
                 && kill_count < self.current_refresh_barrier
                 && self.current_refresh_count > self.refresh_barrier
@@ -455,8 +462,21 @@ impl ZombieGenerator {
             self.generate_zombie();
             self.current += 1;
         }
-        while RustLevel::get_kill_count() >= self.current_refresh_barrier {
+        godot_print!(
+            "refreshed {} count {}",
+            if self.boss { "boss" } else { "zombie" },
+            self.current
+        );
+        while self.get_kill_count() >= self.current_refresh_barrier {
             self.current_refresh_barrier += self.refresh_barrier;
+        }
+    }
+
+    fn get_kill_count(&self) -> u32 {
+        if self.boss {
+            RustLevel::get_kill_boss_count()
+        } else {
+            RustLevel::get_kill_count()
         }
     }
 
@@ -473,7 +493,9 @@ impl ZombieGenerator {
             if let Some(root) = tree.get_root() {
                 root.get_node_as::<Node>("RustWorld")
                     .call_deferred("add_child", &zombies);
+                return;
             }
         }
+        godot_error!("Failed to instantiate zombie scene");
     }
 }
