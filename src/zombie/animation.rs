@@ -44,6 +44,9 @@ impl IAnimatedSprite2D for ZombieAnimation {
 
     fn ready(&mut self) {
         self.signals()
+            .change_zombie_state()
+            .connect_self(Self::on_change_zombie_state);
+        self.signals()
             .frame_changed()
             .connect_self(Self::on_animated_sprite_2d_frame_changed);
     }

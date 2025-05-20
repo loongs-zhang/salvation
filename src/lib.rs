@@ -60,7 +60,7 @@ const LEVEL_GROW_RATE: real = 1.1;
 const LEVEL_RAMPAGE_TIME: real = 120.0;
 
 // zombie
-const ZOMBIE_SKIP_FRAME: u128 = 4;
+const ZOMBIE_SKIP_FRAME: u128 = 3;
 
 const ZOMBIE_MAX_SCREEN_COUNT: u32 = 160;
 

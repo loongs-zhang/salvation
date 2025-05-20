@@ -16,7 +16,7 @@ use godot::classes::{
     AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, Control, GpuParticles2D,
     ICharacterBody2D, InputEvent, Label, Node, PackedScene, ProgressBar, RemoteTransform2D,
 };
-use godot::obj::{Base, Gd, OnReady, WithBaseField, WithUserSignals};
+use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{Duration, Instant};
@@ -122,10 +122,10 @@ impl ICharacterBody2D for RustZombie {
             self.hud.set_global_rotation_degrees(0.0);
         }
         self.frame_counter = self.frame_counter.wrapping_add(1);
-        if ZombieState::Dead == self.state
-            || RustWorld::is_paused()
-            || 0 == self.frame_counter % ZOMBIE_SKIP_FRAME
-        {
+        if RustWorld::is_paused() || 0 == self.frame_counter % ZOMBIE_SKIP_FRAME {
+            return;
+        }
+        if ZombieState::Dead == self.state {
             if BODY_COUNT.load(Ordering::Acquire) >= ZOMBIE_MAX_BODY_COUNT {
                 self.clean_body();
             }
@@ -219,10 +219,6 @@ impl ICharacterBody2D for RustZombie {
         let mut animated_sprite2d = self.animated_sprite2d.bind_mut();
         animated_sprite2d.set_hurt_frames(self.hurt_frames.clone());
         animated_sprite2d.set_damage(ZOMBIE_DAMAGE);
-        animated_sprite2d
-            .signals()
-            .change_zombie_state()
-            .connect_self(ZombieAnimation::on_change_zombie_state);
         drop(animated_sprite2d);
         self.guard();
         if !self.name.is_empty() {

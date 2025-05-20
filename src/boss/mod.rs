@@ -95,7 +95,10 @@ impl ICharacterBody2D for RustBoss {
     }
 
     fn process(&mut self, _delta: f64) {
-        if ZombieState::Dead == self.state || RustWorld::is_paused() {
+        if RustWorld::is_paused() {
+            return;
+        }
+        if ZombieState::Dead == self.state {
             if BODY_COUNT.load(Ordering::Acquire) >= BOSS_MAX_BODY_COUNT {
                 self.clean_body();
             }
