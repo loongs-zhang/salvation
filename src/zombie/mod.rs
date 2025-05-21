@@ -59,6 +59,7 @@ pub struct RustZombie {
     pursuit_direction: bool,
     current_flash_cooldown: f64,
     hud: OnReady<Gd<RemoteTransform2D>>,
+    head_shape2d: OnReady<Gd<CollisionShape2D>>,
     collision_shape2d: OnReady<Gd<CollisionShape2D>>,
     animated_sprite2d: OnReady<Gd<ZombieAnimation>>,
     zombie_attack_area: OnReady<Gd<ZombieAttackArea>>,
@@ -99,6 +100,7 @@ impl ICharacterBody2D for RustZombie {
             pursuit_direction: random_bool(),
             current_flash_cooldown: 0.0,
             hud: OnReady::from_node("RemoteTransform2D"),
+            head_shape2d: OnReady::from_node("HeadShape2D"),
             collision_shape2d: OnReady::from_node("CollisionShape2D"),
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             zombie_attack_area: OnReady::from_node("ZombieAttackArea"),
@@ -215,6 +217,11 @@ impl ICharacterBody2D for RustZombie {
     }
 
     fn ready(&mut self) {
+        let gd = self.to_gd();
+        self.die_audio
+            .signals()
+            .finished()
+            .connect_obj(&gd, Self::clean_audio);
         self.last_turn_time -= self.turn_cooldown;
         let mut animated_sprite2d = self.animated_sprite2d.bind_mut();
         animated_sprite2d.set_hurt_frames(self.hurt_frames.clone());
@@ -393,9 +400,18 @@ impl RustZombie {
         // 释放资源
         self.base_mut().set_z_index(0);
         self.hud.queue_free();
+        self.head_shape2d.queue_free();
         self.collision_shape2d.queue_free();
         self.zombie_attack_area.queue_free();
         self.zombie_damage_area.queue_free();
+        self.hit_audio.queue_free();
+        self.blood_flash.queue_free();
+        self.scream_audio.queue_free();
+        self.guard_audio.queue_free();
+        self.run_audio.queue_free();
+        self.rampage_audio.queue_free();
+        self.attack_audio.queue_free();
+        self.attack_scream_audio.queue_free();
         self.notify_animation();
         // 45S后自动清理尸体
         BODY_COUNT.fetch_add(1, Ordering::Release);
@@ -420,6 +436,11 @@ impl RustZombie {
     pub fn clean_body(&mut self) {
         self.base_mut().queue_free();
         BODY_COUNT.fetch_sub(1, Ordering::Release);
+    }
+
+    #[func]
+    pub fn clean_audio(&mut self) {
+        self.die_audio.queue_free();
     }
 
     pub fn flash(&mut self) {

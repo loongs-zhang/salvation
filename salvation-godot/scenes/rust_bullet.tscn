@@ -3,7 +3,7 @@
 [ext_resource type="AudioStream" uid="uid://crncwty554tu1" path="res://asserts/player/weapons/bullet_hit.mp3" id="1_nf83k"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h1aey"]
-size = Vector2(8.2, 3.2)
+size = Vector2(8, 3)
 
 [node name="RustBullet" type="RustBullet"]
 light_mask = 0
@@ -15,23 +15,29 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -4.1
-offset_top = -1.6
-offset_right = 4.1
-offset_bottom = 1.6
+offset_left = -4.0
+offset_top = -1.5
+offset_right = 4.0
+offset_bottom = 1.5
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(1, 1, 0.501961, 1)
 
 [node name="BulletDamageArea" type="BulletDamageArea" parent="."]
-position = Vector2(0.1, -0.4)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="BulletDamageArea"]
 shape = SubResource("RectangleShape2D_h1aey")
 
-[node name="RayCast2D" type="RayCast2D" parent="BulletDamageArea"]
+[node name="HeadshotRay1" type="RayCast2D" parent="BulletDamageArea"]
 light_mask = 0
 visibility_layer = 4096
+position = Vector2(0, -1.5)
+target_position = Vector2(6, 0)
+
+[node name="HeadshotRay2" type="RayCast2D" parent="BulletDamageArea"]
+light_mask = 0
+visibility_layer = 4096
+position = Vector2(0, 1.5)
 target_position = Vector2(6, 0)
 
 [node name="HitAudio" type="AudioStreamPlayer2D" parent="BulletDamageArea"]

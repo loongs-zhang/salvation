@@ -47,6 +47,9 @@ impl IAnimatedSprite2D for ZombieAnimation {
             .change_zombie_state()
             .connect_self(Self::on_change_zombie_state);
         self.signals()
+            .player_in_area()
+            .connect_self(Self::on_player_in_area);
+        self.signals()
             .frame_changed()
             .connect_self(Self::on_animated_sprite_2d_frame_changed);
     }

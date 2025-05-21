@@ -28,6 +28,9 @@ impl IArea2D for BossBumpArea {
     fn ready(&mut self) {
         self.last_bump_time -= self.bump_cooldown;
         self.signals()
+            .change_zombie_state()
+            .connect_self(Self::on_change_zombie_state);
+        self.signals()
             .body_entered()
             .connect_self(Self::on_area_2d_body_entered);
     }

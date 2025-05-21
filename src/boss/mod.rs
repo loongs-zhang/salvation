@@ -15,7 +15,7 @@ use godot::classes::{
     AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, GpuParticles2D, ICharacterBody2D,
     InputEvent, KinematicCollision2D, Node, PackedScene,
 };
-use godot::obj::{Base, Gd, OnReady, WithBaseField, WithUserSignals};
+use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{Duration, Instant};
@@ -43,6 +43,7 @@ pub struct RustBoss {
     last_player_position: Vector2,
     last_record_time: Instant,
     record_cooldown: Duration,
+    head_shape2d: OnReady<Gd<CollisionShape2D>>,
     collision_shape2d: OnReady<Gd<CollisionShape2D>>,
     animated_sprite2d: OnReady<Gd<ZombieAnimation>>,
     zombie_attack_area: OnReady<Gd<ZombieAttackArea>>,
@@ -76,6 +77,7 @@ impl ICharacterBody2D for RustBoss {
             last_player_position: Vector2::ZERO,
             last_record_time: Instant::now(),
             record_cooldown: Duration::from_secs(3),
+            head_shape2d: OnReady::from_node("HeadShape2D"),
             collision_shape2d: OnReady::from_node("CollisionShape2D"),
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             zombie_attack_area: OnReady::from_node("ZombieAttackArea"),
@@ -154,19 +156,15 @@ impl ICharacterBody2D for RustBoss {
     }
 
     fn ready(&mut self) {
+        let gd = self.to_gd();
+        self.die_audio
+            .signals()
+            .finished()
+            .connect_obj(&gd, Self::clean_audio);
+        self.guard();
         let mut animated_sprite2d = self.animated_sprite2d.bind_mut();
         animated_sprite2d.set_hurt_frames(self.hurt_frames.clone());
         animated_sprite2d.set_damage(BOSS_DAMAGE);
-        animated_sprite2d
-            .signals()
-            .change_zombie_state()
-            .connect_self(ZombieAnimation::on_change_zombie_state);
-        drop(animated_sprite2d);
-        self.bump_damage_area
-            .signals()
-            .change_zombie_state()
-            .connect_self(BossBumpArea::on_change_zombie_state);
-        self.guard();
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
@@ -308,10 +306,18 @@ impl RustBoss {
         }
         // 释放资源
         self.base_mut().set_z_index(0);
+        self.head_shape2d.queue_free();
         self.collision_shape2d.queue_free();
         self.bump_damage_area.queue_free();
         self.zombie_attack_area.queue_free();
         self.zombie_damage_area.queue_free();
+        self.hit_audio.queue_free();
+        self.blood_flash.queue_free();
+        self.scream_audio.queue_free();
+        self.guard_audio.queue_free();
+        self.bump_audio.queue_free();
+        self.attack_audio.queue_free();
+        self.attack_scream_audio.queue_free();
         self.notify_animation();
         // 45S后自动清理尸体
         BODY_COUNT.fetch_add(1, Ordering::Release);
@@ -336,6 +342,11 @@ impl RustBoss {
     pub fn clean_body(&mut self) {
         self.base_mut().queue_free();
         BODY_COUNT.fetch_sub(1, Ordering::Release);
+    }
+
+    #[func]
+    pub fn clean_audio(&mut self) {
+        self.die_audio.queue_free();
     }
 
     pub fn move_back(&mut self) {

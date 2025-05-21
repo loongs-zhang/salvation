@@ -24,10 +24,6 @@ impl IArea2D for ZombieAttackArea {
         self.signals()
             .body_exited()
             .connect_self(Self::on_area_2d_body_exited);
-        self.get_zombie_animation()
-            .signals()
-            .player_in_area()
-            .connect_self(ZombieAnimation::on_player_in_area);
     }
 }
 
@@ -98,10 +94,6 @@ impl IArea2D for ZombieDamageArea {
         self.signals()
             .body_exited()
             .connect_self(Self::on_area_2d_body_exited);
-        self.get_zombie_animation()
-            .signals()
-            .player_in_area()
-            .connect_self(ZombieAnimation::on_player_in_area);
     }
 }
 

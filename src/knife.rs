@@ -9,8 +9,11 @@ use godot::classes::{
 };
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
-use godot::prelude::load;
 use godot::register::{GodotClass, godot_api};
+use godot::tools::load;
+use std::sync::OnceLock;
+
+const HIT_AUDIOS: OnceLock<Array<Gd<AudioStream>>> = OnceLock::new();
 
 #[derive(GodotClass)]
 #[class(base=Area2D)]
@@ -22,7 +25,6 @@ pub struct RustKnife {
     damage_area: OnReady<Gd<Area2D>>,
     chop_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     hit_audio: OnReady<Gd<AudioStreamPlayer2D>>,
-    hit_audios: Array<Gd<AudioStream>>,
     message_scene: OnReady<Gd<PackedScene>>,
     base: Base<Area2D>,
 }
@@ -37,21 +39,12 @@ impl IArea2D for RustKnife {
             damage_area: OnReady::from_node("DamageArea"),
             chop_audio: OnReady::from_node("ChopAudio"),
             hit_audio: OnReady::from_node("HitAudio"),
-            hit_audios: Array::new(),
             message_scene: OnReady::from_loaded("res://scenes/rust_message.tscn"),
             base,
         }
     }
 
     fn ready(&mut self) {
-        if self.hit_audios.is_empty() {
-            for i in 1..=2 {
-                self.hit_audios.push(&load(&format!(
-                    "res://asserts/player/knifes/katana/katana_hit{}.wav",
-                    i
-                )));
-            }
-        }
         let gd = self.to_gd();
         self.damage_area
             .signals()
@@ -99,7 +92,7 @@ impl RustKnife {
         let position = self.base().get_global_position();
         let mut damage = self.final_damage;
         if body.is_class("RustZombie") {
-            if let Some(audio) = self.hit_audios.pick_random() {
+            if let Some(audio) = Self::random_hit_audio() {
                 self.hit_audio.set_stream(&audio);
                 self.hit_audio.play();
             }
@@ -131,7 +124,7 @@ impl RustKnife {
                 RustPlayer::add_score(damage as u64);
             }
         } else if body.is_class("RustBoss") {
-            if let Some(audio) = self.hit_audios.pick_random() {
+            if let Some(audio) = Self::random_hit_audio() {
                 self.hit_audio.set_stream(&audio);
                 self.hit_audio.play();
             }
@@ -167,6 +160,21 @@ impl RustKnife {
             .angle_to(to_player_dir)
             .to_degrees();
         (-60.0..=60.0).contains(&angle)
+    }
+
+    pub fn random_hit_audio() -> Option<Gd<AudioStream>> {
+        HIT_AUDIOS
+            .get_or_init(|| {
+                let mut audios = Array::new();
+                for i in 1..=2 {
+                    audios.push(&load(&format!(
+                        "res://asserts/player/knifes/katana/katana_hit{}.wav",
+                        i
+                    )));
+                }
+                audios
+            })
+            .pick_random()
     }
 
     pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {

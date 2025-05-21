@@ -9,7 +9,11 @@ use godot::classes::{
 };
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
-use godot::prelude::{GodotClass, godot_api, load};
+use godot::register::{GodotClass, godot_api};
+use godot::tools::load;
+use std::sync::OnceLock;
+
+const EXPLODE_AUDIOS: OnceLock<Array<Gd<AudioStream>>> = OnceLock::new();
 
 #[derive(GodotClass)]
 #[class(base=RigidBody2D)]
@@ -23,7 +27,6 @@ pub struct RustGrenade {
     hit_area: OnReady<Gd<Area2D>>,
     damage_area: OnReady<Gd<Area2D>>,
     explode_audio: OnReady<Gd<AudioStreamPlayer2D>>,
-    explode_audios: Array<Gd<AudioStream>>,
     explode_flash: OnReady<Gd<AnimatedSprite2D>>,
     texture_rect: OnReady<Gd<TextureRect>>,
     base: Base<RigidBody2D>,
@@ -41,7 +44,6 @@ impl IRigidBody2D for RustGrenade {
             hit_area: OnReady::from_node("HitArea"),
             damage_area: OnReady::from_node("DamageArea"),
             explode_audio: OnReady::from_node("ExplodeAudio"),
-            explode_audios: Array::new(),
             explode_flash: OnReady::from_node("AnimatedSprite2D"),
             texture_rect: OnReady::from_node("TextureRect"),
             base,
@@ -70,14 +72,6 @@ impl IRigidBody2D for RustGrenade {
             .set_physics_interpolation_mode(PhysicsInterpolationMode::ON);
         let mouse_position = self.get_mouse_position();
         self.base_mut().look_at(mouse_position);
-        if self.explode_audios.is_empty() {
-            for i in 1..=6 {
-                self.explode_audios.push(&load(&format!(
-                    "res://asserts/player/weapons/explode{}.wav",
-                    i
-                )));
-            }
-        }
         if let Some(mut tree) = self.base().get_tree() {
             if let Some(mut timer) = tree.create_timer(2.0) {
                 timer.connect("timeout", &self.base().callable("explode"));
@@ -92,6 +86,11 @@ impl IRigidBody2D for RustGrenade {
             .signals()
             .sleeping_state_changed()
             .connect_obj(&gd, Self::explode);
+    }
+
+    fn exit_tree(&mut self) {
+        self.explode_audio.queue_free();
+        self.explode_flash.queue_free();
     }
 }
 
@@ -137,7 +136,19 @@ impl RustGrenade {
             .call_deferred("set_freeze_enabled", &[true.to_variant()]);
         self.base_mut().set_linear_velocity(Vector2::ZERO);
         //播放音效
-        if let Some(audio) = self.explode_audios.pick_random() {
+        if let Some(audio) = EXPLODE_AUDIOS
+            .get_or_init(|| {
+                let mut audios = Array::new();
+                for i in 1..=6 {
+                    audios.push(&load(&format!(
+                        "res://asserts/player/weapons/explode{}.wav",
+                        i
+                    )));
+                }
+                audios
+            })
+            .pick_random()
+        {
             self.explode_audio.set_stream(&audio);
             self.explode_audio.play();
             self.explode_flash.set_visible(true);
