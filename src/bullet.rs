@@ -135,17 +135,18 @@ impl IArea2D for BulletDamageArea {
         }
     }
 
-    fn ready(&mut self) {
-        self.signals()
-            .body_entered()
-            .connect_self(Self::on_area_2d_body_entered);
-    }
-
     fn exit_tree(&mut self) {
         self.collision_shape2d.queue_free();
         self.headshot_ray1.queue_free();
         self.headshot_ray2.queue_free();
+        self.hit_audio.set_stream(Gd::null_arg());
         self.hit_audio.queue_free();
+    }
+
+    fn ready(&mut self) {
+        self.signals()
+            .body_entered()
+            .connect_self(Self::on_area_2d_body_entered);
     }
 }
 

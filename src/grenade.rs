@@ -75,6 +75,12 @@ impl IRigidBody2D for RustGrenade {
         }
     }
 
+    fn exit_tree(&mut self) {
+        self.explode_audio.set_stream(Gd::null_arg());
+        self.explode_audio.queue_free();
+        self.explode_flash.queue_free();
+    }
+
     fn ready(&mut self) {
         self.explode_flash.set_visible(false);
         self.base_mut()
@@ -95,11 +101,6 @@ impl IRigidBody2D for RustGrenade {
             .signals()
             .sleeping_state_changed()
             .connect_obj(&gd, Self::explode);
-    }
-
-    fn exit_tree(&mut self) {
-        self.explode_audio.queue_free();
-        self.explode_flash.queue_free();
     }
 }
 

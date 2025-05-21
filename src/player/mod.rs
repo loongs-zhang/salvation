@@ -227,6 +227,10 @@ impl ICharacterBody2D for RustPlayer {
         self.scale();
     }
 
+    fn exit_tree(&mut self) {
+        self.grenade_scenes.clear();
+    }
+
     fn ready(&mut self) {
         self.knife.set_visible(false);
         self.change_weapon(self.current_weapon_index);

@@ -109,6 +109,10 @@ impl INode2D for RustWeapon {
         }
     }
 
+    fn exit_tree(&mut self) {
+        self.bullet_scenes.clear();
+    }
+
     fn ready(&mut self) {
         self.ammo = self.clip;
         self.update_ammo_hud();

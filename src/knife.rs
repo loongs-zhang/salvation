@@ -53,6 +53,10 @@ impl IArea2D for RustKnife {
         }
     }
 
+    fn exit_tree(&mut self) {
+        self.hit_audio.set_stream(Gd::null_arg());
+    }
+
     fn ready(&mut self) {
         let gd = self.to_gd();
         self.damage_area

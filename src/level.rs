@@ -445,7 +445,8 @@ impl INode for ZombieGenerator {
                 .call_deferred("update_refresh_hud", &[]);
         } else if event.is_action_pressed("l") {
             RustPlayer::reset_last_score_update();
-            while self.current < self.current_total
+            while !self.timer.is_stopped()
+                && self.current < self.current_total
                 && self.current.saturating_sub(self.get_kill_count()) < self.max_screen_count
             {
                 self.generate();
