@@ -90,7 +90,7 @@ impl INode for RustLevel {
                 .expect("1970-01-01 00:00:00 UTC was {} seconds ago!")
                 .as_secs_f64()
                 - RustPlayer::get_last_score_update()
-                >= boss_timer.get_wait_time()
+                >= 30.0
         {
             RustPlayer::reset_last_score_update();
             //30s内玩家未造成任何伤害，认为卡关了，实际上玩家击杀数足够，但击杀统计少了，强制刷新一批僵尸
@@ -232,7 +232,7 @@ impl RustLevel {
         let boss_wait_time = boss_timer.get_wait_time();
         let mut label = self.get_right_container().get_node_as::<Label>("Refresh");
         label.set_text(&format!(
-            "ZOMBIE {} {}/{:.0}s\nBOSS {} {}/{:.0}s",
+            "ZOMBIE {} {}/{:.1}s\nBOSS {} {}/{:.1}s",
             if zombie_timer.is_stopped() {
                 "COMING"
             } else {
@@ -438,18 +438,15 @@ impl INode for ZombieGenerator {
             } else {
                 self.timer.stop();
             }
-            self.base()
-                .get_parent()
-                .unwrap()
-                .cast::<Node>()
-                .call_deferred("update_refresh_hud", &[]);
+            self.update_refresh_hud();
         } else if event.is_action_pressed("l") {
             RustPlayer::reset_last_score_update();
-            while !self.timer.is_stopped()
-                && self.current < self.current_total
+            if self.current < self.current_total
                 && self.current.saturating_sub(self.get_kill_count()) < self.max_screen_count
             {
-                self.generate();
+                self.timer.set_wait_time(0.2);
+                self.timer.start();
+                self.update_refresh_hud();
             }
         }
     }
@@ -472,6 +469,7 @@ impl ZombieGenerator {
         self.max_screen_count = max_screen_count;
         self.current_total = (self.total as f32 * rate) as u32;
         self.current_refresh_count = (self.refresh_count as f32 * rate) as u32;
+        self.timer.set_wait_time(self.refresh_time);
         if !RustWorld::is_paused() {
             self.timer.start();
         }
@@ -501,6 +499,7 @@ impl ZombieGenerator {
             }
             if self.current >= self.current_total {
                 self.timer.stop();
+                self.update_refresh_hud();
                 break;
             }
             self.generate_zombie();
@@ -509,6 +508,14 @@ impl ZombieGenerator {
         while self.get_kill_count() >= self.current_refresh_barrier {
             self.current_refresh_barrier += self.refresh_barrier;
         }
+    }
+
+    fn update_refresh_hud(&self) {
+        self.base()
+            .get_parent()
+            .unwrap()
+            .cast::<Node>()
+            .call_deferred("update_refresh_hud", &[]);
     }
 
     fn get_kill_count(&self) -> u32 {

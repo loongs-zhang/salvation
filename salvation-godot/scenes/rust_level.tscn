@@ -2,10 +2,10 @@
 
 [ext_resource type="PackedScene" uid="uid://5koe2fd6n3fc" path="res://scenes/rust_zombie.tscn" id="1_4leux"]
 [ext_resource type="PackedScene" uid="uid://dcjy2vqmnudni" path="res://scenes/level_hud.tscn" id="1_oapea"]
-[ext_resource type="AudioStream" uid="uid://bcjknreh3qu5p" path="res://asserts/bgm/ScenarioNormal.mp3" id="3_re1am"]
+[ext_resource type="AudioStream" uid="uid://u5qbhwlhasyx" path="res://asserts/bgm/ScenarioNormal.mp3" id="3_re1am"]
 [ext_resource type="PackedScene" uid="uid://b8ou2gd7qcb4n" path="res://scenes/rust_boss.tscn" id="3_ww368"]
-[ext_resource type="AudioStream" uid="uid://5em365wg5g2q" path="res://asserts/bgm/CounterStrikeOnline.mp3" id="4_t7jsg"]
-[ext_resource type="AudioStream" uid="uid://wp5pnkv1rtuq" path="res://asserts/bgm/ForWhomTheBellTolls.mp3" id="4_ww368"]
+[ext_resource type="AudioStream" uid="uid://b25ros5jwuyrs" path="res://asserts/bgm/CounterStrikeOnline.mp3" id="4_t7jsg"]
+[ext_resource type="AudioStream" uid="uid://dvevkyu0q4fsi" path="res://asserts/bgm/ForWhomTheBellTolls.mp3" id="4_ww368"]
 
 [node name="RustLevel" type="RustLevel"]
 
