@@ -11,9 +11,18 @@ use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use godot::tools::load;
-use std::sync::OnceLock;
+use std::sync::LazyLock;
 
-const EXPLODE_AUDIOS: OnceLock<Array<Gd<AudioStream>>> = OnceLock::new();
+const EXPLODE_AUDIOS: LazyLock<Array<Gd<AudioStream>>> = LazyLock::new(|| {
+    let mut audios = Array::new();
+    for i in 1..=6 {
+        audios.push(&load(&format!(
+            "res://asserts/player/weapons/explode{}.wav",
+            i
+        )));
+    }
+    audios
+});
 
 #[derive(GodotClass)]
 #[class(base=RigidBody2D)]
@@ -136,19 +145,7 @@ impl RustGrenade {
             .call_deferred("set_freeze_enabled", &[true.to_variant()]);
         self.base_mut().set_linear_velocity(Vector2::ZERO);
         //播放音效
-        if let Some(audio) = EXPLODE_AUDIOS
-            .get_or_init(|| {
-                let mut audios = Array::new();
-                for i in 1..=6 {
-                    audios.push(&load(&format!(
-                        "res://asserts/player/weapons/explode{}.wav",
-                        i
-                    )));
-                }
-                audios
-            })
-            .pick_random()
-        {
+        if let Some(audio) = EXPLODE_AUDIOS.pick_random() {
             self.explode_audio.set_stream(&audio);
             self.explode_audio.play();
             self.explode_flash.set_visible(true);

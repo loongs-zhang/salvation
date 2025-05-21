@@ -11,9 +11,18 @@ use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use godot::tools::load;
-use std::sync::OnceLock;
+use std::sync::LazyLock;
 
-const HIT_AUDIOS: OnceLock<Array<Gd<AudioStream>>> = OnceLock::new();
+const HIT_AUDIOS: LazyLock<Array<Gd<AudioStream>>> = LazyLock::new(|| {
+    let mut audios = Array::new();
+    for i in 1..=2 {
+        audios.push(&load(&format!(
+            "res://asserts/player/knifes/katana/katana_hit{}.wav",
+            i
+        )));
+    }
+    audios
+});
 
 #[derive(GodotClass)]
 #[class(base=Area2D)]
@@ -92,7 +101,7 @@ impl RustKnife {
         let position = self.base().get_global_position();
         let mut damage = self.final_damage;
         if body.is_class("RustZombie") {
-            if let Some(audio) = Self::random_hit_audio() {
+            if let Some(audio) = HIT_AUDIOS.pick_random() {
                 self.hit_audio.set_stream(&audio);
                 self.hit_audio.play();
             }
@@ -124,7 +133,7 @@ impl RustKnife {
                 RustPlayer::add_score(damage as u64);
             }
         } else if body.is_class("RustBoss") {
-            if let Some(audio) = Self::random_hit_audio() {
+            if let Some(audio) = HIT_AUDIOS.pick_random() {
                 self.hit_audio.set_stream(&audio);
                 self.hit_audio.play();
             }
@@ -160,21 +169,6 @@ impl RustKnife {
             .angle_to(to_player_dir)
             .to_degrees();
         (-60.0..=60.0).contains(&angle)
-    }
-
-    pub fn random_hit_audio() -> Option<Gd<AudioStream>> {
-        HIT_AUDIOS
-            .get_or_init(|| {
-                let mut audios = Array::new();
-                for i in 1..=2 {
-                    audios.push(&load(&format!(
-                        "res://asserts/player/knifes/katana/katana_hit{}.wav",
-                        i
-                    )));
-                }
-                audios
-            })
-            .pick_random()
     }
 
     pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {

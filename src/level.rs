@@ -9,7 +9,7 @@ use godot::classes::{
     AudioStreamPlayer2D, CanvasLayer, Engine, INode, InputEvent, Label, Node, Node2D, PackedScene,
     Timer, VBoxContainer,
 };
-use godot::global::{godot_error, godot_print, godot_warn};
+use godot::global::{godot_error, godot_warn};
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::prelude::ToGodot;
 use godot::register::{GodotClass, godot_api};
@@ -505,11 +505,6 @@ impl ZombieGenerator {
             self.generate_zombie();
             self.current += 1;
         }
-        godot_print!(
-            "refreshed {} count {}",
-            if self.boss { "boss" } else { "zombie" },
-            self.current
-        );
         while self.get_kill_count() >= self.current_refresh_barrier {
             self.current_refresh_barrier += self.refresh_barrier;
         }

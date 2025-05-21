@@ -14,8 +14,11 @@ use godot::global::godot_error;
 use godot::obj::{Base, Gd, OnReady, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
 use godot::tools::load;
+use std::sync::LazyLock;
 
 pub mod hud;
+
+const BULLET: LazyLock<Gd<PackedScene>> = LazyLock::new(|| load("res://scenes/rust_bullet.tscn"));
 
 #[derive(GodotClass)]
 #[class(base=Node2D)]
@@ -135,8 +138,7 @@ impl INode2D for RustWeapon {
                 .connect_obj(&gd, Self::on_bolt_pull_finished);
         }
         if self.bullet_scenes.is_empty() {
-            self.bullet_scenes
-                .push(&load::<PackedScene>("res://scenes/rust_bullet.tscn"));
+            self.bullet_scenes.push(&*BULLET);
         }
     }
 }

@@ -17,6 +17,7 @@ use godot::classes::{
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use godot::tools::load;
+use std::sync::LazyLock;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -43,6 +44,8 @@ static SCORE: AtomicU64 = AtomicU64::new(0);
 static DIED: AtomicU64 = AtomicU64::new(0);
 
 static LAST_SCORE_UPDATE: AtomicCell<f64> = AtomicCell::new(0.0);
+
+const GRENADE: LazyLock<Gd<PackedScene>> = LazyLock::new(|| load("res://scenes/rust_grenade.tscn"));
 
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
@@ -241,8 +244,7 @@ impl ICharacterBody2D for RustPlayer {
         hud.update_score_hud();
         hud.update_died_hud();
         if self.grenade_scenes.is_empty() {
-            self.grenade_scenes
-                .push(&load::<PackedScene>("res://scenes/rust_grenade.tscn"));
+            self.grenade_scenes.push(&*GRENADE);
         }
     }
 
