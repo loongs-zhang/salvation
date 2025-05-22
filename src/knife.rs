@@ -13,6 +13,7 @@ use godot::register::{GodotClass, godot_api};
 use godot::tools::load;
 use std::sync::LazyLock;
 
+#[allow(clippy::declare_interior_mutable_const)]
 const HIT_AUDIOS: LazyLock<Array<Gd<AudioStream>>> = LazyLock::new(|| {
     let mut audios = Array::new();
     for i in 1..=2 {
@@ -105,6 +106,7 @@ impl RustKnife {
         let position = self.base().get_global_position();
         let mut damage = self.final_damage;
         if body.is_class("RustZombie") {
+            #[allow(clippy::borrow_interior_mutable_const)]
             if let Some(audio) = HIT_AUDIOS.pick_random() {
                 self.hit_audio.set_stream(&audio);
                 self.hit_audio.play();
@@ -137,6 +139,7 @@ impl RustKnife {
                 RustPlayer::add_score(damage as u64);
             }
         } else if body.is_class("RustBoss") {
+            #[allow(clippy::borrow_interior_mutable_const)]
             if let Some(audio) = HIT_AUDIOS.pick_random() {
                 self.hit_audio.set_stream(&audio);
                 self.hit_audio.play();

@@ -31,13 +31,13 @@ shape = SubResource("RectangleShape2D_h1aey")
 [node name="HeadshotRay1" type="RayCast2D" parent="BulletDamageArea"]
 light_mask = 0
 visibility_layer = 4096
-position = Vector2(0, -1.5)
+position = Vector2(0, -0.5)
 target_position = Vector2(6, 0)
 
 [node name="HeadshotRay2" type="RayCast2D" parent="BulletDamageArea"]
 light_mask = 0
 visibility_layer = 4096
-position = Vector2(0, 1.5)
+position = Vector2(0, 0.5)
 target_position = Vector2(6, 0)
 
 [node name="HitAudio" type="AudioStreamPlayer2D" parent="BulletDamageArea"]

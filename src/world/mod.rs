@@ -2,35 +2,48 @@ use crate::PlayerState;
 use crate::entrance::RustEntrance;
 use crate::level::RustLevel;
 use crate::player::RustPlayer;
-use godot::builtin::{Array, Vector2, Vector2i, array};
-use godot::classes::fast_noise_lite::NoiseType;
+use crate::world::ground::RustGround;
+use godot::builtin::{Vector2, Vector2i, real};
 use godot::classes::{
-    Button, CanvasLayer, Control, FastNoiseLite, HBoxContainer, INode2D, InputEvent, Label, Node,
-    Node2D, Object, PackedScene, TileMapLayer,
+    Button, CanvasLayer, Control, HBoxContainer, INode2D, InputEvent, Label, Node, Node2D, Object,
+    PackedScene,
 };
 use godot::global::godot_print;
-use godot::obj::{Base, Gd, NewGd, OnReady, WithBaseField, WithUserSignals};
+use godot::obj::{Base, Gd, OnReady, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
-use std::collections::HashSet;
-use std::sync::atomic::{AtomicBool, Ordering};
+use godot::tools::load;
+use std::sync::LazyLock;
+use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
 use std::time::Instant;
 
-const SOIL_TERRAIN_SET: i32 = 0;
-const SAND_TERRAIN_SET: i32 = 1;
-const GLASS_TERRAIN_SET: i32 = 2;
-const SOURCE_ID: i32 = 0;
+pub mod ground;
+
+const RANGE: i32 = 256;
+
+const STEP: i32 = 8;
+
+const STEP_VECTOR2I: Vector2i = Vector2i::new(STEP, STEP);
+
+static MAX_LEFT: AtomicI32 = AtomicI32::new(0);
+
+static MAX_RIGHT: AtomicI32 = AtomicI32::new(0);
+
+static MAX_TOP: AtomicI32 = AtomicI32::new(0);
+
+static MAX_BOTTOM: AtomicI32 = AtomicI32::new(0);
 
 static PAUSED: AtomicBool = AtomicBool::new(false);
+
+#[allow(clippy::declare_interior_mutable_const)]
+const GROUND: LazyLock<Gd<PackedScene>> = LazyLock::new(|| load("res://scenes/rust_ground.tscn"));
 
 #[derive(GodotClass)]
 #[class(base=Node2D)]
 pub struct RustWorld {
     entrance_scene: OnReady<Gd<PackedScene>>,
-    tile_map_layer: OnReady<Gd<TileMapLayer>>,
     rust_player: OnReady<Gd<RustPlayer>>,
     rust_level: OnReady<Gd<RustLevel>>,
     game_over: OnReady<Gd<CanvasLayer>>,
-    generated: HashSet<Vector2i>,
     base: Base<Node2D>,
 }
 
@@ -41,11 +54,9 @@ impl INode2D for RustWorld {
         // Alternatively to init(), you can use #[init(...)] on the struct fields.
         Self {
             entrance_scene: OnReady::from_loaded("res://scenes/rust_entrance.tscn"),
-            tile_map_layer: OnReady::from_node("TileMapLayer"),
             rust_player: OnReady::from_node("RustPlayer"),
             rust_level: OnReady::from_node("RustLevel"),
             game_over: OnReady::from_node("CanvasLayer"),
-            generated: HashSet::new(),
             base,
         }
     }
@@ -72,7 +83,6 @@ impl INode2D for RustWorld {
         self.signals()
             .player_dead()
             .connect_self(Self::on_player_dead);
-        self.generate_world(125);
         // stop BGM after world generated
         if let Some(tree) = self.base().get_tree() {
             if let Some(root) = tree.get_root() {
@@ -81,6 +91,7 @@ impl INode2D for RustWorld {
                 }
             }
         }
+        self.generate_world();
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
@@ -143,78 +154,52 @@ impl RustWorld {
     }
 
     #[func]
-    pub fn generate(&mut self) {
-        self.generate_world(20);
-    }
-
-    pub fn generate_world(&mut self, square_half_length: i32) {
+    pub fn generate_world(&mut self) {
+        let player_position = self.rust_player.get_global_position();
+        if !Self::can_generate(player_position) {
+            return;
+        }
         let now = Instant::now();
-        let player = self.rust_player.get_global_position();
-        let glass_atlas: Array<Vector2i> = array![
-            Vector2i::new(0, 0),
-            Vector2i::new(1, 0),
-            Vector2i::new(2, 0),
-            Vector2i::new(3, 0),
-            Vector2i::new(4, 0)
-        ];
-        let mut soil_array = Array::new();
-        let mut sand_array = Array::new();
-        let mut glass_array = Array::new();
-
-        let mut noise = FastNoiseLite::new_gd();
-        noise.set_noise_type(NoiseType::SIMPLEX_SMOOTH);
-        noise.set_seed(rand::random::<i32>());
-        noise.set_frequency(0.08);
-        // generate world
-        for x in player.x as i32 - square_half_length..player.x as i32 + square_half_length {
-            for y in player.y as i32 - square_half_length..player.y as i32 + square_half_length {
-                let vector2i = Vector2i::new(x, y);
-                if self.generated.contains(&vector2i) {
+        for i in (-RANGE..RANGE).step_by(STEP as usize) {
+            for j in (-RANGE..RANGE).step_by(STEP as usize) {
+                let from =
+                    Vector2i::new(player_position.x as i32 + i, player_position.y as i32 + j);
+                let to = from + STEP_VECTOR2I;
+                MAX_LEFT.store(
+                    MAX_LEFT.load(Ordering::Acquire).max(to.x),
+                    Ordering::Release,
+                );
+                MAX_RIGHT.store(
+                    MAX_RIGHT.load(Ordering::Acquire).min(from.x),
+                    Ordering::Release,
+                );
+                MAX_TOP.store(MAX_TOP.load(Ordering::Acquire).max(to.y), Ordering::Release);
+                MAX_BOTTOM.store(
+                    MAX_BOTTOM.load(Ordering::Acquire).min(from.y),
+                    Ordering::Release,
+                );
+                if !Self::can_generate(player_position) {
                     continue;
                 }
-                let val = noise.get_noise_2d(x as f32, y as f32);
-                if val <= 0.0 {
-                    soil_array.push(vector2i);
-                } else if val <= 0.1 {
-                    sand_array.push(vector2i);
-                } else if val <= 0.2 {
-                    self.tile_map_layer
-                        .set_cell_ex(vector2i)
-                        .source_id(SOURCE_ID)
-                        .atlas_coords(
-                            glass_atlas
-                                .pick_random()
-                                .expect("Atlas should not be empty"),
-                        )
-                        .done();
-                } else if val <= 0.4 {
-                    glass_array.push(vector2i);
-                } else {
-                    soil_array.push(vector2i);
+                #[allow(clippy::borrow_interior_mutable_const)]
+                if let Some(mut ground) = GROUND.try_instantiate_as::<RustGround>() {
+                    ground.bind_mut().set_from(from);
+                    ground.bind_mut().set_to(to);
+                    self.base_mut().add_child(&ground);
                 }
-                self.generated.insert(vector2i);
             }
         }
-        if !soil_array.is_empty() {
-            self.tile_map_layer
-                .set_cells_terrain_connect(&soil_array, SOIL_TERRAIN_SET, 0);
-        }
-        if !sand_array.is_empty() {
-            self.tile_map_layer
-                .set_cells_terrain_connect(&sand_array, SAND_TERRAIN_SET, 0);
-        }
-        if !glass_array.is_empty() {
-            self.tile_map_layer
-                .set_cells_terrain_connect(&glass_array, GLASS_TERRAIN_SET, 0);
-        }
         godot_print!(
-            "Generated {} with {} soil, {} sand and {} glass tiles, cost {}ms",
-            self.base.to_gd(),
-            soil_array.len(),
-            sand_array.len(),
-            glass_array.len(),
+            "Generated world cost {}ms",
             Instant::now().duration_since(now).as_millis()
         );
+    }
+
+    fn can_generate(player_position: Vector2) -> bool {
+        player_position.x - RANGE as real <= MAX_LEFT.load(Ordering::Acquire) as real
+            || player_position.x + (RANGE as real) >= MAX_RIGHT.load(Ordering::Acquire) as real
+            || player_position.y - RANGE as real <= MAX_TOP.load(Ordering::Acquire) as real
+            || player_position.y + (RANGE as real) >= MAX_BOTTOM.load(Ordering::Acquire) as real
     }
 
     pub fn random_position() -> Vector2 {

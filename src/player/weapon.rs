@@ -38,7 +38,7 @@ impl RustPlayer {
         self.current_weapon_index = weapon_index;
         if self.get_current_weapon().get_name() == "AWP".into() {
             self.zoom_audio.play();
-            self.camera.set_zoom(Vector2::new(0.4, 0.4));
+            self.camera.set_zoom(Vector2::new(0.5, 0.5));
         } else {
             self.camera.set_zoom(Vector2::new(1.0, 1.0));
         }

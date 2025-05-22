@@ -6,8 +6,8 @@ use crate::{
 };
 use godot::builtin::{Array, real};
 use godot::classes::{
-    AudioStreamPlayer2D, CanvasLayer, Engine, INode, InputEvent, Label, Node, Node2D, PackedScene,
-    Timer, VBoxContainer,
+    AudioStreamPlayer2D, CanvasLayer, Engine, INode2D, InputEvent, Label, Node, Node2D,
+    PackedScene, Timer, VBoxContainer,
 };
 use godot::global::{godot_error, godot_warn};
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
@@ -26,7 +26,7 @@ static KILL_BOSS_COUNT: AtomicU32 = AtomicU32::new(0);
 static LIVE_COUNT: AtomicU32 = AtomicU32::new(0);
 
 #[derive(GodotClass)]
-#[class(base=Node)]
+#[class(base=Node2D)]
 pub struct RustLevel {
     #[export]
     level: u32,
@@ -43,12 +43,12 @@ pub struct RustLevel {
     bgm: OnReady<Gd<AudioStreamPlayer2D>>,
     rampage_bgm: OnReady<Gd<AudioStreamPlayer2D>>,
     boss_bgm: OnReady<Gd<AudioStreamPlayer2D>>,
-    base: Base<Node>,
+    base: Base<Node2D>,
 }
 
 #[godot_api]
-impl INode for RustLevel {
-    fn init(base: Base<Node>) -> Self {
+impl INode2D for RustLevel {
+    fn init(base: Base<Node2D>) -> Self {
         Self {
             level: 0,
             grow_rate: LEVEL_GROW_RATE,
@@ -374,7 +374,7 @@ impl RustLevel {
 }
 
 #[derive(GodotClass, Debug)]
-#[class(base=Node)]
+#[class(base=Node2D)]
 pub struct ZombieGenerator {
     #[export]
     immediate: bool,
@@ -397,12 +397,12 @@ pub struct ZombieGenerator {
     current: u32,
     current_refresh_barrier: u32,
     timer: OnReady<Gd<Timer>>,
-    base: Base<Node>,
+    base: Base<Node2D>,
 }
 
 #[godot_api]
-impl INode for ZombieGenerator {
-    fn init(base: Base<Node>) -> Self {
+impl INode2D for ZombieGenerator {
+    fn init(base: Base<Node2D>) -> Self {
         Self {
             immediate: false,
             boss: false,
@@ -527,6 +527,9 @@ impl ZombieGenerator {
     }
 
     pub fn generate_zombie(&self) {
+        if !self.base().is_visible() {
+            return;
+        }
         let mut zombies = Vec::new();
         for zombie_scene in self.zombie_scenes.iter_shared() {
             if let Some(mut zombie) = zombie_scene.try_instantiate_as::<Node2D>() {

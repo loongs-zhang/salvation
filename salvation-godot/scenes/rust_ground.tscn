@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://cbfpw8lejebvd"]
+
+[ext_resource type="TileSet" uid="uid://br38cdjufbhgt" path="res://data/world.tres" id="1_pavq7"]
+
+[node name="RustGround" type="RustGround"]
+
+[node name="TileMapLayer" type="TileMapLayer" parent="."]
+tile_set = ExtResource("1_pavq7")

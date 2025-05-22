@@ -13,6 +13,7 @@ use godot::register::{GodotClass, godot_api};
 use godot::tools::load;
 use std::sync::LazyLock;
 
+#[allow(clippy::declare_interior_mutable_const)]
 const EXPLODE_AUDIOS: LazyLock<Array<Gd<AudioStream>>> = LazyLock::new(|| {
     let mut audios = Array::new();
     for i in 1..=6 {
@@ -146,6 +147,7 @@ impl RustGrenade {
             .call_deferred("set_freeze_enabled", &[true.to_variant()]);
         self.base_mut().set_linear_velocity(Vector2::ZERO);
         //播放音效
+        #[allow(clippy::borrow_interior_mutable_const)]
         if let Some(audio) = EXPLODE_AUDIOS.pick_random() {
             self.explode_audio.set_stream(&audio);
             self.explode_audio.play();

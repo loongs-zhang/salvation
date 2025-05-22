@@ -45,6 +45,7 @@ static DIED: AtomicU64 = AtomicU64::new(0);
 
 static LAST_SCORE_UPDATE: AtomicCell<f64> = AtomicCell::new(0.0);
 
+#[allow(clippy::declare_interior_mutable_const)]
 const GRENADE: LazyLock<Gd<PackedScene>> = LazyLock::new(|| load("res://scenes/rust_grenade.tscn"));
 
 #[derive(GodotClass)]
@@ -248,6 +249,7 @@ impl ICharacterBody2D for RustPlayer {
         hud.update_score_hud();
         hud.update_died_hud();
         if self.grenade_scenes.is_empty() {
+            #[allow(clippy::borrow_interior_mutable_const)]
             self.grenade_scenes.push(&*GRENADE);
         }
     }

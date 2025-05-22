@@ -18,6 +18,7 @@ use std::sync::LazyLock;
 
 pub mod hud;
 
+#[allow(clippy::declare_interior_mutable_const)]
 const BULLET: LazyLock<Gd<PackedScene>> = LazyLock::new(|| load("res://scenes/rust_bullet.tscn"));
 
 #[derive(GodotClass)]
@@ -142,6 +143,7 @@ impl INode2D for RustWeapon {
                 .connect_obj(&gd, Self::on_bolt_pull_finished);
         }
         if self.bullet_scenes.is_empty() {
+            #[allow(clippy::borrow_interior_mutable_const)]
             self.bullet_scenes.push(&*BULLET);
         }
     }
@@ -170,8 +172,7 @@ impl RustWeapon {
         for bullet_scene in vec {
             let r = if self.explode {
                 //散弹枪一次性从所有子弹点射出子弹
-                let mut r = Err(std::io::Error::new(
-                    std::io::ErrorKind::Other,
+                let mut r = Err(std::io::Error::other(
                     "Failed to instantiate bullet or grenade",
                 ));
                 for bullet_point in self.bullet_points.get_children().iter_shared() {
@@ -280,8 +281,7 @@ impl RustWeapon {
                 }
             }
         }
-        Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
+        Err(std::io::Error::other(
             "Failed to instantiate bullet or grenade",
         ))
     }
