@@ -1,9 +1,7 @@
-use crate::DEFAULT_SCREEN_SIZE;
+use crate::scale_rate;
 use crate::world::RustWorld;
-use godot::builtin::real;
 use godot::classes::{
-    AudioStreamPlayer2D, Button, ColorRect, Control, DisplayServer, IControl, PackedScene,
-    VBoxContainer,
+    AudioStreamPlayer2D, Button, ColorRect, Control, IControl, PackedScene, VBoxContainer,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::prelude::ToGodot;
@@ -55,18 +53,10 @@ impl IControl for RustEntrance {
 #[godot_api]
 impl RustEntrance {
     pub fn scale(&self) {
-        //计算缩放倍数
-        let window_size = DisplayServer::singleton()
-            .screen_get_size_ex()
-            .screen(DisplayServer::SCREEN_PRIMARY)
-            .done();
-        let scale = (window_size.x as real / DEFAULT_SCREEN_SIZE.x)
-            .min(window_size.y as real / DEFAULT_SCREEN_SIZE.y)
-            .max(1.0);
         self.base()
             .get_window()
             .unwrap()
-            .set_content_scale_factor(scale);
+            .set_content_scale_factor(scale_rate());
     }
 
     #[func]

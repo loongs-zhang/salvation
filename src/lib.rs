@@ -1,4 +1,5 @@
 use godot::builtin::{GString, Vector2, real};
+use godot::classes::DisplayServer;
 use godot::init::{ExtensionLibrary, gdextension};
 use godot::register::GodotConvert;
 use rand::Rng;
@@ -141,6 +142,17 @@ struct Salvation;
 
 #[gdextension]
 unsafe impl ExtensionLibrary for Salvation {}
+
+pub fn scale_rate() -> real {
+    //计算缩放倍数
+    let window_size = DisplayServer::singleton()
+        .screen_get_size_ex()
+        .screen(DisplayServer::SCREEN_PRIMARY)
+        .done();
+    (window_size.x as real / DEFAULT_SCREEN_SIZE.x)
+        .min(window_size.y as real / DEFAULT_SCREEN_SIZE.y)
+        .max(1.0)
+}
 
 pub fn random_bool() -> bool {
     rand::thread_rng().gen_range(-1.0..=1.0) >= 0.0

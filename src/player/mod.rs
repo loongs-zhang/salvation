@@ -4,15 +4,15 @@ use crate::knife::RustKnife;
 use crate::player::hud::PlayerHUD;
 use crate::world::RustWorld;
 use crate::{
-    DEFAULT_SCREEN_SIZE, PLAYER_LEVEL_UP_BARRIER, PLAYER_MAX_HEALTH, PLAYER_MAX_LIVES,
-    PLAYER_MOVE_SPEED, PlayerState,
+    PLAYER_LEVEL_UP_BARRIER, PLAYER_MAX_HEALTH, PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState,
+    scale_rate,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Array, Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
-    AnimatedSprite2D, AudioStreamPlayer2D, Camera2D, CharacterBody2D, DisplayServer,
-    GpuParticles2D, ICharacterBody2D, Input, InputEvent, Node2D, PackedScene,
+    AnimatedSprite2D, AudioStreamPlayer2D, Camera2D, CharacterBody2D, GpuParticles2D,
+    ICharacterBody2D, Input, InputEvent, Node2D, PackedScene,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -296,18 +296,10 @@ impl ICharacterBody2D for RustPlayer {
 #[godot_api]
 impl RustPlayer {
     pub fn scale(&self) {
-        //计算缩放倍数
-        let window_size = DisplayServer::singleton()
-            .screen_get_size_ex()
-            .screen(DisplayServer::SCREEN_PRIMARY)
-            .done();
-        let scale = (window_size.x as real / DEFAULT_SCREEN_SIZE.x)
-            .min(window_size.y as real / DEFAULT_SCREEN_SIZE.y)
-            .max(1.0);
         self.base()
             .get_window()
             .unwrap()
-            .set_content_scale_factor(scale);
+            .set_content_scale_factor(scale_rate());
     }
 
     pub fn on_hit(&mut self, hit_val: i64, hit_position: Vector2) {

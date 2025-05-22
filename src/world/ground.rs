@@ -1,25 +1,20 @@
-use dashmap::DashSet;
 use godot::builtin::{Array, Vector2i, array};
 use godot::classes::fast_noise_lite::NoiseType;
 use godot::classes::{FastNoiseLite, INode2D, Node2D, TileMapLayer};
+use godot::global::godot_error;
 use godot::obj::{Base, Gd, NewGd, OnReady};
 use godot::register::{GodotClass, godot_api};
-use std::sync::LazyLock;
 
 const SOIL_TERRAIN_SET: i32 = 0;
 const SAND_TERRAIN_SET: i32 = 1;
 const GLASS_TERRAIN_SET: i32 = 2;
 const SOURCE_ID: i32 = 0;
 
-static GENERATED: LazyLock<DashSet<Vector2i>> = LazyLock::new(DashSet::new);
-
 #[derive(GodotClass)]
 #[class(base=Node2D)]
 pub struct RustGround {
     #[export]
-    from: Vector2i,
-    #[export]
-    to: Vector2i,
+    points: Array<Vector2i>,
     tile_map_layer: OnReady<Gd<TileMapLayer>>,
     base: Base<Node2D>,
 }
@@ -28,21 +23,24 @@ pub struct RustGround {
 impl INode2D for RustGround {
     fn init(base: Base<Node2D>) -> Self {
         Self {
-            from: Vector2i::ZERO,
-            to: Vector2i::ZERO,
+            points: Array::new(),
             tile_map_layer: OnReady::from_node("TileMapLayer"),
             base,
         }
     }
 
-    fn ready(&mut self) {
-        self.generate(self.from, self.to);
+    fn draw(&mut self) {
+        if self.points.is_empty() {
+            godot_error!("Ground points are empty");
+            return;
+        }
+        self.generate();
     }
 }
 
 #[godot_api]
 impl RustGround {
-    pub fn generate(&mut self, from: Vector2i, to: Vector2i) {
+    pub fn generate(&mut self) {
         let glass_atlas: Array<Vector2i> = array![
             Vector2i::new(0, 0),
             Vector2i::new(1, 0),
@@ -58,33 +56,26 @@ impl RustGround {
         noise.set_seed(rand::random::<i32>());
         noise.set_frequency(0.08);
         // generate ground
-        for x in from.x..to.x {
-            for y in from.y..to.y {
-                let vector2i = Vector2i::new(x, y);
-                if GENERATED.contains(&vector2i) {
-                    continue;
-                }
-                let val = noise.get_noise_2d(x as f32, y as f32);
-                if val <= 0.0 {
-                    soil_array.push(vector2i);
-                } else if val <= 0.1 {
-                    sand_array.push(vector2i);
-                } else if val <= 0.2 {
-                    self.tile_map_layer
-                        .set_cell_ex(vector2i)
-                        .source_id(SOURCE_ID)
-                        .atlas_coords(
-                            glass_atlas
-                                .pick_random()
-                                .expect("Atlas should not be empty"),
-                        )
-                        .done();
-                } else if val <= 0.4 {
-                    glass_array.push(vector2i);
-                } else {
-                    soil_array.push(vector2i);
-                }
-                GENERATED.insert(vector2i);
+        for point in self.points.iter_shared() {
+            let val = noise.get_noise_2d(point.x as f32, point.y as f32);
+            if val <= 0.0 {
+                soil_array.push(point);
+            } else if val <= 0.1 {
+                sand_array.push(point);
+            } else if val <= 0.2 {
+                self.tile_map_layer
+                    .set_cell_ex(point)
+                    .source_id(SOURCE_ID)
+                    .atlas_coords(
+                        glass_atlas
+                            .pick_random()
+                            .expect("Atlas should not be empty"),
+                    )
+                    .done();
+            } else if val <= 0.4 {
+                glass_array.push(point);
+            } else {
+                soil_array.push(point);
             }
         }
         if !soil_array.is_empty() {
