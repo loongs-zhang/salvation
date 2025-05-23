@@ -6,11 +6,11 @@ use crate::{
 };
 use godot::builtin::{Array, real};
 use godot::classes::{
-    AudioStreamPlayer2D, CanvasLayer, Engine, INode2D, InputEvent, Label, Node, Node2D,
-    PackedScene, Timer, VBoxContainer,
+    AudioStreamPlayer2D, CanvasLayer, Engine, INode2D, Input, InputEvent, InputEventAction, Label,
+    Node, Node2D, PackedScene, Timer, VBoxContainer,
 };
 use godot::global::{godot_error, godot_warn};
-use godot::obj::{Base, Gd, OnReady, WithBaseField};
+use godot::obj::{Base, Gd, NewGd, OnReady, WithBaseField};
 use godot::prelude::ToGodot;
 use godot::register::{GodotClass, godot_api};
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
@@ -94,7 +94,7 @@ impl INode2D for RustLevel {
                 .expect("1970-01-01 00:00:00 UTC was {} seconds ago!")
                 .as_secs_f64()
                 - RustPlayer::get_last_score_update()
-                >= 30.0
+                >= boss_timer.get_wait_time().max(zombie_timer.get_wait_time())
         {
             RustPlayer::reset_last_score_update();
             //30s内玩家未造成任何伤害，认为卡关了，实际上玩家击杀数足够，但击杀统计少了，强制刷新一批僵尸
@@ -166,8 +166,13 @@ impl INode2D for RustLevel {
         if event.is_action_pressed("l") {
             self.left_rampage_time = 0.0;
         } else if event.is_action_pressed("j") {
-            //跳关
-            self.level_up(true);
+            let mut event = InputEventAction::new_gd();
+            event.set_action("k");
+            event.set_pressed(true);
+            Input::singleton().parse_input_event(&event.upcast::<InputEvent>());
+            //这一帧清僵尸，下一帧跳关
+            self.base_mut()
+                .call_deferred("level_up", &[true.to_variant()]);
         }
     }
 }
@@ -272,6 +277,7 @@ impl RustLevel {
         self.hud.get_node_as::<VBoxContainer>("VBoxRight")
     }
 
+    #[func]
     pub fn level_up(&mut self, jump: bool) {
         RustPlayer::reset_last_score_update();
         let rate = self.grow_rate.powf(self.level as f32);
