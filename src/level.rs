@@ -67,6 +67,10 @@ impl INode2D for RustLevel {
     }
 
     fn process(&mut self, delta: f64) {
+        let player_position = RustPlayer::get_position();
+        self.bgm.set_global_position(player_position);
+        self.rampage_bgm.set_global_position(player_position);
+        self.boss_bgm.set_global_position(player_position);
         if RustWorld::is_paused() {
             return;
         }

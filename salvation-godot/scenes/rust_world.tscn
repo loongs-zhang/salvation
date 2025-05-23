@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://dd7psn2s8iij0"]
+[gd_scene load_steps=4 format=3 uid="uid://dd7psn2s8iij0"]
 
 [ext_resource type="PackedScene" uid="uid://d2ryhlh122dqg" path="res://scenes/rust_player.tscn" id="2_8q5hl"]
 [ext_resource type="PackedScene" uid="uid://c4b5nrdy6rq1h" path="res://scenes/rust_level.tscn" id="3_b5is2"]
+[ext_resource type="PackedScene" uid="uid://cbfpw8lejebvd" path="res://scenes/rust_ground.tscn" id="3_dson0"]
 
 [node name="RustWorld" type="RustWorld"]
 
@@ -66,5 +67,4 @@ text = "CONTINUE"
 layout_mode = 2
 text = "Exit"
 
-[node name="Timer" type="Timer" parent="."]
-wait_time = 0.125
+[node name="RustGround" parent="." instance=ExtResource("3_dson0")]
