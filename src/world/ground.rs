@@ -127,7 +127,7 @@ impl RustGround {
                         .object_placed_range
                         .contains_point(current_tile_position)
                 {
-                    for (i, mut array) in self.object_tiles_position.clone() {
+                    for (i, array) in &mut self.object_tiles_position {
                         match i {
                             0 => {
                                 if rand::random::<i32>() % 2 == 0 && atlas_position.x == 0 {
