@@ -47,10 +47,11 @@ default_font_size = 12
 
 [node name="AWP" type="RustWeapon"]
 damage = 115
+weight = 0.8
 distance = 2000.0
 clip = 10
 pull_after_reload = true
-penetrate = 4.5
+penetrate = 5.5
 fire_cooldown = 1.0
 reload_time = 3.6
 

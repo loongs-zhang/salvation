@@ -34,6 +34,10 @@ pub struct RustLevel {
     grow_rate: real,
     #[export]
     rampage_time: real,
+    #[export]
+    zombie_refresh_time: f64,
+    #[export]
+    boss_refresh_time: f64,
     left_rampage_time: real,
     zombie_killed: AtomicU32,
     boss_killed: AtomicU32,
@@ -53,6 +57,8 @@ impl INode2D for RustLevel {
             level: 0,
             grow_rate: LEVEL_GROW_RATE,
             rampage_time: LEVEL_RAMPAGE_TIME,
+            zombie_refresh_time: 3.0,
+            boss_refresh_time: 30.0,
             left_rampage_time: LEVEL_RAMPAGE_TIME,
             zombie_killed: AtomicU32::new(0),
             boss_killed: AtomicU32::new(0),
@@ -94,7 +100,10 @@ impl INode2D for RustLevel {
                 .expect("1970-01-01 00:00:00 UTC was {} seconds ago!")
                 .as_secs_f64()
                 - RustPlayer::get_last_score_update()
-                >= boss_timer.get_wait_time().max(zombie_timer.get_wait_time())
+                >= boss_timer
+                    .get_wait_time()
+                    .max(zombie_timer.get_wait_time())
+                    .max(30.0)
         {
             RustPlayer::reset_last_score_update();
             //30s内玩家未造成任何伤害，认为卡关了，实际上玩家击杀数足够，但击杀统计少了，强制刷新一批僵尸
@@ -291,6 +300,7 @@ impl RustLevel {
             rate,
             ZOMBIE_REFRESH_BARRIER,
             ZOMBIE_MAX_SCREEN_COUNT,
+            self.zombie_refresh_time,
         );
         self.boss_generator.bind_mut().level_up(
             jump,
@@ -298,6 +308,7 @@ impl RustLevel {
             rate,
             BOSS_REFRESH_BARRIER,
             BOSS_MAX_SCREEN_COUNT,
+            self.boss_refresh_time,
         );
         self.update_level_hud();
         self.update_refresh_hud();
@@ -353,6 +364,16 @@ impl RustLevel {
     pub fn start(&mut self) {
         self.zombie_generator.bind_mut().start_timer();
         self.boss_generator.bind_mut().start_timer();
+    }
+
+    pub fn refresh(&mut self) {
+        self.zombie_generator
+            .bind_mut()
+            .refresh_timer(self.zombie_refresh_time);
+        self.boss_generator
+            .bind_mut()
+            .refresh_timer(self.boss_refresh_time);
+        self.left_rampage_time = self.rampage_time;
     }
 
     pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {
@@ -471,6 +492,7 @@ impl ZombieGenerator {
         rate: f32,
         refresh_barrier: u32,
         max_screen_count: u32,
+        refresh_time: f64,
     ) {
         self.current = 0;
         self.boss = boss;
@@ -479,7 +501,7 @@ impl ZombieGenerator {
         self.max_screen_count = max_screen_count;
         self.current_total = (self.total as f32 * rate) as u32;
         self.current_refresh_count = (self.refresh_count as f32 * rate) as u32;
-        self.timer.set_wait_time(self.refresh_time);
+        self.timer.set_wait_time(refresh_time);
         if !RustWorld::is_paused() {
             self.timer.start();
         }
@@ -488,12 +510,15 @@ impl ZombieGenerator {
         }
     }
 
+    pub fn refresh_timer(&mut self, refresh_time: f64) {
+        self.timer.set_wait_time(refresh_time);
+        self.timer.start();
+        self.update_refresh_hud();
+    }
+
     pub fn start_timer(&mut self) {
         self.timer.start();
-        self.base()
-            .get_parent()
-            .unwrap()
-            .call_deferred("update_refresh_hud", &[]);
+        self.update_refresh_hud();
     }
 
     #[func]
@@ -524,7 +549,6 @@ impl ZombieGenerator {
         self.base()
             .get_parent()
             .unwrap()
-            .cast::<Node>()
             .call_deferred("update_refresh_hud", &[]);
     }
 

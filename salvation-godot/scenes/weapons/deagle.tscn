@@ -51,7 +51,7 @@ distance = 400.0
 clip = 7
 pull_after_reload = true
 repel = 36.0
-penetrate = 3.0
+penetrate = 3.5
 fire_cooldown = 0.2
 reload_time = 1.8
 

@@ -47,11 +47,12 @@ default_font_size = 12
 
 [node name="MG3" type="RustWeapon"]
 damage = 33
+weight = 0.75
 clip = 200
 pull_after_reload = true
 repel = 25.0
-penetrate = 1.0
-fire_cooldown = 0.05
+penetrate = 2.0
+fire_cooldown = 0.04
 reload_time = 6.2
 
 [node name="BulletPoints" type="Control" parent="."]

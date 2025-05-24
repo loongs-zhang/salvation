@@ -27,6 +27,9 @@ pub struct RustWeapon {
     //武器伤害
     #[export]
     damage: i64,
+    //持有武器的移动速度比例，模拟武器重量
+    #[export]
+    weight: real,
     //武器射程
     #[export]
     distance: real,
@@ -73,6 +76,7 @@ impl INode2D for RustWeapon {
     fn init(base: Base<Self::Base>) -> Self {
         Self {
             damage: BULLET_DAMAGE,
+            weight: 1.0,
             distance: BULLET_DISTANCE,
             clip: MAX_AMMO,
             explode: false,

@@ -47,6 +47,7 @@ default_font_size = 12
 
 [node name="XM1014" type="RustWeapon"]
 damage = 30
+weight = 0.92
 distance = 400.0
 clip = 7
 explode = true

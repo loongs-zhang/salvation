@@ -18,6 +18,8 @@ static PAUSED: AtomicBool = AtomicBool::new(false);
 #[derive(GodotClass)]
 #[class(base=Node2D)]
 pub struct RustWorld {
+    #[export]
+    hell: bool,
     entrance_scene: OnReady<Gd<PackedScene>>,
     rust_player: OnReady<Gd<RustPlayer>>,
     rust_level: OnReady<Gd<RustLevel>>,
@@ -31,6 +33,7 @@ impl INode2D for RustWorld {
         // We could also initialize those manually inside ready(), but OnReady automatically defers initialization.
         // Alternatively to init(), you can use #[init(...)] on the struct fields.
         Self {
+            hell: false,
             entrance_scene: OnReady::from_loaded("res://scenes/rust_entrance.tscn"),
             rust_player: OnReady::from_node("RustPlayer"),
             rust_level: OnReady::from_node("RustLevel"),
@@ -68,6 +71,13 @@ impl INode2D for RustWorld {
                     entrance.queue_free();
                 }
             }
+        }
+        if self.hell {
+            let mut rust_level = self.rust_level.bind_mut();
+            rust_level.set_rampage_time(0.0);
+            rust_level.set_zombie_refresh_time(0.2);
+            rust_level.set_boss_refresh_time(0.2);
+            rust_level.refresh();
         }
     }
 

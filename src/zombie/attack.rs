@@ -58,7 +58,10 @@ impl ZombieAttackArea {
     fn attack(&mut self) {
         // 攻击玩家
         if let Ok(mut zombie) = self.get_parent().try_cast::<RustZombie>() {
-            zombie.bind_mut().attack();
+            if zombie.bind().is_face_to_user() {
+                // 僵尸面向玩家才发起攻击
+                zombie.bind_mut().attack();
+            }
         } else if let Ok(mut boss) = self.get_parent().try_cast::<RustBoss>() {
             boss.bind_mut().attack();
         }

@@ -48,10 +48,11 @@ default_font_size = 12
 
 [node name="Ak47-60R" type="RustWeapon"]
 damage = 40
+weight = 0.9
 distance = 1000.0
 clip = 60
 repel = 30.0
-penetrate = 3.0
+penetrate = 3.5
 fire_cooldown = 0.08
 reload_time = 2.0
 

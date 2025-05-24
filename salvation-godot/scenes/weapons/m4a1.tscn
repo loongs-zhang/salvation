@@ -48,6 +48,7 @@ default_font_size = 12
 
 [node name="M4A1" type="RustWeapon"]
 damage = 33
+weight = 0.88
 distance = 1000.0
 pull_after_reload = true
 repel = 10.0

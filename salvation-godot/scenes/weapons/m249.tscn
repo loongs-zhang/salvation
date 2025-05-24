@@ -47,10 +47,11 @@ default_font_size = 12
 
 [node name="M249" type="RustWeapon"]
 damage = 32
+weight = 0.8
 clip = 100
 pull_after_reload = true
 repel = 20.0
-penetrate = 1.0
+penetrate = 2.0
 fire_cooldown = 0.06
 reload_time = 5.7
 

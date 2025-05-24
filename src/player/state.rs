@@ -13,7 +13,7 @@ impl RustPlayer {
         self.current_lives -= 1;
         self.weapons.set_visible(true);
         self.animated_sprite2d.play_ex().name("guard").done();
-        self.current_speed = self.speed;
+        self.current_speed = self.speed * self.get_current_weapon().bind().get_weight();
         self.state = PlayerState::Born;
         self.current_health = self.health;
         STATE.store(self.state);
@@ -37,7 +37,7 @@ impl RustPlayer {
         }
         self.weapons.set_visible(true);
         self.animated_sprite2d.play_ex().name("guard").done();
-        self.current_speed = self.speed;
+        self.current_speed = self.speed * self.get_current_weapon().bind().get_weight();
         self.state = PlayerState::Guard;
         STATE.store(self.state);
     }
@@ -51,7 +51,7 @@ impl RustPlayer {
         }
         self.weapons.set_visible(false);
         self.animated_sprite2d.play_ex().name("run").done();
-        self.current_speed = self.speed * 1.5;
+        self.current_speed = self.speed * 1.5 * self.get_current_weapon().bind().get_weight();
         self.state = PlayerState::Run;
         STATE.store(self.state);
         //打断换弹
@@ -76,7 +76,7 @@ impl RustPlayer {
         }
         rust_weapon.set_visible(true);
         self.animated_sprite2d.play_ex().name("guard").done();
-        self.current_speed = self.speed * 0.5;
+        self.current_speed = self.speed * 0.5 * rust_weapon.bind().get_weight();
         self.state = PlayerState::Shoot;
         STATE.store(self.state);
         //打断正在持续的换弹
@@ -120,16 +120,17 @@ impl RustPlayer {
     }
 
     pub fn reload(&mut self) {
+        let mut rust_weapon = self.get_current_weapon();
         if PlayerState::Dead == self.state
             || PlayerState::Impact == self.state
             || PlayerState::Chop == self.state
-            || !self.get_current_weapon().bind_mut().reload()
+            || !rust_weapon.bind_mut().reload()
         {
             return;
         }
         self.weapons.set_visible(true);
         self.animated_sprite2d.play_ex().name("reload").done();
-        self.current_speed = self.speed * 0.75;
+        self.current_speed = self.speed * 0.75 * rust_weapon.bind().get_weight();
         self.state = PlayerState::Reload;
         STATE.store(self.state);
     }
@@ -140,7 +141,7 @@ impl RustPlayer {
             return;
         }
         self.animated_sprite2d.play_ex().name("reload").done();
-        self.current_speed = self.speed * 0.75;
+        self.current_speed = self.speed * 0.75 * self.get_current_weapon().bind().get_weight();
         self.state = PlayerState::Reloading;
         STATE.store(self.state);
     }
@@ -160,7 +161,7 @@ impl RustPlayer {
         }
         self.weapons.set_visible(false);
         self.animated_sprite2d.play_ex().name("hit").done();
-        self.current_speed = self.speed * 0.5;
+        self.current_speed = self.speed * 0.5 * self.get_current_weapon().bind().get_weight();
         self.state = PlayerState::Hit;
         let player_position = self.base().get_global_position();
         self.blood_flash.set_global_position(

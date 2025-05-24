@@ -1,7 +1,7 @@
 use crate::scale_rate;
 use crate::world::RustWorld;
 use godot::classes::{
-    AudioStreamPlayer2D, Button, ColorRect, Control, IControl, PackedScene, VBoxContainer,
+    AudioStreamPlayer2D, Button, ColorRect, Control, IControl, PackedScene, Tween, VBoxContainer,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::prelude::ToGodot;
@@ -32,6 +32,11 @@ impl IControl for RustEntrance {
     fn ready(&mut self) {
         let gd = self.to_gd();
         let container = self.base().get_node_as::<VBoxContainer>("VBoxContainer");
+        container
+            .get_node_as::<Button>("HellMode")
+            .signals()
+            .pressed()
+            .connect_obj(&gd, Self::on_hell_mode_pressed);
         container
             .get_node_as::<Button>("EndlessMode")
             .signals()
@@ -65,8 +70,20 @@ impl RustEntrance {
     }
 
     #[func]
-    pub fn on_endless_mode_pressed(&mut self) {
+    pub fn on_hell_mode_pressed(&mut self) {
+        self.prepare().tween_callback(
+            &self
+                .base_mut()
+                .callable("change_scene")
+                .bind(&[true.to_variant()]),
+        );
+    }
+
+    fn prepare(&mut self) -> Gd<Tween> {
         let container = self.base().get_node_as::<VBoxContainer>("VBoxContainer");
+        container
+            .get_node_as::<Button>("HellMode")
+            .set_visible(false);
         container
             .get_node_as::<Button>("EndlessMode")
             .set_visible(false);
@@ -82,17 +99,28 @@ impl RustEntrance {
             .create_tween()
             .expect("Failed to create tween");
         tween
-            .tween_property(&color_rect, "modulate:a", &1_f32.to_variant(), 2.0)
+            .tween_property(&color_rect, "modulate:a", &1_f32.to_variant(), 1.0)
             .unwrap()
             .from(&0_f32.to_variant());
-        tween.tween_callback(&self.base_mut().callable("change_scene"));
+        tween
     }
 
     #[func]
-    pub fn change_scene(&mut self) {
-        if let Some(world) = self.world_scene.try_instantiate_as::<RustWorld>() {
+    pub fn on_endless_mode_pressed(&mut self) {
+        self.prepare().tween_callback(
+            &self
+                .base_mut()
+                .callable("change_scene")
+                .bind(&[false.to_variant()]),
+        );
+    }
+
+    #[func]
+    pub fn change_scene(&mut self, hell: bool) {
+        if let Some(mut world) = self.world_scene.try_instantiate_as::<RustWorld>() {
             if let Some(tree) = self.base().get_tree() {
                 if let Some(mut root) = tree.get_root() {
+                    world.bind_mut().set_hell(hell);
                     root.add_child(&world);
                 }
             }

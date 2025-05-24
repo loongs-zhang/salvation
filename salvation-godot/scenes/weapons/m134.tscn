@@ -47,11 +47,12 @@ default_font_size = 12
 
 [node name="M134" type="RustWeapon"]
 damage = 30
+weight = 0.6
 distance = 666.0
 clip = 300
 pull_after_reload = true
 repel = 16.0
-penetrate = 1.0
+penetrate = 2.5
 fire_cooldown = 0.02
 reload_time = 5.5
 
