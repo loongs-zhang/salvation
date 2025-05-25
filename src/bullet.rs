@@ -104,8 +104,8 @@ impl RustBullet {
                 .get_mouse_position()
     }
 
-    fn on_hit(&mut self) {
-        self.hit_count += 1;
+    fn on_hit(&mut self, cost: i16) {
+        self.hit_count += cost;
         if self.hit_count >= self.final_penetrate as i16 {
             //达到最大穿透上限
             self.base_mut().queue_free()
@@ -165,7 +165,7 @@ impl BulletDamageArea {
                 .expect("RustBullet not found")
                 .cast::<RustBullet>();
             let mut damage = rust_bullet.bind().final_damage;
-            rust_bullet.bind_mut().on_hit();
+            rust_bullet.bind_mut().on_hit(1);
             if self.headshot_ray1.is_colliding() || self.headshot_ray2.is_colliding() {
                 self.get_rust_player().bind_mut().headshot();
                 damage *= 3;
@@ -187,7 +187,8 @@ impl BulletDamageArea {
                 .expect("RustBullet not found")
                 .cast::<RustBullet>();
             let mut damage = rust_bullet.bind().final_damage;
-            rust_bullet.bind_mut().on_hit();
+            // BOSS身体大，消耗更多穿透
+            rust_bullet.bind_mut().on_hit(2);
             if self.headshot_ray1.is_colliding() || self.headshot_ray2.is_colliding() {
                 self.get_rust_player().bind_mut().headshot();
                 damage *= 3;

@@ -1,12 +1,10 @@
 [gd_scene load_steps=4 format=3 uid="uid://dmcm32a0spqxm"]
 
-[ext_resource type="PackedScene" uid="uid://d2ryhlh122dqg" path="res://scenes/rust_player.tscn" id="1_olc51"]
 [ext_resource type="PackedScene" uid="uid://b8ou2gd7qcb4n" path="res://scenes/rust_boss.tscn" id="2_1wwry"]
 [ext_resource type="PackedScene" uid="uid://5koe2fd6n3fc" path="res://scenes/rust_zombie.tscn" id="3_0ov4r"]
+[ext_resource type="PackedScene" uid="uid://d1fywhnf12yb8" path="res://scenes/rust_player_unlock.tscn" id="3_olc51"]
 
 [node name="RustWorld" type="Node2D"]
-
-[node name="RustPlayer" parent="." instance=ExtResource("1_olc51")]
 
 [node name="RustBoss" parent="." instance=ExtResource("2_1wwry")]
 invincible = true
@@ -22,3 +20,14 @@ attackable = false
 rampage_time = 999.0
 alarm_time = 999.0
 position = Vector2(-300, -50)
+
+[node name="RustZombie2" parent="." instance=ExtResource("3_0ov4r")]
+invincible = true
+moveable = false
+attackable = false
+rotatable = false
+rampage_time = 999.0
+alarm_time = 999.0
+position = Vector2(-375, -50)
+
+[node name="RustPlayer" parent="." instance=ExtResource("3_olc51")]

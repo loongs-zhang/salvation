@@ -1,112 +1,121 @@
-[gd_scene load_steps=47 format=3 uid="uid://d2ryhlh122dqg"]
+[gd_scene load_steps=56 format=3 uid="uid://d1fywhnf12yb8"]
 
-[ext_resource type="Texture2D" uid="uid://bqvfrl504qx0y" path="res://asserts/player/player_idle.png" id="1_iwbmd"]
-[ext_resource type="Texture2D" uid="uid://corkdmhx227i8" path="res://asserts/player/player_run.png" id="2_0rh5x"]
-[ext_resource type="Texture2D" uid="uid://dl2e2alxr88ti" path="res://asserts/zombie/zombie.png" id="2_53o8o"]
-[ext_resource type="Texture2D" uid="uid://b4ohe06jqwoww" path="res://asserts/player/player_walk.png" id="3_53o8o"]
-[ext_resource type="Texture2D" uid="uid://bwhbmsgxcswh" path="res://asserts/player/player_gun_reload.png" id="3_g8j1n"]
-[ext_resource type="PackedScene" uid="uid://bq5lki2s1pxuu" path="res://scenes/weapons/deagle.tscn" id="6_xpqh4"]
-[ext_resource type="PackedScene" uid="uid://6mpjo4ff6g2a" path="res://scenes/player_hud.tscn" id="7_g8j1n"]
-[ext_resource type="AudioStream" uid="uid://dxkj5niiqothq" path="res://asserts/player/player_run.mp3" id="8_e5vhl"]
-[ext_resource type="AudioStream" uid="uid://rxfjna7uyc3n" path="res://asserts/player/player_hurt1.mp3" id="9_dmfm0"]
-[ext_resource type="AudioStream" uid="uid://b0y6ev0meuplf" path="res://asserts/player/player_hurt2.mp3" id="10_dlpix"]
-[ext_resource type="AudioStream" uid="uid://bvg2twk6l78iy" path="res://asserts/player/player_scream.mp3" id="11_0hc44"]
-[ext_resource type="AudioStream" uid="uid://cosa5vkr4rl56" path="res://asserts/player/player_die.mp3" id="12_x4rvw"]
-[ext_resource type="AudioStream" uid="uid://wj1cfkemtkf6" path="res://asserts/player/weapons/wpn_hudon.wav" id="14_0hc44"]
-[ext_resource type="AudioStream" uid="uid://bswhxk7meyul0" path="res://asserts/player/weapons/wpn_hudoff.wav" id="15_x4rvw"]
-[ext_resource type="AudioStream" uid="uid://bkwxfct2opix5" path="res://asserts/player/weapons/headshot.wav" id="17_3nwbu"]
-[ext_resource type="AudioStream" uid="uid://dcmp03pf4jcqv" path="res://asserts/player/weapons/zoom.wav" id="21_h5itx"]
-[ext_resource type="PackedScene" uid="uid://sjqrgw2hktci" path="res://scenes/katana.tscn" id="25_1pfbi"]
+[ext_resource type="Texture2D" uid="uid://b4ohe06jqwoww" path="res://asserts/player/player_walk.png" id="1_7f4hr"]
+[ext_resource type="Texture2D" uid="uid://dl2e2alxr88ti" path="res://asserts/zombie/zombie.png" id="2_rp40j"]
+[ext_resource type="Texture2D" uid="uid://bqvfrl504qx0y" path="res://asserts/player/player_idle.png" id="3_uxvgs"]
+[ext_resource type="Texture2D" uid="uid://bwhbmsgxcswh" path="res://asserts/player/player_gun_reload.png" id="4_1m61y"]
+[ext_resource type="Texture2D" uid="uid://corkdmhx227i8" path="res://asserts/player/player_run.png" id="5_cpf0a"]
+[ext_resource type="PackedScene" uid="uid://sjqrgw2hktci" path="res://scenes/katana.tscn" id="6_3hcco"]
+[ext_resource type="PackedScene" uid="uid://bq5lki2s1pxuu" path="res://scenes/weapons/deagle.tscn" id="7_cyyng"]
+[ext_resource type="PackedScene" uid="uid://cjqspps1mdrvr" path="res://scenes/weapons/xm1014.tscn" id="8_f4o6j"]
+[ext_resource type="PackedScene" uid="uid://6mpjo4ff6g2a" path="res://scenes/player_hud.tscn" id="8_ktafe"]
+[ext_resource type="AudioStream" uid="uid://dxkj5niiqothq" path="res://asserts/player/player_run.mp3" id="9_7gtun"]
+[ext_resource type="PackedScene" uid="uid://dmvaupviw4lk8" path="res://scenes/weapons/awp.tscn" id="9_7k46e"]
+[ext_resource type="AudioStream" uid="uid://rxfjna7uyc3n" path="res://asserts/player/player_hurt1.mp3" id="10_f4o6j"]
+[ext_resource type="PackedScene" uid="uid://ckikdyjginfce" path="res://scenes/weapons/m79.tscn" id="10_h5yny"]
+[ext_resource type="AudioStream" uid="uid://b0y6ev0meuplf" path="res://asserts/player/player_hurt2.mp3" id="11_7k46e"]
+[ext_resource type="PackedScene" uid="uid://bts1qj27g6gue" path="res://scenes/weapons/m4a1.tscn" id="11_g2cjv"]
+[ext_resource type="PackedScene" uid="uid://cigcujmruac6u" path="res://scenes/weapons/ak47.tscn" id="12_8dpft"]
+[ext_resource type="AudioStream" uid="uid://bvg2twk6l78iy" path="res://asserts/player/player_scream.mp3" id="12_h5yny"]
+[ext_resource type="AudioStream" uid="uid://cosa5vkr4rl56" path="res://asserts/player/player_die.mp3" id="13_g2cjv"]
+[ext_resource type="PackedScene" uid="uid://b0c5a38wvdtx" path="res://scenes/weapons/ak47-60r.tscn" id="13_qo1w2"]
+[ext_resource type="AudioStream" uid="uid://wj1cfkemtkf6" path="res://asserts/player/weapons/wpn_hudon.wav" id="14_8dpft"]
+[ext_resource type="PackedScene" uid="uid://dmjpe0q08ydxe" path="res://scenes/weapons/m249.tscn" id="14_d5okg"]
+[ext_resource type="PackedScene" uid="uid://c5kfqnhoa8v6w" path="res://scenes/weapons/mg3.tscn" id="15_kwi0f"]
+[ext_resource type="AudioStream" uid="uid://bswhxk7meyul0" path="res://asserts/player/weapons/wpn_hudoff.wav" id="15_qo1w2"]
+[ext_resource type="PackedScene" uid="uid://yk15efq3cmxx" path="res://scenes/weapons/m134.tscn" id="16_3x6y8"]
+[ext_resource type="AudioStream" uid="uid://dcmp03pf4jcqv" path="res://asserts/player/weapons/zoom.wav" id="16_d5okg"]
+[ext_resource type="AudioStream" uid="uid://bkwxfct2opix5" path="res://asserts/player/weapons/headshot.wav" id="17_kwi0f"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_h4u8k"]
 radius = 18.0
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_jej6c"]
-atlas = ExtResource("3_53o8o")
+atlas = ExtResource("1_7f4hr")
 region = Rect2(0, 0, 35, 57)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_qfm1y"]
-atlas = ExtResource("3_53o8o")
+atlas = ExtResource("1_7f4hr")
 region = Rect2(140, 0, 35, 57)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_fulsm"]
-atlas = ExtResource("3_53o8o")
+atlas = ExtResource("1_7f4hr")
 region = Rect2(175, 0, 35, 57)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_f1ej7"]
-atlas = ExtResource("3_53o8o")
+atlas = ExtResource("1_7f4hr")
 region = Rect2(35, 0, 35, 57)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_h4u8k"]
-atlas = ExtResource("2_53o8o")
+atlas = ExtResource("2_rp40j")
 region = Rect2(2816, 640, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_53o8o"]
-atlas = ExtResource("2_53o8o")
+atlas = ExtResource("2_rp40j")
 region = Rect2(128, 640, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_g8j1n"]
-atlas = ExtResource("2_53o8o")
+atlas = ExtResource("2_rp40j")
 region = Rect2(256, 640, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ai780"]
-atlas = ExtResource("2_53o8o")
+atlas = ExtResource("2_rp40j")
 region = Rect2(384, 640, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_tuyoq"]
-atlas = ExtResource("1_iwbmd")
+atlas = ExtResource("3_uxvgs")
 region = Rect2(0, 0, 63, 57)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_jrx5i"]
-atlas = ExtResource("3_g8j1n")
+atlas = ExtResource("4_1m61y")
 region = Rect2(0, 0, 63, 57)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_1k218"]
-atlas = ExtResource("3_g8j1n")
+atlas = ExtResource("4_1m61y")
 region = Rect2(63, 0, 63, 57)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4ayag"]
-atlas = ExtResource("3_g8j1n")
+atlas = ExtResource("4_1m61y")
 region = Rect2(126, 0, 63, 57)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_e5vhl"]
-atlas = ExtResource("3_g8j1n")
+atlas = ExtResource("4_1m61y")
 region = Rect2(189, 0, 63, 57)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_dmfm0"]
-atlas = ExtResource("3_g8j1n")
+atlas = ExtResource("4_1m61y")
 region = Rect2(252, 0, 63, 57)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_fjrip"]
-atlas = ExtResource("2_0rh5x")
+atlas = ExtResource("5_cpf0a")
 region = Rect2(0, 0, 80, 87)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_smehm"]
-atlas = ExtResource("2_0rh5x")
+atlas = ExtResource("5_cpf0a")
 region = Rect2(80, 0, 80, 87)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ur7pv"]
-atlas = ExtResource("2_0rh5x")
+atlas = ExtResource("5_cpf0a")
 region = Rect2(160, 0, 80, 87)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_y4r1p"]
-atlas = ExtResource("2_0rh5x")
+atlas = ExtResource("5_cpf0a")
 region = Rect2(240, 0, 80, 87)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_d2wvv"]
-atlas = ExtResource("2_0rh5x")
+atlas = ExtResource("5_cpf0a")
 region = Rect2(320, 0, 80, 87)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_3v2ag"]
-atlas = ExtResource("2_0rh5x")
+atlas = ExtResource("5_cpf0a")
 region = Rect2(400, 0, 80, 87)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_oprun"]
-atlas = ExtResource("3_53o8o")
+atlas = ExtResource("1_7f4hr")
 region = Rect2(70, 0, 35, 57)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_a8ls1"]
-atlas = ExtResource("3_53o8o")
+atlas = ExtResource("1_7f4hr")
 region = Rect2(105, 0, 35, 57)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_g8j1n"]
@@ -309,7 +318,7 @@ autoplay = "guard"
 
 [node name="Camera2D" type="Camera2D" parent="."]
 
-[node name="Knife" parent="." instance=ExtResource("25_1pfbi")]
+[node name="Knife" parent="." instance=ExtResource("6_3hcco")]
 max_attack_angle = 60.0
 z_as_relative = false
 position = Vector2(-2, 12)
@@ -318,7 +327,25 @@ rotation = -1.1781
 [node name="Weapon" type="Node2D" parent="."]
 position = Vector2(10, 2)
 
-[node name="DEAGLE" parent="Weapon" instance=ExtResource("6_xpqh4")]
+[node name="DEAGLE" parent="Weapon" instance=ExtResource("7_cyyng")]
+
+[node name="XM1014" parent="Weapon" instance=ExtResource("8_f4o6j")]
+
+[node name="AWP" parent="Weapon" instance=ExtResource("9_7k46e")]
+
+[node name="M79" parent="Weapon" instance=ExtResource("10_h5yny")]
+
+[node name="M4A1" parent="Weapon" instance=ExtResource("11_g2cjv")]
+
+[node name="Ak47" parent="Weapon" instance=ExtResource("12_8dpft")]
+
+[node name="Ak47-60R" parent="Weapon" instance=ExtResource("13_qo1w2")]
+
+[node name="M249" parent="Weapon" instance=ExtResource("14_d5okg")]
+
+[node name="MG3" parent="Weapon" instance=ExtResource("15_kwi0f")]
+
+[node name="M134" parent="Weapon" instance=ExtResource("16_3x6y8")]
 
 [node name="GpuParticles2D" type="GPUParticles2D" parent="."]
 emitting = false
@@ -328,37 +355,37 @@ one_shot = true
 explosiveness = 1.0
 process_material = SubResource("ParticleProcessMaterial_dlpix")
 
-[node name="PlayerHUD" parent="." instance=ExtResource("7_g8j1n")]
+[node name="PlayerHUD" parent="." instance=ExtResource("8_ktafe")]
 
 [node name="RunAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("8_e5vhl")
+stream = ExtResource("9_7gtun")
 
 [node name="HurtAudio1" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("9_dmfm0")
+stream = ExtResource("10_f4o6j")
 
 [node name="HurtAudio2" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("10_dlpix")
+stream = ExtResource("11_7k46e")
 
 [node name="ScreamAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("11_0hc44")
+stream = ExtResource("12_h5yny")
 
 [node name="DieAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("12_x4rvw")
+stream = ExtResource("13_g2cjv")
 
 [node name="ChangeWeaponSuccess" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("14_0hc44")
+stream = ExtResource("14_8dpft")
 
 [node name="ChangeWeaponFail" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("15_x4rvw")
+stream = ExtResource("15_qo1w2")
 
 [node name="ZoomAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("21_h5itx")
+stream = ExtResource("16_d5okg")
 volume_db = 16.0
 
 [node name="GrenadePoint" type="Node2D" parent="."]
 position = Vector2(20, 0)
 
 [node name="HeadshotAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("17_3nwbu")
+stream = ExtResource("17_kwi0f")
 max_distance = 4096.0
 attenuation = 4.02679e-05

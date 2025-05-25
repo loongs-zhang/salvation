@@ -51,7 +51,6 @@ weight = 0.75
 clip = 200
 pull_after_reload = true
 repel = 25.0
-penetrate = 2.0
 fire_cooldown = 0.04
 reload_time = 6.2
 

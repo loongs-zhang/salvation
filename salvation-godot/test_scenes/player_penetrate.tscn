@@ -1,13 +1,9 @@
 [gd_scene load_steps=3 format=3 uid="uid://bq6na7l8r0sac"]
 
-[ext_resource type="PackedScene" uid="uid://d2ryhlh122dqg" path="res://scenes/rust_player.tscn" id="1_tne2b"]
 [ext_resource type="PackedScene" uid="uid://5koe2fd6n3fc" path="res://scenes/rust_zombie.tscn" id="2_bsuhp"]
+[ext_resource type="PackedScene" uid="uid://d1fywhnf12yb8" path="res://scenes/rust_player_unlock.tscn" id="2_tne2b"]
 
 [node name="RustWorld" type="Node2D"]
-
-[node name="RustPlayer" parent="." instance=ExtResource("1_tne2b")]
-invincible = true
-penetrate = 5.0
 
 [node name="RustZombie" parent="." instance=ExtResource("2_bsuhp")]
 moveable = false
@@ -78,3 +74,5 @@ rampage_time = 0.0
 alarm_time = 0.0
 position = Vector2(750, 0)
 rotation = 3.14159
+
+[node name="RustPlayer" parent="." instance=ExtResource("2_tne2b")]

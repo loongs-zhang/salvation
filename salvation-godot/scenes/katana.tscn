@@ -7,35 +7,35 @@
 size = Vector2(40, 4)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wuom7"]
-size = Vector2(42, 6)
+size = Vector2(29, 6)
 
 [node name="Katana" type="RustKnife"]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(35, 0)
+position = Vector2(20, 0)
 shape = SubResource("RectangleShape2D_mlkmf")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(35, 0)
+position = Vector2(20, 0)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("1_wuom7")
 
 [node name="DamageArea" type="Area2D" parent="."]
-position = Vector2(15, 0)
+position = Vector2(11, 0)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="DamageArea"]
-position = Vector2(21, 0)
+position = Vector2(14.5, 0)
 shape = SubResource("RectangleShape2D_wuom7")
 
 [node name="ChopAudio" type="AudioStreamPlayer2D" parent="."]
-position = Vector2(34, 0)
+position = Vector2(19, 0)
 stream = ExtResource("2_reoij")
 volume_db = 12.0
 max_distance = 4096.0
 attenuation = 1e-05
 
 [node name="HitAudio" type="AudioStreamPlayer2D" parent="."]
-position = Vector2(34, 0)
+position = Vector2(19, 0)
 volume_db = 12.0
 max_distance = 4096.0
 attenuation = 1e-05

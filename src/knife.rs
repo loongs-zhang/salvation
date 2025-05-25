@@ -30,6 +30,7 @@ const HIT_AUDIOS: LazyLock<Array<Gd<AudioStream>>> = LazyLock::new(|| {
 pub struct RustKnife {
     #[export]
     max_attack_angle: real,
+    anticlockwise: bool,
     final_repel: real,
     final_damage: i64,
     damage_area: OnReady<Gd<Area2D>>,
@@ -43,7 +44,8 @@ pub struct RustKnife {
 impl IArea2D for RustKnife {
     fn init(base: Base<Area2D>) -> Self {
         Self {
-            max_attack_angle: 60.0,
+            max_attack_angle: 67.5,
+            anticlockwise: false,
             final_repel: 0.0,
             final_damage: 0,
             damage_area: OnReady::from_node("DamageArea"),
@@ -75,7 +77,11 @@ impl RustKnife {
         }
         self.final_damage = final_damage;
         self.final_repel = final_repel;
-        let max_attack_angle = self.max_attack_angle;
+        let max_attack_angle = if self.anticlockwise {
+            -self.max_attack_angle
+        } else {
+            self.max_attack_angle
+        };
         self.base_mut()
             .set_global_rotation_degrees(-max_attack_angle);
         self.base_mut().set_visible(true);
