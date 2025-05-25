@@ -5,7 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://bqvfrl504qx0y" path="res://asserts/player/player_idle.png" id="3_uxvgs"]
 [ext_resource type="Texture2D" uid="uid://bwhbmsgxcswh" path="res://asserts/player/player_gun_reload.png" id="4_1m61y"]
 [ext_resource type="Texture2D" uid="uid://corkdmhx227i8" path="res://asserts/player/player_run.png" id="5_cpf0a"]
-[ext_resource type="PackedScene" uid="uid://sjqrgw2hktci" path="res://scenes/katana.tscn" id="6_3hcco"]
+[ext_resource type="PackedScene" uid="uid://sjqrgw2hktci" path="res://scenes/knifes/katana.tscn" id="6_3hcco"]
 [ext_resource type="PackedScene" uid="uid://bq5lki2s1pxuu" path="res://scenes/weapons/deagle.tscn" id="7_cyyng"]
 [ext_resource type="PackedScene" uid="uid://cjqspps1mdrvr" path="res://scenes/weapons/xm1014.tscn" id="8_f4o6j"]
 [ext_resource type="PackedScene" uid="uid://6mpjo4ff6g2a" path="res://scenes/player_hud.tscn" id="8_ktafe"]
@@ -319,7 +319,6 @@ autoplay = "guard"
 [node name="Camera2D" type="Camera2D" parent="."]
 
 [node name="Knife" parent="." instance=ExtResource("6_3hcco")]
-max_attack_angle = 60.0
 z_as_relative = false
 position = Vector2(-2, 12)
 rotation = -1.1781

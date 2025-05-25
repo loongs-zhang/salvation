@@ -16,7 +16,7 @@
 [ext_resource type="AudioStream" uid="uid://bswhxk7meyul0" path="res://asserts/player/weapons/wpn_hudoff.wav" id="15_x4rvw"]
 [ext_resource type="AudioStream" uid="uid://bkwxfct2opix5" path="res://asserts/player/weapons/headshot.wav" id="17_3nwbu"]
 [ext_resource type="AudioStream" uid="uid://dcmp03pf4jcqv" path="res://asserts/player/weapons/zoom.wav" id="21_h5itx"]
-[ext_resource type="PackedScene" uid="uid://sjqrgw2hktci" path="res://scenes/katana.tscn" id="25_1pfbi"]
+[ext_resource type="PackedScene" uid="uid://sjqrgw2hktci" path="res://scenes/knifes/katana.tscn" id="25_1pfbi"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_h4u8k"]
 radius = 18.0
@@ -310,7 +310,6 @@ autoplay = "guard"
 [node name="Camera2D" type="Camera2D" parent="."]
 
 [node name="Knife" parent="." instance=ExtResource("25_1pfbi")]
-max_attack_angle = 60.0
 z_as_relative = false
 position = Vector2(-2, 12)
 rotation = -1.1781

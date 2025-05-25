@@ -8,7 +8,7 @@ use crate::{
 };
 use godot::builtin::{Array, Vector2, real};
 use godot::classes::{
-    AudioStreamPlayer2D, Control, GpuParticles2D, INode2D, Node, Node2D, Object, PackedScene,
+    AudioStreamPlayer2D, Control, GpuParticles2D, INode2D, Node2D, Object, PackedScene,
 };
 use godot::global::godot_error;
 use godot::obj::{Base, Gd, OnReady, WithBaseField, WithUserSignals};
@@ -383,11 +383,9 @@ impl RustWeapon {
     }
 
     pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {
-        if let Some(tree) = self.base().get_tree() {
-            if let Some(root) = tree.get_root() {
-                return root
-                    .get_node_as::<Node>("RustWorld")
-                    .get_node_as::<RustPlayer>("RustPlayer");
+        if let Some(parent) = self.base().get_parent() {
+            if let Some(node) = parent.get_parent() {
+                return node.cast::<RustPlayer>();
             }
         }
         panic!("RustPlayer not found");

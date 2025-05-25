@@ -270,6 +270,7 @@ impl RustZombie {
                 health.saturating_add(-hit_val as u32)
             };
         }
+        self.current_alarm_time = self.alarm_time;
         let speed = self.current_speed;
         let moved = direction * repel;
         let new_position = zombie_position + moved;

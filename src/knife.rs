@@ -4,9 +4,7 @@ use crate::player::RustPlayer;
 use crate::zombie::RustZombie;
 use godot::builtin::{Array, real};
 use godot::classes::tween::{EaseType, TransitionType};
-use godot::classes::{
-    Area2D, AudioStream, AudioStreamPlayer2D, IArea2D, Node, Node2D, PackedScene,
-};
+use godot::classes::{Area2D, AudioStream, AudioStreamPlayer2D, IArea2D, Node2D, PackedScene};
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -30,6 +28,7 @@ const HIT_AUDIOS: LazyLock<Array<Gd<AudioStream>>> = LazyLock::new(|| {
 pub struct RustKnife {
     #[export]
     max_attack_angle: real,
+    #[export]
     anticlockwise: bool,
     final_repel: real,
     final_damage: i64,
@@ -185,12 +184,8 @@ impl RustKnife {
     }
 
     pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {
-        if let Some(tree) = self.base().get_tree() {
-            if let Some(root) = tree.get_root() {
-                return root
-                    .get_node_as::<Node>("RustWorld")
-                    .get_node_as::<RustPlayer>("RustPlayer");
-            }
+        if let Some(node) = self.base().get_parent() {
+            return node.cast::<RustPlayer>();
         }
         panic!("RustPlayer not found");
     }
