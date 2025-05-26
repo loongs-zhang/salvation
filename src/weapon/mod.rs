@@ -236,10 +236,7 @@ impl RustWeapon {
             self.fire_audio.play();
             self.current_fire_cooldown = self.fire_cooldown;
             self.ammo -= 1;
-            self.base()
-                .get_node_as::<WeaponHUD>("WeaponHUD")
-                .bind_mut()
-                .update_ammo_hud(self.ammo, self.clip);
+            self.update_ammo_hud();
         }
     }
 

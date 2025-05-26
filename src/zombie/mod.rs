@@ -262,6 +262,7 @@ impl RustZombie {
     #[func]
     pub fn on_hit(&mut self, hit_val: i64, direction: Vector2, repel: real, hit_position: Vector2) {
         let zombie_position = self.base().get_global_position();
+        #[allow(clippy::borrow_interior_mutable_const)]
         if let Some(mut hit_label) = MESSAGE.try_instantiate_as::<RustMessage>() {
             hit_label.set_global_position(zombie_position);
             if let Some(tree) = self.base().get_tree() {

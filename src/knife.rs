@@ -121,6 +121,7 @@ impl RustKnife {
             // 暗杀判定
             if self.try_assassinate(&mut body) {
                 damage *= 3;
+                #[allow(clippy::borrow_interior_mutable_const)]
                 if let Some(mut assassinate_label) = MESSAGE.try_instantiate_as::<RustMessage>() {
                     assassinate_label.set_global_position(position);
                     if let Some(tree) = self.base().get_tree() {

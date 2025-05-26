@@ -1,18 +1,18 @@
 use crate::common::RustMessage;
 use crate::grenade::RustGrenade;
+use crate::hud::RustHUD;
 use crate::knife::RustKnife;
-use crate::player::hud::PlayerHUD;
 use crate::world::RustWorld;
 use crate::{
     GRENADE_DAMAGE, GRENADE_DISTANCE, GRENADE_REPEL, PLAYER_LEVEL_UP_BARRIER, PLAYER_MAX_HEALTH,
     PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState, scale_rate,
 };
 use crossbeam_utils::atomic::AtomicCell;
-use godot::builtin::{Array, Vector2, real};
+use godot::builtin::{Array, GString, Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
     AnimatedSprite2D, AudioStreamPlayer2D, Camera2D, CharacterBody2D, GpuParticles2D,
-    ICharacterBody2D, Input, InputEvent, Node2D, PackedScene,
+    ICharacterBody2D, Input, InputEvent, Label, Node2D, PackedScene, RemoteTransform2D,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -20,8 +20,6 @@ use godot::tools::load;
 use std::sync::LazyLock;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
-
-pub mod hud;
 
 pub mod state;
 
@@ -52,6 +50,8 @@ const GRENADE: LazyLock<Gd<PackedScene>> =
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
 pub struct RustPlayer {
+    #[export]
+    player_name: GString,
     // 玩家无敌
     #[export]
     invincible: bool,
@@ -95,12 +95,13 @@ pub struct RustPlayer {
     current_health: u32,
     state: PlayerState,
     current_speed: real,
+    remote_transform2d: OnReady<Gd<RemoteTransform2D>>,
     animated_sprite2d: OnReady<Gd<AnimatedSprite2D>>,
     camera: OnReady<Gd<Camera2D>>,
     knife: OnReady<Gd<RustKnife>>,
     weapons: OnReady<Gd<Node2D>>,
     blood_flash: OnReady<Gd<GpuParticles2D>>,
-    hud: OnReady<Gd<PlayerHUD>>,
+    hud: OnReady<Gd<RustHUD>>,
     run_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     body_hurt: OnReady<Gd<AudioStreamPlayer2D>>,
     bone_hurt: OnReady<Gd<AudioStreamPlayer2D>>,
@@ -119,6 +120,7 @@ pub struct RustPlayer {
 impl ICharacterBody2D for RustPlayer {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
+            player_name: GString::new(),
             invincible: false,
             current_weapon_index: 0,
             lives: PLAYER_MAX_LIVES,
@@ -139,12 +141,13 @@ impl ICharacterBody2D for RustPlayer {
             current_level_up_barrier: PLAYER_LEVEL_UP_BARRIER as u64,
             current_lives: PLAYER_MAX_LIVES,
             current_speed: PLAYER_MOVE_SPEED,
+            remote_transform2d: OnReady::from_node("RemoteTransform2D"),
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             camera: OnReady::from_node("Camera2D"),
             knife: OnReady::from_node("Knife"),
             weapons: OnReady::from_node("Weapon"),
             blood_flash: OnReady::from_node("GpuParticles2D"),
-            hud: OnReady::from_node("PlayerHUD"),
+            hud: OnReady::from_node("RustHUD"),
             run_audio: OnReady::from_node("RunAudio"),
             body_hurt: OnReady::from_node("HurtAudio1"),
             bone_hurt: OnReady::from_node("HurtAudio2"),
@@ -161,6 +164,10 @@ impl ICharacterBody2D for RustPlayer {
     }
 
     fn process(&mut self, delta: f64) {
+        self.hud.bind_mut().update_fps_hud();
+        if self.remote_transform2d.is_instance_valid() {
+            self.remote_transform2d.set_global_rotation_degrees(0.0);
+        }
         if PlayerState::Dead == self.state || RustWorld::is_paused() {
             return;
         }
@@ -252,6 +259,12 @@ impl ICharacterBody2D for RustPlayer {
         if self.grenade_scenes.is_empty() {
             #[allow(clippy::borrow_interior_mutable_const)]
             self.grenade_scenes.push(&*GRENADE);
+        }
+        if !self.player_name.is_empty() {
+            let name = self.player_name.clone();
+            let mut name_label = self.remote_transform2d.get_node_as::<Label>("Name");
+            name_label.set_text(&name);
+            name_label.show();
         }
     }
 
@@ -377,6 +390,10 @@ impl RustPlayer {
             }
         }
         None
+    }
+
+    pub fn get_hud(&self) -> Gd<RustHUD> {
+        self.base().get_node_as::<RustHUD>("RustHUD")
     }
 
     pub fn get_mouse_position(&self) -> Vector2 {

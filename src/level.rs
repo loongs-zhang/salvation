@@ -6,10 +6,7 @@ use crate::{
     kill_all_zombies, random_bool,
 };
 use godot::builtin::{Array, real};
-use godot::classes::{
-    AudioStreamPlayer2D, CanvasLayer, Engine, INode2D, InputEvent, Label, Node, Node2D,
-    PackedScene, Timer, VBoxContainer,
-};
+use godot::classes::{AudioStreamPlayer2D, INode2D, InputEvent, Node, Node2D, PackedScene, Timer};
 use godot::global::{godot_error, godot_warn};
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::prelude::ToGodot;
@@ -46,7 +43,6 @@ pub struct RustLevel {
     left_rampage_time: real,
     zombie_killed: AtomicU32,
     boss_killed: AtomicU32,
-    hud: OnReady<Gd<CanvasLayer>>,
     zombie_generator: OnReady<Gd<ZombieGenerator>>,
     boomer_generator: OnReady<Gd<ZombieGenerator>>,
     boss_generator: OnReady<Gd<ZombieGenerator>>,
@@ -70,7 +66,6 @@ impl INode2D for RustLevel {
             left_rampage_time: LEVEL_RAMPAGE_TIME,
             zombie_killed: AtomicU32::new(0),
             boss_killed: AtomicU32::new(0),
-            hud: OnReady::from_node("LevelHUD"),
             zombie_generator: OnReady::from_node("ZombieGenerator"),
             boomer_generator: OnReady::from_node("BoomerGenerator"),
             boss_generator: OnReady::from_node("BossGenerator"),
@@ -156,7 +151,6 @@ impl INode2D for RustLevel {
         self.left_rampage_time = (self.left_rampage_time - delta as real).max(0.0);
         self.update_rampage_hud();
         self.update_progress_hud();
-        self.update_fps_hud();
         if 0.0 == self.left_rampage_time && zombie_killed < zombie_current {
             RAMPAGE.store(true, Ordering::Release);
             self.play_rampage_bgm();
@@ -216,15 +210,19 @@ impl RustLevel {
     }
 
     pub fn update_level_hud(&mut self) {
-        let mut label = self.get_center_container().get_node_as::<Label>("Level");
-        label.set_text(&format!("LEVEL {}", self.level));
-        label.show();
+        self.get_rust_player()
+            .bind()
+            .get_hud()
+            .bind_mut()
+            .update_level_hud(self.level);
     }
 
     pub fn update_rampage_hud(&mut self) {
-        let mut label = self.get_center_container().get_node_as::<Label>("Rampage");
-        label.set_text(&format!("ZOMBIE RAMPAGE {:.1} s", self.left_rampage_time));
-        label.show();
+        self.get_rust_player()
+            .bind()
+            .get_hud()
+            .bind_mut()
+            .update_rampage_hud(self.left_rampage_time);
     }
 
     pub fn update_progress_hud(&mut self) {
@@ -234,17 +232,18 @@ impl RustLevel {
         let boss_total = self.boss_generator.bind().current_total;
         let zombie_total =
             self.zombie_generator.bind().current_total + self.boomer_generator.bind().current_total;
-        let mut label = self.get_center_container().get_node_as::<Label>("Progress");
-        label.set_text(&format!(
-            "PROGRESS {}+{}/{}+{}/{}+{}",
-            self.boss_killed.load(Ordering::Acquire),
-            self.zombie_killed.load(Ordering::Acquire),
-            boss_refreshed,
-            zombie_refreshed,
-            boss_total,
-            zombie_total
-        ));
-        label.show();
+        self.get_rust_player()
+            .bind()
+            .get_hud()
+            .bind_mut()
+            .update_progress_hud(
+                self.boss_killed.load(Ordering::Acquire),
+                self.zombie_killed.load(Ordering::Acquire),
+                boss_refreshed,
+                zombie_refreshed,
+                boss_total,
+                zombie_total,
+            );
     }
 
     #[func]
@@ -270,49 +269,22 @@ impl RustLevel {
             .min(self.boss_generator.bind().refresh_barrier);
         let boss_timer = self.boss_generator.get_node_as::<Timer>("Timer");
         let boss_wait_time = boss_timer.get_wait_time();
-        let mut label = self.get_right_container().get_node_as::<Label>("Refresh");
-        label.set_text(&format!(
-            "ZOMBIE {} {}/{:.1}s\nBOOMER {} {}/{:.1}s\nBOSS {} {}/{:.1}s",
-            if zombie_timer.is_stopped() {
-                "COMING"
-            } else {
-                "INCOMING"
-            },
+        let mut hud = self.get_rust_player().bind().get_hud();
+        hud.bind_mut().update_refresh_zombie_hud(
+            zombie_timer.is_stopped(),
             zombie_refresh_count,
             zombie_wait_time,
-            if boomer_timer.is_stopped() {
-                "COMING"
-            } else {
-                "INCOMING"
-            },
+        );
+        hud.bind_mut().update_refresh_boomer_hud(
+            boomer_timer.is_stopped(),
             boomer_refresh_count,
             boomer_wait_time,
-            if boss_timer.is_stopped() {
-                "COMING"
-            } else {
-                "INCOMING"
-            },
+        );
+        hud.bind_mut().update_refresh_boss_hud(
+            boss_timer.is_stopped(),
             boss_refresh_count,
             boss_wait_time,
-        ));
-        label.show();
-    }
-
-    pub fn update_fps_hud(&mut self) {
-        let mut label = self.get_right_container().get_node_as::<Label>("FPS");
-        label.set_text(&format!(
-            "FPS {}",
-            Engine::singleton().get_frames_per_second(),
-        ));
-        label.show();
-    }
-
-    fn get_center_container(&mut self) -> Gd<VBoxContainer> {
-        self.hud.get_node_as::<VBoxContainer>("VBoxCenter")
-    }
-
-    fn get_right_container(&mut self) -> Gd<VBoxContainer> {
-        self.hud.get_node_as::<VBoxContainer>("VBoxRight")
+        );
     }
 
     #[func]

@@ -1,13 +1,13 @@
-[gd_scene load_steps=4 format=3 uid="uid://6mpjo4ff6g2a"]
+[gd_scene load_steps=4 format=3 uid="uid://dmthcbsw8nxhs"]
 
-[ext_resource type="FontFile" uid="uid://ctt8sqtdr60ln" path="res://asserts/Xolonium-Regular.ttf" id="1_mlvnn"]
-[ext_resource type="Texture2D" uid="uid://desrpva5a2fgq" path="res://asserts/player/cross_hair.png" id="2_iraov"]
+[ext_resource type="FontFile" uid="uid://ctt8sqtdr60ln" path="res://asserts/Xolonium-Regular.ttf" id="1_ml7kj"]
+[ext_resource type="Texture2D" uid="uid://desrpva5a2fgq" path="res://asserts/player/cross_hair.png" id="2_wc0e8"]
 
 [sub_resource type="Theme" id="Theme_g8j1n"]
-default_font = ExtResource("1_mlvnn")
+default_font = ExtResource("1_ml7kj")
 default_font_size = 12
 
-[node name="PlayerHUD" type="PlayerHUD"]
+[node name="RustHUD" type="RustHUD"]
 
 [node name="Control" type="Control" parent="."]
 layout_mode = 3
@@ -17,44 +17,44 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Control"]
+[node name="VBoxTopLeft" type="VBoxContainer" parent="Control"]
 layout_mode = 1
 offset_left = 10.0
 offset_top = 10.0
 offset_right = 50.0
 offset_bottom = 50.0
 
-[node name="Lives" type="Label" parent="Control/VBoxContainer"]
+[node name="Lives" type="Label" parent="Control/VBoxTopLeft"]
 layout_mode = 2
 theme = SubResource("Theme_g8j1n")
 text = "LIVES"
 
-[node name="HP" type="Label" parent="Control/VBoxContainer"]
+[node name="HP" type="Label" parent="Control/VBoxTopLeft"]
 layout_mode = 2
 theme = SubResource("Theme_g8j1n")
 text = "HP"
 
-[node name="Damage" type="Label" parent="Control/VBoxContainer"]
+[node name="Damage" type="Label" parent="Control/VBoxTopLeft"]
 layout_mode = 2
 theme = SubResource("Theme_g8j1n")
 text = "DAMAGE"
 
-[node name="Distance" type="Label" parent="Control/VBoxContainer"]
+[node name="Distance" type="Label" parent="Control/VBoxTopLeft"]
 layout_mode = 2
 theme = SubResource("Theme_g8j1n")
 text = "DISTANCE"
 
-[node name="Repel" type="Label" parent="Control/VBoxContainer"]
+[node name="Repel" type="Label" parent="Control/VBoxTopLeft"]
 layout_mode = 2
 theme = SubResource("Theme_g8j1n")
 text = "REPEL"
 
-[node name="Penetrate" type="Label" parent="Control/VBoxContainer"]
+[node name="Penetrate" type="Label" parent="Control/VBoxTopLeft"]
 layout_mode = 2
 theme = SubResource("Theme_g8j1n")
 text = "PENETRATE"
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Control"]
+[node name="VBoxTopCenter" type="VBoxContainer" parent="Control"]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -62,24 +62,82 @@ anchor_right = 0.5
 offset_left = -92.0
 offset_top = 10.0
 offset_right = 92.0
-offset_bottom = 30.0
+offset_bottom = 112.0
 grow_horizontal = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Control/VBoxTopCenter"]
+layout_mode = 2
+size_flags_vertical = 0
 theme_override_constants/separation = 8
 
-[node name="Killed" type="Label" parent="Control/HBoxContainer"]
+[node name="Killed" type="Label" parent="Control/VBoxTopCenter/HBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
 text = "KILLED"
 
-[node name="Score" type="Label" parent="Control/HBoxContainer"]
+[node name="Score" type="Label" parent="Control/VBoxTopCenter/HBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.74902, 0, 1)
 text = "SCORE"
 
-[node name="Died" type="Label" parent="Control/HBoxContainer"]
+[node name="Died" type="Label" parent="Control/VBoxTopCenter/HBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
 text = "DIED"
+
+[node name="Level" type="Label" parent="Control/VBoxTopCenter"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.133333, 0.2, 0.133333, 1)
+theme_override_font_sizes/font_size = 24
+text = "LEVEL"
+horizontal_alignment = 1
+
+[node name="Rampage" type="Label" parent="Control/VBoxTopCenter"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
+text = "Rampage"
+horizontal_alignment = 1
+
+[node name="Progress" type="Label" parent="Control/VBoxTopCenter"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.74902, 0, 1)
+text = "Progress"
+horizontal_alignment = 1
+
+[node name="VBoxTopRight" type="VBoxContainer" parent="Control"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -79.0
+offset_top = 10.0
+offset_right = -13.0
+offset_bottom = 54.0
+grow_horizontal = 0
+alignment = 2
+
+[node name="FPS" type="Label" parent="Control/VBoxTopRight"]
+layout_mode = 2
+text = "FPS"
+horizontal_alignment = 2
+
+[node name="RefreshZombie" type="Label" parent="Control/VBoxTopRight"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.133333, 0.2, 0.133333, 1)
+text = "RefreshZombie"
+horizontal_alignment = 2
+
+[node name="RefreshBoomer" type="Label" parent="Control/VBoxTopRight"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.133333, 0.2, 0.133333, 1)
+text = "RefreshBoomer"
+horizontal_alignment = 2
+
+[node name="RefreshBoss" type="Label" parent="Control/VBoxTopRight"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.133333, 0.2, 0.133333, 1)
+text = "RefreshBoss"
+horizontal_alignment = 2
 
 [node name="CrossHair" type="TextureRect" parent="."]
 anchors_preset = 8
@@ -95,7 +153,7 @@ grow_horizontal = 2
 grow_vertical = 2
 scale = Vector2(2, 2)
 pivot_offset = Vector2(16, 16)
-texture = ExtResource("2_iraov")
+texture = ExtResource("2_wc0e8")
 expand_mode = 1
 stretch_mode = 6
 
