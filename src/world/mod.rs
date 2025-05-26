@@ -73,11 +73,7 @@ impl INode2D for RustWorld {
             }
         }
         if self.hell {
-            let mut rust_level = self.rust_level.bind_mut();
-            rust_level.set_rampage_time(0.0);
-            rust_level.set_zombie_refresh_time(0.2);
-            rust_level.set_boss_refresh_time(0.2);
-            rust_level.refresh();
+            self.rust_level.bind_mut().enable_hell();
         }
     }
 

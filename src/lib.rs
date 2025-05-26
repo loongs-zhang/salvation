@@ -1,8 +1,13 @@
-use godot::builtin::{GString, Vector2, real};
-use godot::classes::DisplayServer;
+use godot::builtin::{Array, GString, Vector2, real};
+use godot::classes::{
+    AudioStream, DisplayServer, Input, InputEvent, InputEventAction, PackedScene,
+};
 use godot::init::{ExtensionLibrary, gdextension};
+use godot::obj::{Gd, NewGd};
+use godot::prelude::load;
 use godot::register::GodotConvert;
 use rand::Rng;
+use std::sync::LazyLock;
 
 pub mod common;
 
@@ -24,10 +29,24 @@ pub mod knife;
 
 pub mod zombie;
 
-pub mod boss;
-
 // game info
 const DEFAULT_SCREEN_SIZE: Vector2 = Vector2::new(960.0, 540.0);
+
+// common
+#[allow(clippy::declare_interior_mutable_const)]
+const MESSAGE: LazyLock<Gd<PackedScene>> = LazyLock::new(|| load("res://scenes/rust_message.tscn"));
+
+#[allow(clippy::declare_interior_mutable_const)]
+const EXPLODE_AUDIOS: LazyLock<Array<Gd<AudioStream>>> = LazyLock::new(|| {
+    let mut audios = Array::new();
+    for i in 1..=6 {
+        audios.push(&load(&format!(
+            "res://asserts/player/weapons/explode{}.wav",
+            i
+        )));
+    }
+    audios
+});
 
 // player
 const PLAYER_MAX_LIVES: u32 = 3;
@@ -39,6 +58,13 @@ const PLAYER_LEVEL_UP_GROW_RATE: real = 1.2;
 const PLAYER_LEVEL_UP_BARRIER: u32 = 2000;
 
 const PLAYER_MOVE_SPEED: real = 225.0;
+
+// grenade
+const GRENADE_DAMAGE: i64 = 240;
+
+const GRENADE_REPEL: real = 120.0;
+
+const GRENADE_DISTANCE: real = 400.0;
 
 // weapon
 const WEAPON_FIRE_COOLDOWN: real = 0.1;
@@ -55,7 +81,7 @@ const MAX_AMMO: i32 = 30;
 
 const RELOAD_TIME: real = 1.0;
 
-//level
+// level
 const LEVEL_GROW_RATE: real = 1.1;
 
 const LEVEL_RAMPAGE_TIME: real = 120.0;
@@ -83,7 +109,14 @@ const ZOMBIE_ALARM_TIME: real = 1.5;
 
 const ZOMBIE_RAMPAGE_TIME: real = 30.0;
 
-//boss
+// boomer
+const BOOMER_MOVE_SPEED: real = 2.0;
+
+const BOOMER_DAMAGE: i64 = 50;
+
+const BOOMER_REPEL: real = 100.0;
+
+// boss
 const BOSS_MAX_HEALTH: u32 = 7200;
 
 const BOSS_MOVE_SPEED: real = 2.5;
@@ -177,4 +210,12 @@ fn random_half_position(from: real, to: real) -> real {
     } else {
         rng.gen_range(-to..=-from)
     }
+}
+
+pub fn kill_all_zombies() {
+    //在这一帧清理所有僵尸
+    let mut event = InputEventAction::new_gd();
+    event.set_action("k");
+    event.set_pressed(true);
+    Input::singleton().parse_input_event(&event.upcast::<InputEvent>());
 }

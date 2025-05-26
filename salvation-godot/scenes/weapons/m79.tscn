@@ -1,6 +1,6 @@
 [gd_scene load_steps=16 format=3 uid="uid://ckikdyjginfce"]
 
-[ext_resource type="PackedScene" uid="uid://dgavaa1gfepoa" path="res://scenes/rust_grenade_bullet.tscn" id="1_peu4v"]
+[ext_resource type="PackedScene" uid="uid://dgavaa1gfepoa" path="res://scenes/bullets/rust_grenade_bullet.tscn" id="1_peu4v"]
 [ext_resource type="AudioStream" uid="uid://5kde4ei5ikjl" path="res://asserts/player/weapons/m79/m79-1.wav" id="2_y5g1i"]
 [ext_resource type="AudioStream" uid="uid://wxs2hvjjf31w" path="res://asserts/player/weapons/m79/m79_clipout.wav" id="3_peu4v"]
 [ext_resource type="AudioStream" uid="uid://0dnqbyebg1m4" path="res://asserts/player/weapons/m79/m79_clipin.wav" id="4_lb87w"]

@@ -1,10 +1,11 @@
-use crate::boss::RustBoss;
+use crate::MESSAGE;
 use crate::common::RustMessage;
 use crate::player::RustPlayer;
 use crate::zombie::RustZombie;
+use crate::zombie::boss::RustBoss;
 use godot::builtin::{Array, real};
 use godot::classes::tween::{EaseType, TransitionType};
-use godot::classes::{Area2D, AudioStream, AudioStreamPlayer2D, IArea2D, Node2D, PackedScene};
+use godot::classes::{Area2D, AudioStream, AudioStreamPlayer2D, IArea2D, Node2D};
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -35,7 +36,6 @@ pub struct RustKnife {
     damage_area: OnReady<Gd<Area2D>>,
     chop_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     hit_audio: OnReady<Gd<AudioStreamPlayer2D>>,
-    message_scene: OnReady<Gd<PackedScene>>,
     base: Base<Area2D>,
 }
 
@@ -50,7 +50,6 @@ impl IArea2D for RustKnife {
             damage_area: OnReady::from_node("DamageArea"),
             chop_audio: OnReady::from_node("ChopAudio"),
             hit_audio: OnReady::from_node("HitAudio"),
-            message_scene: OnReady::from_loaded("res://scenes/rust_message.tscn"),
             base,
         }
     }
@@ -122,9 +121,7 @@ impl RustKnife {
             // 暗杀判定
             if self.try_assassinate(&zombie) {
                 damage *= 3;
-                if let Some(mut assassinate_label) =
-                    self.message_scene.try_instantiate_as::<RustMessage>()
-                {
+                if let Some(mut assassinate_label) = MESSAGE.try_instantiate_as::<RustMessage>() {
                     assassinate_label.set_global_position(position);
                     if let Some(tree) = self.base().get_tree() {
                         if let Some(mut root) = tree.get_root() {

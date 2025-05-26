@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://bq6na7l8r0sac"]
 
-[ext_resource type="PackedScene" uid="uid://5koe2fd6n3fc" path="res://scenes/rust_zombie.tscn" id="2_bsuhp"]
+[ext_resource type="PackedScene" uid="uid://5koe2fd6n3fc" path="res://scenes/zombies/rust_zombie.tscn" id="2_bsuhp"]
 [ext_resource type="PackedScene" uid="uid://d1fywhnf12yb8" path="res://scenes/rust_player_unlock.tscn" id="2_tne2b"]
 
 [node name="RustWorld" type="Node2D"]

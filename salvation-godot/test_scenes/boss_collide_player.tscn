@@ -1,8 +1,8 @@
 [gd_scene load_steps=4 format=3 uid="uid://bsvqj1yvsk7l"]
 
-[ext_resource type="PackedScene" uid="uid://b8ou2gd7qcb4n" path="res://scenes/rust_boss.tscn" id="2_uoi34"]
+[ext_resource type="PackedScene" uid="uid://b8ou2gd7qcb4n" path="res://scenes/zombies/rust_boss.tscn" id="2_uoi34"]
 [ext_resource type="PackedScene" uid="uid://d1fywhnf12yb8" path="res://scenes/rust_player_unlock.tscn" id="3_pi4w0"]
-[ext_resource type="PackedScene" uid="uid://5koe2fd6n3fc" path="res://scenes/rust_zombie.tscn" id="3_rycuj"]
+[ext_resource type="PackedScene" uid="uid://5koe2fd6n3fc" path="res://scenes/zombies/rust_zombie.tscn" id="3_rycuj"]
 
 [node name="RustWorld" type="Node2D"]
 

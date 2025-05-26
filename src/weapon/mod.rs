@@ -19,7 +19,8 @@ use std::sync::LazyLock;
 pub mod hud;
 
 #[allow(clippy::declare_interior_mutable_const)]
-const BULLET: LazyLock<Gd<PackedScene>> = LazyLock::new(|| load("res://scenes/rust_bullet.tscn"));
+const BULLET: LazyLock<Gd<PackedScene>> =
+    LazyLock::new(|| load("res://scenes/bullets/rust_bullet.tscn"));
 
 #[derive(GodotClass)]
 #[class(base=Node2D)]

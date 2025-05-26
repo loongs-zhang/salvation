@@ -3,45 +3,29 @@ use crate::level::RustLevel;
 use crate::player::RustPlayer;
 use crate::world::RustWorld;
 use crate::zombie::animation::ZombieAnimation;
-use crate::zombie::attack::{ZombieAttackArea, ZombieDamageArea};
+use crate::zombie::boss::RustBoss;
+use crate::zombie::explode::ZombieExplodeArea;
+use crate::zombie::{NEXT_ATTACK_DIRECTION, RustZombie};
 use crate::{
-    MESSAGE, PlayerState, ZOMBIE_ALARM_TIME, ZOMBIE_DAMAGE, ZOMBIE_MAX_BODY_COUNT,
-    ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH, ZOMBIE_MOVE_SPEED, ZOMBIE_PURSUIT_DISTANCE,
-    ZOMBIE_RAMPAGE_TIME, ZOMBIE_REFRESH_BARRIER, ZOMBIE_SKIP_FRAME, ZombieState, random_bool,
-    random_direction, random_position,
+    BOOMER_DAMAGE, BOOMER_MOVE_SPEED, BOOMER_REPEL, EXPLODE_AUDIOS, MESSAGE, PlayerState,
+    ZOMBIE_ALARM_TIME, ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH, ZOMBIE_PURSUIT_DISTANCE,
+    ZOMBIE_RAMPAGE_TIME, ZOMBIE_REFRESH_BARRIER, ZombieState, random_bool, random_direction,
+    random_position,
 };
-use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{GString, Vector2, real};
 use godot::classes::{
-    AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, Control, GpuParticles2D,
-    ICharacterBody2D, InputEvent, Label, Node, ProgressBar, RemoteTransform2D,
+    AnimatedSprite2D, Area2D, AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, Control,
+    GpuParticles2D, ICharacterBody2D, InputEvent, Label, Node, ProgressBar, RemoteTransform2D,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
-use godot::register::{GodotClass, godot_api};
-use std::sync::atomic::{AtomicU32, Ordering};
+use godot::prelude::{GodotClass, godot_api};
 use std::time::{Duration, Instant};
-
-pub mod attack;
-
-pub mod bump;
-
-pub mod explode;
-
-pub mod animation;
-
-pub mod boomer;
-
-pub mod boss;
-
-static BODY_COUNT: AtomicU32 = AtomicU32::new(0);
-
-static NEXT_ATTACK_DIRECTION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
-pub struct RustZombie {
+pub struct RustBoomer {
     #[export]
-    zombie_name: GString,
+    boomer_name: GString,
     #[export]
     invincible: bool,
     #[export]
@@ -49,7 +33,7 @@ pub struct RustZombie {
     #[export]
     rotatable: bool,
     #[export]
-    attackable: bool,
+    explosive: bool,
     #[export]
     health: u32,
     #[export]
@@ -58,72 +42,68 @@ pub struct RustZombie {
     rampage_time: real,
     #[export]
     alarm_time: real,
+    state: ZombieState,
+    current_speed: real,
+    collision: Vector2,
     current_alarm_time: real,
     last_rotate_time: Instant,
     rotate_cooldown: Duration,
-    state: ZombieState,
-    current_speed: real,
-    hurt_frames: Vec<i32>,
-    collision: Vector2,
-    frame_counter: u128,
     pursuit_direction: bool,
     current_flash_cooldown: f64,
     hud: OnReady<Gd<RemoteTransform2D>>,
     head_shape2d: OnReady<Gd<CollisionShape2D>>,
     collision_shape2d: OnReady<Gd<CollisionShape2D>>,
     animated_sprite2d: OnReady<Gd<ZombieAnimation>>,
-    zombie_attack_area: OnReady<Gd<ZombieAttackArea>>,
-    zombie_damage_area: OnReady<Gd<ZombieDamageArea>>,
+    zombie_explode_area: OnReady<Gd<ZombieExplodeArea>>,
+    zombie_damage_area: OnReady<Gd<Area2D>>,
     hit_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     blood_flash: OnReady<Gd<GpuParticles2D>>,
     scream_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     guard_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     run_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     rampage_audio: OnReady<Gd<AudioStreamPlayer2D>>,
-    attack_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     attack_scream_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     die_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    die_flash: OnReady<Gd<AnimatedSprite2D>>,
     base: Base<CharacterBody2D>,
 }
 
 #[godot_api]
-impl ICharacterBody2D for RustZombie {
+impl ICharacterBody2D for RustBoomer {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
-            zombie_name: GString::new(),
+            boomer_name: GString::from("BOOMER"),
             invincible: false,
             moveable: true,
             rotatable: true,
-            attackable: true,
-            speed: ZOMBIE_MOVE_SPEED,
-            health: ZOMBIE_MAX_HEALTH,
+            explosive: true,
+            speed: BOOMER_MOVE_SPEED,
             rampage_time: ZOMBIE_RAMPAGE_TIME,
             alarm_time: ZOMBIE_ALARM_TIME,
+            health: ZOMBIE_MAX_HEALTH,
+            state: ZombieState::Guard,
+            current_speed: BOOMER_MOVE_SPEED * 0.75,
+            collision: Vector2::ZERO,
             current_alarm_time: 0.0,
             last_rotate_time: Instant::now(),
             rotate_cooldown: Duration::from_secs(8),
-            state: ZombieState::Guard,
-            current_speed: ZOMBIE_MOVE_SPEED * 0.2,
-            hurt_frames: vec![2, 3, 4, 5],
-            collision: Vector2::ZERO,
-            frame_counter: 0,
             pursuit_direction: random_bool(),
             current_flash_cooldown: 0.0,
             hud: OnReady::from_node("RemoteTransform2D"),
             head_shape2d: OnReady::from_node("HeadShape2D"),
             collision_shape2d: OnReady::from_node("CollisionShape2D"),
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
-            zombie_attack_area: OnReady::from_node("ZombieAttackArea"),
+            zombie_explode_area: OnReady::from_node("ZombieExplodeArea"),
             zombie_damage_area: OnReady::from_node("ZombieDamageArea"),
             hit_audio: OnReady::from_node("HitAudio"),
             blood_flash: OnReady::from_node("GpuParticles2D"),
             guard_audio: OnReady::from_node("GuardAudio"),
-            scream_audio: OnReady::from_node("ScreamAudio"),
             run_audio: OnReady::from_node("RunAudio"),
+            scream_audio: OnReady::from_node("ScreamAudio"),
             rampage_audio: OnReady::from_node("RampageAudio"),
-            attack_audio: OnReady::from_node("AttackAudio"),
             attack_scream_audio: OnReady::from_node("AttackScreamAudio"),
             die_audio: OnReady::from_node("DieAudio"),
+            die_flash: OnReady::from_node("DieFlash"),
             base,
         }
     }
@@ -132,14 +112,10 @@ impl ICharacterBody2D for RustZombie {
         if self.hud.is_instance_valid() {
             self.hud.set_global_rotation_degrees(0.0);
         }
-        self.frame_counter = self.frame_counter.wrapping_add(1);
-        if RustWorld::is_paused() || 0 == self.frame_counter % ZOMBIE_SKIP_FRAME {
+        if RustWorld::is_paused() {
             return;
         }
         if ZombieState::Dead == self.state {
-            if BODY_COUNT.load(Ordering::Acquire) >= ZOMBIE_MAX_BODY_COUNT {
-                self.clean_body();
-            }
             return;
         }
         let player_state = RustPlayer::get_state();
@@ -150,7 +126,6 @@ impl ICharacterBody2D for RustZombie {
         if ZombieState::Attack == self.state || PlayerState::Impact == player_state {
             return;
         }
-        self.current_flash_cooldown -= delta;
         self.rampage_time = (self.rampage_time - delta as real).max(0.0);
         let zombie_position = self.base().get_global_position();
         let player_position = RustPlayer::get_position();
@@ -209,10 +184,7 @@ impl ICharacterBody2D for RustZombie {
             // 发出排斥力的方向
             let from = collision.get_normal();
             if let Some(object) = collision.get_collider() {
-                if object.is_class("RustZombie")
-                    || object.is_class("RustBoomer")
-                    || object.is_class("RustBoss")
-                {
+                if object.is_class("RustBoomer") || object.is_class("RustBoss") {
                     let dir = NEXT_ATTACK_DIRECTION.load();
                     let move_angle = to_player_dir.angle_to(dir).to_degrees();
                     self.collision =
@@ -230,20 +202,25 @@ impl ICharacterBody2D for RustZombie {
         }
     }
 
+    fn exit_tree(&mut self) {
+        self.die_flash.queue_free();
+    }
+
     fn ready(&mut self) {
+        self.die_flash.set_visible(false);
         let gd = self.to_gd();
         self.die_audio
             .signals()
             .finished()
             .connect_obj(&gd, Self::clean_audio);
+        self.scream_audio
+            .signals()
+            .finished()
+            .connect_obj(&gd, Self::clean_scream_audio);
         self.last_rotate_time -= self.rotate_cooldown;
-        let mut animated_sprite2d = self.animated_sprite2d.bind_mut();
-        animated_sprite2d.set_hurt_frames(self.hurt_frames.clone());
-        animated_sprite2d.set_damage(ZOMBIE_DAMAGE);
-        drop(animated_sprite2d);
         self.guard();
-        if !self.zombie_name.is_empty() {
-            let name = self.zombie_name.clone();
+        if !self.boomer_name.is_empty() {
+            let name = self.boomer_name.clone();
             let mut name_label = self.hud.get_node_as::<Label>("Name");
             name_label.set_text(&name);
             name_label.show();
@@ -258,7 +235,7 @@ impl ICharacterBody2D for RustZombie {
 }
 
 #[godot_api]
-impl RustZombie {
+impl RustBoomer {
     #[func]
     pub fn on_hit(&mut self, hit_val: i64, direction: Vector2, repel: real, hit_position: Vector2) {
         let zombie_position = self.base().get_global_position();
@@ -281,7 +258,8 @@ impl RustZombie {
         }
         self.current_alarm_time = self.alarm_time;
         let speed = self.current_speed;
-        let moved = direction * repel;
+        //面对BOOMER击退力下降25%
+        let moved = direction * repel * 0.75;
         let new_position = zombie_position + moved;
         let mut base_mut = self.base_mut();
         base_mut.look_at(zombie_position - direction);
@@ -379,62 +357,63 @@ impl RustZombie {
         self.notify_animation();
     }
 
-    pub fn attack(&mut self) {
-        if ZombieState::Dead == self.state || !self.attackable {
-            return;
-        }
-        self.base_mut().look_at(RustPlayer::get_position());
-        self.animated_sprite2d.play_ex().name("attack").done();
-        self.current_speed = self.speed * 0.5;
-        self.state = ZombieState::Attack;
-        let direction = NEXT_ATTACK_DIRECTION.load()
-            + self
-                .base()
-                .get_global_position()
-                .direction_to(RustPlayer::get_position());
-        NEXT_ATTACK_DIRECTION.store(direction.normalized());
-        if self.attack_audio.is_inside_tree() {
-            self.attack_audio.play();
-        }
-        if !self.attack_scream_audio.is_playing() && self.attack_scream_audio.is_inside_tree() {
-            self.attack_scream_audio.play();
-        }
-        self.notify_animation();
-    }
-
+    #[func]
     pub fn die(&mut self) {
         if ZombieState::Dead == self.state {
             return;
         }
-        self.animated_sprite2d.play_ex().name("die").done();
         self.current_speed = 0.0;
         self.state = ZombieState::Dead;
-        if self.die_audio.is_inside_tree() {
-            self.die_audio.play();
+        if !self.attack_scream_audio.is_playing() && self.attack_scream_audio.is_inside_tree() {
+            self.attack_scream_audio.play();
+        }
+        if self.die_audio.is_inside_tree() && self.explosive {
+            //播放爆炸音效
+            #[allow(clippy::borrow_interior_mutable_const)]
+            if let Some(audio) = EXPLODE_AUDIOS.pick_random() {
+                self.die_audio.set_stream(&audio);
+                self.die_audio.play();
+                self.die_flash.set_visible(true);
+                self.die_flash.set_global_rotation_degrees(0.0);
+                self.die_flash.play_ex().name("default").done();
+            }
+            let position = self.base().get_global_position();
+            for body in self
+                .zombie_damage_area
+                .get_overlapping_bodies()
+                .iter_shared()
+            {
+                if body.is_class("RustPlayer") {
+                    body.cast::<RustPlayer>()
+                        .bind_mut()
+                        .on_hit(BOOMER_DAMAGE, position);
+                } else if body.is_class("RustZombie") {
+                    let mut zombie = body.cast::<RustZombie>();
+                    let direction = position.direction_to(zombie.get_global_position());
+                    zombie
+                        .bind_mut()
+                        .on_hit(BOOMER_DAMAGE, direction, BOOMER_REPEL, position);
+                } else if body.is_class("RustBoss") {
+                    let mut boss = body.cast::<RustBoss>();
+                    let direction = position.direction_to(boss.get_global_position());
+                    boss.bind_mut()
+                        .on_hit(BOOMER_DAMAGE, direction, BOOMER_REPEL, position);
+                }
+            }
         }
         // 释放资源
         self.base_mut().set_z_index(0);
         self.hud.queue_free();
         self.head_shape2d.queue_free();
         self.collision_shape2d.queue_free();
-        self.zombie_attack_area.queue_free();
         self.zombie_damage_area.queue_free();
         self.hit_audio.queue_free();
         self.blood_flash.queue_free();
-        self.scream_audio.queue_free();
         self.guard_audio.queue_free();
         self.run_audio.queue_free();
         self.rampage_audio.queue_free();
-        self.attack_audio.queue_free();
         self.attack_scream_audio.queue_free();
         self.notify_animation();
-        // 45S后自动清理尸体
-        BODY_COUNT.fetch_add(1, Ordering::Release);
-        if let Some(mut tree) = self.base().get_tree() {
-            if let Some(mut timer) = tree.create_timer(45.0) {
-                timer.connect("timeout", &self.base().callable("clean_body"));
-            }
-        }
         // 击杀僵尸确认
         self.base()
             .get_tree()
@@ -448,14 +427,16 @@ impl RustZombie {
     }
 
     #[func]
-    pub fn clean_body(&mut self) {
+    pub fn clean_audio(&mut self) {
+        self.die_audio.set_stream(Gd::null_arg());
+        self.die_audio.queue_free();
+        // 自动清理尸体
         self.base_mut().queue_free();
-        BODY_COUNT.fetch_sub(1, Ordering::Release);
     }
 
     #[func]
-    pub fn clean_audio(&mut self) {
-        self.die_audio.queue_free();
+    pub fn clean_scream_audio(&mut self) {
+        self.scream_audio.queue_free();
     }
 
     pub fn flash(&mut self) {

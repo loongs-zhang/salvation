@@ -1,6 +1,6 @@
-use crate::boss::RustBoss;
 use crate::zombie::RustZombie;
 use crate::zombie::animation::ZombieAnimation;
+use crate::zombie::boss::RustBoss;
 use godot::classes::{Area2D, IArea2D, Node, Node2D, Object};
 use godot::obj::{Base, Gd, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};

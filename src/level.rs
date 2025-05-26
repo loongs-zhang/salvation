@@ -2,15 +2,15 @@ use crate::player::RustPlayer;
 use crate::world::RustWorld;
 use crate::{
     BOSS_MAX_SCREEN_COUNT, BOSS_REFRESH_BARRIER, LEVEL_GROW_RATE, LEVEL_RAMPAGE_TIME,
-    ZOMBIE_MAX_SCREEN_COUNT, ZOMBIE_REFRESH_BARRIER,
+    ZOMBIE_MAX_SCREEN_COUNT, ZOMBIE_REFRESH_BARRIER, kill_all_zombies,
 };
 use godot::builtin::{Array, real};
 use godot::classes::{
-    AudioStreamPlayer2D, CanvasLayer, Engine, INode2D, Input, InputEvent, InputEventAction, Label,
-    Node, Node2D, PackedScene, Timer, VBoxContainer,
+    AudioStreamPlayer2D, CanvasLayer, Engine, INode2D, InputEvent, Label, Node, Node2D,
+    PackedScene, Timer, VBoxContainer,
 };
 use godot::global::{godot_error, godot_warn};
-use godot::obj::{Base, Gd, NewGd, OnReady, WithBaseField};
+use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::prelude::ToGodot;
 use godot::register::{GodotClass, godot_api};
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
@@ -28,6 +28,8 @@ static LIVE_COUNT: AtomicU32 = AtomicU32::new(0);
 #[derive(GodotClass)]
 #[class(base=Node2D)]
 pub struct RustLevel {
+    #[export]
+    hell: bool,
     #[export]
     level: u32,
     #[export]
@@ -54,11 +56,12 @@ pub struct RustLevel {
 impl INode2D for RustLevel {
     fn init(base: Base<Node2D>) -> Self {
         Self {
+            hell: false,
             level: 0,
             grow_rate: LEVEL_GROW_RATE,
             rampage_time: LEVEL_RAMPAGE_TIME,
             zombie_refresh_time: 3.0,
-            boss_refresh_time: 30.0,
+            boss_refresh_time: 60.0,
             left_rampage_time: LEVEL_RAMPAGE_TIME,
             zombie_killed: AtomicU32::new(0),
             boss_killed: AtomicU32::new(0),
@@ -175,11 +178,7 @@ impl INode2D for RustLevel {
         if event.is_action_pressed("l") {
             self.left_rampage_time = 0.0;
         } else if event.is_action_pressed("j") {
-            let mut event = InputEventAction::new_gd();
-            event.set_action("k");
-            event.set_pressed(true);
-            Input::singleton().parse_input_event(&event.upcast::<InputEvent>());
-            //这一帧清僵尸，下一帧跳关
+            kill_all_zombies();
             self.base_mut()
                 .call_deferred("level_up", &[true.to_variant()]);
         }
@@ -299,7 +298,11 @@ impl RustLevel {
             false,
             rate,
             ZOMBIE_REFRESH_BARRIER,
-            ZOMBIE_MAX_SCREEN_COUNT,
+            if self.hell {
+                (ZOMBIE_MAX_SCREEN_COUNT as real * 1.6) as u32
+            } else {
+                ZOMBIE_MAX_SCREEN_COUNT
+            },
             self.zombie_refresh_time,
         );
         self.boss_generator.bind_mut().level_up(
@@ -366,14 +369,18 @@ impl RustLevel {
         self.boss_generator.bind_mut().start_timer();
     }
 
-    pub fn refresh(&mut self) {
+    pub fn enable_hell(&mut self) {
+        self.zombie_refresh_time = 0.2;
+        self.boss_refresh_time = 0.2;
+        self.rampage_time = 0.0;
+        self.left_rampage_time = self.rampage_time;
+        self.hell = true;
         self.zombie_generator
             .bind_mut()
             .refresh_timer(self.zombie_refresh_time);
         self.boss_generator
             .bind_mut()
             .refresh_timer(self.boss_refresh_time);
-        self.left_rampage_time = self.rampage_time;
     }
 
     pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {

@@ -1,8 +1,8 @@
 [gd_scene load_steps=4 format=3 uid="uid://dd7psn2s8iij0"]
 
 [ext_resource type="PackedScene" uid="uid://d2ryhlh122dqg" path="res://scenes/rust_player.tscn" id="2_8q5hl"]
-[ext_resource type="PackedScene" uid="uid://c4b5nrdy6rq1h" path="res://scenes/rust_level.tscn" id="3_b5is2"]
-[ext_resource type="PackedScene" uid="uid://cbfpw8lejebvd" path="res://scenes/rust_ground.tscn" id="3_dson0"]
+[ext_resource type="PackedScene" uid="uid://c4b5nrdy6rq1h" path="res://scenes/world/rust_level.tscn" id="3_b5is2"]
+[ext_resource type="PackedScene" uid="uid://cbfpw8lejebvd" path="res://scenes/world/rust_ground.tscn" id="3_dson0"]
 
 [node name="RustWorld" type="RustWorld"]
 

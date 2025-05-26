@@ -1,6 +1,7 @@
-use crate::boss::RustBoss;
 use crate::player::RustPlayer;
 use crate::zombie::RustZombie;
+use crate::zombie::boomer::RustBoomer;
+use crate::zombie::boss::RustBoss;
 use godot::builtin::{Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
@@ -157,14 +158,14 @@ impl BulletDamageArea {
 
     #[func]
     pub fn on_area_2d_body_entered(&mut self, body: Gd<Node2D>) {
+        let mut rust_bullet = self
+            .base()
+            .get_parent()
+            .expect("RustBullet not found")
+            .cast::<RustBullet>();
+        let mut damage = rust_bullet.bind().final_damage;
         if body.is_class("RustZombie") {
             self.hit_audio.play();
-            let mut rust_bullet = self
-                .base()
-                .get_parent()
-                .expect("RustBullet not found")
-                .cast::<RustBullet>();
-            let mut damage = rust_bullet.bind().final_damage;
             rust_bullet.bind_mut().on_hit(1);
             if self.headshot_ray1.is_colliding() || self.headshot_ray2.is_colliding() {
                 self.get_rust_player().bind_mut().headshot();
@@ -181,12 +182,6 @@ impl BulletDamageArea {
             }
         } else if body.is_class("RustBoss") {
             self.hit_audio.play();
-            let mut rust_bullet = self
-                .base()
-                .get_parent()
-                .expect("RustBullet not found")
-                .cast::<RustBullet>();
-            let mut damage = rust_bullet.bind().final_damage;
             // BOSS身体大，消耗更多穿透
             rust_bullet.bind_mut().on_hit(2);
             if self.headshot_ray1.is_colliding() || self.headshot_ray2.is_colliding() {
@@ -194,6 +189,22 @@ impl BulletDamageArea {
                 damage *= 3;
             }
             body.cast::<RustBoss>().bind_mut().on_hit(
+                damage,
+                rust_bullet.bind().direction,
+                rust_bullet.bind().final_repel,
+                rust_bullet.get_global_position(),
+            );
+            if damage > 0 {
+                RustPlayer::add_score(damage as u64);
+            }
+        } else if body.is_class("RustBoomer") {
+            self.hit_audio.play();
+            rust_bullet.bind_mut().on_hit(1);
+            if self.headshot_ray1.is_colliding() || self.headshot_ray2.is_colliding() {
+                self.get_rust_player().bind_mut().headshot();
+                damage *= 3;
+            }
+            body.cast::<RustBoomer>().bind_mut().on_hit(
                 damage,
                 rust_bullet.bind().direction,
                 rust_bullet.bind().final_repel,

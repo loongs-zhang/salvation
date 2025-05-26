@@ -4,8 +4,8 @@ use crate::knife::RustKnife;
 use crate::player::hud::PlayerHUD;
 use crate::world::RustWorld;
 use crate::{
-    PLAYER_LEVEL_UP_BARRIER, PLAYER_MAX_HEALTH, PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState,
-    scale_rate,
+    GRENADE_DAMAGE, GRENADE_DISTANCE, GRENADE_REPEL, PLAYER_LEVEL_UP_BARRIER, PLAYER_MAX_HEALTH,
+    PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState, scale_rate,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Array, Vector2, real};
@@ -46,7 +46,8 @@ static DIED: AtomicU64 = AtomicU64::new(0);
 static LAST_SCORE_UPDATE: AtomicCell<f64> = AtomicCell::new(0.0);
 
 #[allow(clippy::declare_interior_mutable_const)]
-const GRENADE: LazyLock<Gd<PackedScene>> = LazyLock::new(|| load("res://scenes/rust_grenade.tscn"));
+const GRENADE: LazyLock<Gd<PackedScene>> =
+    LazyLock::new(|| load("res://scenes/grenades/fgrenade.tscn"));
 
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
@@ -350,9 +351,9 @@ impl RustPlayer {
                 grenade.set_global_position(grenade_point);
                 let mut gd_mut = grenade.bind_mut();
                 gd_mut.set_bullet_point(grenade_point);
-                gd_mut.set_final_distance(400.0 + self.distance);
-                gd_mut.set_final_damage(240 + self.damage);
-                gd_mut.set_final_repel(120.0 + self.repel);
+                gd_mut.set_final_distance(GRENADE_DISTANCE + self.distance);
+                gd_mut.set_final_damage(GRENADE_DAMAGE + self.damage);
+                gd_mut.set_final_repel(GRENADE_REPEL + self.repel);
                 gd_mut.throw(direction);
                 drop(gd_mut);
                 if let Some(tree) = self.base().get_tree() {

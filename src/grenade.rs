@@ -1,29 +1,17 @@
-use crate::boss::RustBoss;
+use crate::EXPLODE_AUDIOS;
 use crate::player::RustPlayer;
 use crate::zombie::RustZombie;
-use godot::builtin::{Array, Vector2, real};
+use crate::zombie::boomer::RustBoomer;
+use crate::zombie::boss::RustBoss;
+use godot::builtin::{Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
-    AnimatedSprite2D, Area2D, AudioStream, AudioStreamPlayer2D, IRigidBody2D, Node2D, Object,
-    RigidBody2D, TextureRect,
+    AnimatedSprite2D, Area2D, AudioStreamPlayer2D, IRigidBody2D, Node2D, Object, RigidBody2D,
+    TextureRect,
 };
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
-use godot::tools::load;
-use std::sync::LazyLock;
-
-#[allow(clippy::declare_interior_mutable_const)]
-const EXPLODE_AUDIOS: LazyLock<Array<Gd<AudioStream>>> = LazyLock::new(|| {
-    let mut audios = Array::new();
-    for i in 1..=6 {
-        audios.push(&load(&format!(
-            "res://asserts/player/weapons/explode{}.wav",
-            i
-        )));
-    }
-    audios
-});
 
 #[derive(GodotClass)]
 #[class(base=RigidBody2D)]
@@ -174,6 +162,14 @@ impl RustGrenade {
                 }
             } else if body.is_class("RustBoss") {
                 let mut boss = body.cast::<RustBoss>();
+                let direction = position.direction_to(boss.get_global_position());
+                boss.bind_mut()
+                    .on_hit(self.final_damage, direction, self.final_repel, position);
+                if self.final_damage > 0 {
+                    RustPlayer::add_score(self.final_damage as u64);
+                }
+            } else if body.is_class("RustBoomer") {
+                let mut boss = body.cast::<RustBoomer>();
                 let direction = position.direction_to(boss.get_global_position());
                 boss.bind_mut()
                     .on_hit(self.final_damage, direction, self.final_repel, position);

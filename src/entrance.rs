@@ -19,7 +19,7 @@ pub struct RustEntrance {
 impl IControl for RustEntrance {
     fn init(base: Base<Control>) -> Self {
         Self {
-            world_scene: OnReady::from_loaded("res://scenes/rust_world.tscn"),
+            world_scene: OnReady::from_loaded("res://scenes/world/rust_world.tscn"),
             bgm: OnReady::from_node("Bgm"),
             base,
         }

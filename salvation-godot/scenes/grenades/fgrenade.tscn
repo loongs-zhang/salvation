@@ -1,78 +1,78 @@
 [gd_scene load_steps=24 format=3 uid="uid://e5puv53w1dua"]
 
-[ext_resource type="Texture2D" uid="uid://ccr3duhwkt7a8" path="res://asserts/player/vfx_explosion.png" id="1_2cv0s"]
-[ext_resource type="Texture2D" uid="uid://bkhf0qpaderu6" path="res://asserts/player/grenades/explosives/fgrenade2_m.png" id="1_04lso"]
+[ext_resource type="Texture2D" uid="uid://bkhf0qpaderu6" path="res://asserts/player/grenades/explosives/fgrenade2_m.png" id="1_lmxp6"]
+[ext_resource type="Texture2D" uid="uid://ccr3duhwkt7a8" path="res://asserts/player/vfx_explosion.png" id="2_h121v"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_04lso"]
 radius = 6.0
 height = 14.0
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_gds4w"]
-atlas = ExtResource("1_2cv0s")
+atlas = ExtResource("2_h121v")
 region = Rect2(0, 0, 300, 300)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_eonty"]
-atlas = ExtResource("1_2cv0s")
+atlas = ExtResource("2_h121v")
 region = Rect2(300, 0, 300, 300)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_6as3f"]
-atlas = ExtResource("1_2cv0s")
+atlas = ExtResource("2_h121v")
 region = Rect2(600, 0, 300, 300)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_hc37t"]
-atlas = ExtResource("1_2cv0s")
+atlas = ExtResource("2_h121v")
 region = Rect2(900, 0, 300, 300)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_rgfbn"]
-atlas = ExtResource("1_2cv0s")
+atlas = ExtResource("2_h121v")
 region = Rect2(1200, 0, 300, 300)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_cmxd2"]
-atlas = ExtResource("1_2cv0s")
+atlas = ExtResource("2_h121v")
 region = Rect2(0, 300, 300, 300)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_tkeej"]
-atlas = ExtResource("1_2cv0s")
+atlas = ExtResource("2_h121v")
 region = Rect2(300, 300, 300, 300)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_52ui8"]
-atlas = ExtResource("1_2cv0s")
+atlas = ExtResource("2_h121v")
 region = Rect2(600, 300, 300, 300)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_fka5u"]
-atlas = ExtResource("1_2cv0s")
+atlas = ExtResource("2_h121v")
 region = Rect2(900, 300, 300, 300)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_q33cq"]
-atlas = ExtResource("1_2cv0s")
+atlas = ExtResource("2_h121v")
 region = Rect2(1200, 300, 300, 300)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_t4esq"]
-atlas = ExtResource("1_2cv0s")
+atlas = ExtResource("2_h121v")
 region = Rect2(0, 600, 300, 300)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_hiblf"]
-atlas = ExtResource("1_2cv0s")
+atlas = ExtResource("2_h121v")
 region = Rect2(300, 600, 300, 300)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_tli72"]
-atlas = ExtResource("1_2cv0s")
+atlas = ExtResource("2_h121v")
 region = Rect2(600, 600, 300, 300)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_pq2ch"]
-atlas = ExtResource("1_2cv0s")
+atlas = ExtResource("2_h121v")
 region = Rect2(900, 600, 300, 300)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_c4bqm"]
-atlas = ExtResource("1_2cv0s")
+atlas = ExtResource("2_h121v")
 region = Rect2(1200, 600, 300, 300)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_jpjm6"]
-atlas = ExtResource("1_2cv0s")
+atlas = ExtResource("2_h121v")
 region = Rect2(0, 900, 300, 300)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_6xea5"]
-atlas = ExtResource("1_2cv0s")
+atlas = ExtResource("2_h121v")
 region = Rect2(300, 900, 300, 300)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_xlnxk"]
@@ -154,7 +154,7 @@ offset_top = -10.0
 offset_right = 44.0
 offset_bottom = 71.0
 scale = Vector2(0.25, 0.25)
-texture = ExtResource("1_04lso")
+texture = ExtResource("1_lmxp6")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_04lso")

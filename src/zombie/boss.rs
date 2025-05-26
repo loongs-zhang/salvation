@@ -1,4 +1,3 @@
-use crate::boss::bump::BossBumpArea;
 use crate::common::RustMessage;
 use crate::level::RustLevel;
 use crate::player::RustPlayer;
@@ -6,21 +5,21 @@ use crate::world::RustWorld;
 use crate::zombie::RustZombie;
 use crate::zombie::animation::ZombieAnimation;
 use crate::zombie::attack::{ZombieAttackArea, ZombieDamageArea};
+use crate::zombie::boomer::RustBoomer;
+use crate::zombie::bump::BossBumpArea;
 use crate::{
     BOSS_BUMP_DISTANCE, BOSS_DAMAGE, BOSS_MAX_BODY_COUNT, BOSS_MAX_HEALTH, BOSS_MOVE_SPEED,
-    PlayerState, ZOMBIE_MAX_DISTANCE, ZombieState, random_position,
+    MESSAGE, PlayerState, ZOMBIE_MAX_DISTANCE, ZombieState, random_position,
 };
 use godot::builtin::{Vector2, real};
 use godot::classes::{
     AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, GpuParticles2D, ICharacterBody2D,
-    InputEvent, KinematicCollision2D, Node, PackedScene,
+    InputEvent, KinematicCollision2D, Node,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{Duration, Instant};
-
-pub mod bump;
 
 static BODY_COUNT: AtomicU32 = AtomicU32::new(0);
 
@@ -49,7 +48,6 @@ pub struct RustBoss {
     zombie_attack_area: OnReady<Gd<ZombieAttackArea>>,
     zombie_damage_area: OnReady<Gd<ZombieDamageArea>>,
     bump_damage_area: OnReady<Gd<BossBumpArea>>,
-    hit_scene: OnReady<Gd<PackedScene>>,
     hit_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     blood_flash: OnReady<Gd<GpuParticles2D>>,
     scream_audio: OnReady<Gd<AudioStreamPlayer2D>>,
@@ -83,7 +81,6 @@ impl ICharacterBody2D for RustBoss {
             zombie_attack_area: OnReady::from_node("ZombieAttackArea"),
             zombie_damage_area: OnReady::from_node("ZombieDamageArea"),
             bump_damage_area: OnReady::from_node("BossBumpArea"),
-            hit_scene: OnReady::from_loaded("res://scenes/rust_message.tscn"),
             hit_audio: OnReady::from_node("HitAudio"),
             blood_flash: OnReady::from_node("GpuParticles2D"),
             guard_audio: OnReady::from_node("GuardAudio"),
@@ -189,6 +186,14 @@ impl RustBoss {
                 if let Some(another_collision) = to_zombie.move_and_collide(velocity) {
                     Self::zombie_collide(another_collision, velocity, push_count - 1);
                 }
+            } else if object.is_class("RustBoomer") {
+                let mut to_zombie = object.cast::<RustBoomer>();
+                let position = to_zombie.get_global_position();
+                to_zombie.set_global_position(position + velocity);
+                to_zombie.look_at(position + velocity);
+                if let Some(another_collision) = to_zombie.move_and_collide(velocity) {
+                    Self::zombie_collide(another_collision, velocity, push_count - 1);
+                }
             }
         }
     }
@@ -196,7 +201,7 @@ impl RustBoss {
     #[func]
     pub fn on_hit(&mut self, hit_val: i64, direction: Vector2, repel: real, hit_position: Vector2) {
         let zombie_position = self.base().get_global_position();
-        if let Some(mut hit_label) = self.hit_scene.try_instantiate_as::<RustMessage>() {
+        if let Some(mut hit_label) = MESSAGE.try_instantiate_as::<RustMessage>() {
             hit_label.set_global_position(zombie_position);
             if let Some(tree) = self.base().get_tree() {
                 if let Some(mut root) = tree.get_root() {
