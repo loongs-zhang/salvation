@@ -30,14 +30,15 @@ impl ZombieExplodeArea {
     #[func]
     pub fn on_area_2d_body_entered(&mut self, body: Gd<Node2D>) {
         if body.is_class("RustPlayer") {
-            if let Ok(boomer) = self.get_parent().try_cast::<RustBoomer>() {
+            if let Ok(mut boomer) = self.get_parent().try_cast::<RustBoomer>() {
                 if !boomer.bind().is_face_to_user() {
                     return;
                 }
                 // 僵尸面向玩家才发起攻击
+                boomer.call_deferred("dying", &[]);
                 if let Some(mut tree) = self.base().get_tree() {
                     if let Some(mut timer) = tree.create_timer(1.5) {
-                        timer.connect("timeout", &self.get_parent().callable("die"));
+                        timer.connect("timeout", &boomer.callable("die"));
                     }
                 }
             }

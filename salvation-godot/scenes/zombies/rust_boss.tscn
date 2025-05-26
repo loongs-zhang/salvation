@@ -285,7 +285,7 @@ shape = SubResource("CircleShape2D_xgxvb")
 [node name="AnimatedSprite2D" type="ZombieAnimation" parent="."]
 scale = Vector2(2, 2)
 sprite_frames = SubResource("SpriteFrames_3rmjs")
-animation = &"attack"
+animation = &"guard"
 autoplay = "guard"
 
 [node name="BossBumpArea" type="BossBumpArea" parent="."]

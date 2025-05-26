@@ -1,4 +1,4 @@
-[gd_scene load_steps=51 format=3 uid="uid://r2dqujonhlji"]
+[gd_scene load_steps=50 format=3 uid="uid://r2dqujonhlji"]
 
 [ext_resource type="Texture2D" uid="uid://ccr3duhwkt7a8" path="res://asserts/player/vfx_explosion.png" id="1_2iwqr"]
 [ext_resource type="Texture2D" uid="uid://dl2e2alxr88ti" path="res://asserts/zombie/zombie.png" id="1_8o2tp"]
@@ -8,7 +8,6 @@
 [ext_resource type="AudioStream" uid="uid://dld2fkg05e81r" path="res://asserts/zombie/zombie_run.mp3" id="5_melal"]
 [ext_resource type="AudioStream" uid="uid://coegfy2jkym2a" path="res://asserts/zombie/zombie_rampage.mp3" id="6_wqmnm"]
 [ext_resource type="AudioStream" uid="uid://dukpy5xk3txlv" path="res://asserts/zombie/zombie_attack_scream.mp3" id="8_3t7e0"]
-[ext_resource type="AudioStream" uid="uid://dw7k7gprqva86" path="res://asserts/zombie/zombie_die.mp3" id="9_0lft3"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pgect"]
 bg_color = Color(0.545098, 0, 0, 1)
@@ -121,7 +120,7 @@ animations = [{
 }]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_4lcne"]
-radius = 36.0
+radius = 64.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_ojx4y"]
 radius = 100.0
@@ -360,7 +359,7 @@ shape = SubResource("CircleShape2D_xgxvb")
 
 [node name="AnimatedSprite2D" type="ZombieAnimation" parent="."]
 sprite_frames = SubResource("SpriteFrames_a2hqs")
-animation = &"run"
+animation = &"guard"
 autoplay = "guard"
 
 [node name="ZombieExplodeArea" type="ZombieExplodeArea" parent="."]
@@ -422,7 +421,6 @@ stream = ExtResource("8_3t7e0")
 max_distance = 300.0
 
 [node name="DieAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("9_0lft3")
 volume_db = 8.0
 max_distance = 4096.0
 attenuation = 1e-05

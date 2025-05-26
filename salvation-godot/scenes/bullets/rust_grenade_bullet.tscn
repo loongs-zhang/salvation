@@ -142,6 +142,7 @@ height = 28.0
 radius = 100.0
 
 [node name="RustGrenade" type="RustGrenade"]
+timed = false
 light_mask = 0
 visibility_layer = 6
 mass = 0.1

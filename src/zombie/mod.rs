@@ -526,6 +526,7 @@ impl RustZombie {
         zombie_position.distance_to(player_position)
     }
 
+    #[func]
     pub fn get_current_direction(&self) -> Vector2 {
         let rotation = self.base().get_rotation();
         Vector2::new(rotation.cos(), rotation.sin())

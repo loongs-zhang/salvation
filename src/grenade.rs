@@ -1,8 +1,5 @@
 use crate::EXPLODE_AUDIOS;
 use crate::player::RustPlayer;
-use crate::zombie::RustZombie;
-use crate::zombie::boomer::RustBoomer;
-use crate::zombie::boss::RustBoss;
 use godot::builtin::{Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
@@ -18,6 +15,8 @@ use godot::register::{GodotClass, godot_api};
 pub struct RustGrenade {
     #[export]
     speed: real,
+    #[export]
+    timed: bool,
     bullet_point: Vector2,
     final_distance: real,
     final_repel: real,
@@ -35,6 +34,7 @@ impl IRigidBody2D for RustGrenade {
     fn init(base: Base<RigidBody2D>) -> Self {
         Self {
             speed: 50.0,
+            timed: true,
             bullet_point: Vector2::ZERO,
             final_distance: 0.0,
             final_repel: 0.0,
@@ -76,9 +76,11 @@ impl IRigidBody2D for RustGrenade {
             .set_physics_interpolation_mode(PhysicsInterpolationMode::ON);
         let mouse_position = self.get_mouse_position();
         self.base_mut().look_at(mouse_position);
-        if let Some(mut tree) = self.base().get_tree() {
-            if let Some(mut timer) = tree.create_timer(2.0) {
-                timer.connect("timeout", &self.base().callable("explode"));
+        if self.timed {
+            if let Some(mut tree) = self.base().get_tree() {
+                if let Some(mut timer) = tree.create_timer(2.0) {
+                    timer.connect("timeout", &self.base().callable("explode"));
+                }
             }
         }
         let gd = self.to_gd();
@@ -121,7 +123,7 @@ impl RustGrenade {
 
     #[func]
     pub fn explode_ext(&mut self, body: Gd<Node2D>) {
-        if body.is_class("RustZombie") || body.is_class("RustBoss") {
+        if body.is_class("RustZombie") || body.is_class("RustBoss") || body.is_class("RustBoomer") {
             self.explode();
         }
     }
@@ -146,33 +148,25 @@ impl RustGrenade {
             self.texture_rect.queue_free();
         }
         let position = self.base().get_global_position();
-        for body in self.damage_area.get_overlapping_bodies().iter_shared() {
+        for mut body in self.damage_area.get_overlapping_bodies().iter_shared() {
             if body.is_class("RustPlayer") {
                 body.cast::<RustPlayer>()
                     .bind_mut()
                     .on_hit(self.final_damage, position);
-            } else if body.is_class("RustZombie") {
-                let mut zombie = body.cast::<RustZombie>();
-                let direction = position.direction_to(zombie.get_global_position());
-                zombie
-                    .bind_mut()
-                    .on_hit(self.final_damage, direction, self.final_repel, position);
-                if self.final_damage > 0 {
-                    RustPlayer::add_score(self.final_damage as u64);
-                }
-            } else if body.is_class("RustBoss") {
-                let mut boss = body.cast::<RustBoss>();
-                let direction = position.direction_to(boss.get_global_position());
-                boss.bind_mut()
-                    .on_hit(self.final_damage, direction, self.final_repel, position);
-                if self.final_damage > 0 {
-                    RustPlayer::add_score(self.final_damage as u64);
-                }
-            } else if body.is_class("RustBoomer") {
-                let mut boss = body.cast::<RustBoomer>();
-                let direction = position.direction_to(boss.get_global_position());
-                boss.bind_mut()
-                    .on_hit(self.final_damage, direction, self.final_repel, position);
+            } else if body.is_class("RustZombie")
+                || body.is_class("RustBoss")
+                || body.is_class("RustBoomer")
+            {
+                let direction = position.direction_to(body.get_global_position());
+                body.call_deferred(
+                    "on_hit",
+                    &[
+                        self.final_damage.to_variant(),
+                        direction.to_variant(),
+                        self.final_repel.to_variant(),
+                        position.to_variant(),
+                    ],
+                );
                 if self.final_damage > 0 {
                     RustPlayer::add_score(self.final_damage as u64);
                 }

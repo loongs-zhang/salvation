@@ -1,8 +1,9 @@
 use crate::player::RustPlayer;
 use crate::world::RustWorld;
 use crate::{
-    BOSS_MAX_SCREEN_COUNT, BOSS_REFRESH_BARRIER, LEVEL_GROW_RATE, LEVEL_RAMPAGE_TIME,
-    ZOMBIE_MAX_SCREEN_COUNT, ZOMBIE_REFRESH_BARRIER, kill_all_zombies,
+    BOOMER_MAX_SCREEN_COUNT, BOOMER_REFRESH_BARRIER, BOSS_MAX_SCREEN_COUNT, BOSS_REFRESH_BARRIER,
+    LEVEL_GROW_RATE, LEVEL_RAMPAGE_TIME, ZOMBIE_MAX_SCREEN_COUNT, ZOMBIE_REFRESH_BARRIER,
+    kill_all_zombies, random_bool,
 };
 use godot::builtin::{Array, real};
 use godot::classes::{
@@ -39,12 +40,15 @@ pub struct RustLevel {
     #[export]
     zombie_refresh_time: f64,
     #[export]
+    boomer_refresh_time: f64,
+    #[export]
     boss_refresh_time: f64,
     left_rampage_time: real,
     zombie_killed: AtomicU32,
     boss_killed: AtomicU32,
     hud: OnReady<Gd<CanvasLayer>>,
     zombie_generator: OnReady<Gd<ZombieGenerator>>,
+    boomer_generator: OnReady<Gd<ZombieGenerator>>,
     boss_generator: OnReady<Gd<ZombieGenerator>>,
     bgm: OnReady<Gd<AudioStreamPlayer2D>>,
     rampage_bgm: OnReady<Gd<AudioStreamPlayer2D>>,
@@ -61,12 +65,14 @@ impl INode2D for RustLevel {
             grow_rate: LEVEL_GROW_RATE,
             rampage_time: LEVEL_RAMPAGE_TIME,
             zombie_refresh_time: 3.0,
+            boomer_refresh_time: 10.0,
             boss_refresh_time: 60.0,
             left_rampage_time: LEVEL_RAMPAGE_TIME,
             zombie_killed: AtomicU32::new(0),
             boss_killed: AtomicU32::new(0),
             hud: OnReady::from_node("LevelHUD"),
             zombie_generator: OnReady::from_node("ZombieGenerator"),
+            boomer_generator: OnReady::from_node("BoomerGenerator"),
             boss_generator: OnReady::from_node("BossGenerator"),
             bgm: OnReady::from_node("Bgm"),
             rampage_bgm: OnReady::from_node("RampageBgm"),
@@ -87,6 +93,7 @@ impl INode2D for RustLevel {
         let boss_killed = self.boss_killed.load(Ordering::Acquire);
         let killed = zombie_killed.saturating_add(boss_killed);
         let zombie_generator = self.zombie_generator.bind();
+        let boomer_generator = self.boomer_generator.bind();
         let boss_generator = self.boss_generator.bind();
         let zombie_current = zombie_generator.current;
         let boss_current = boss_generator.current;
@@ -95,8 +102,10 @@ impl INode2D for RustLevel {
         let zombie_refresh_count = zombie_generator.current_refresh_count;
         let boss_refresh_count = boss_generator.current_refresh_count;
         let zombie_timer = self.zombie_generator.get_node_as::<Timer>("Timer");
+        let boomer_timer = self.boomer_generator.get_node_as::<Timer>("Timer");
         let boss_timer = self.boss_generator.get_node_as::<Timer>("Timer");
         if zombie_timer.is_stopped()
+            && boomer_timer.is_stopped()
             && boss_timer.is_stopped()
             && SystemTime::now()
                 .duration_since(UNIX_EPOCH)
@@ -117,7 +126,11 @@ impl INode2D for RustLevel {
                 .saturating_sub(boss_killed)
                 .min(zombie_refresh_count);
             for _ in 0..refresh_zombie_count {
-                zombie_generator.generate_zombie();
+                if random_bool() {
+                    zombie_generator.generate_zombie();
+                } else {
+                    boomer_generator.generate_zombie();
+                }
             }
             for _ in 0..refresh_boss_count {
                 boss_generator.generate_zombie();
@@ -138,6 +151,7 @@ impl INode2D for RustLevel {
             Ordering::Release,
         );
         drop(zombie_generator);
+        drop(boomer_generator);
         drop(boss_generator);
         self.left_rampage_time = (self.left_rampage_time - delta as real).max(0.0);
         self.update_rampage_hud();
@@ -215,9 +229,11 @@ impl RustLevel {
 
     pub fn update_progress_hud(&mut self) {
         let boss_refreshed = self.boss_generator.bind().current;
-        let zombie_refreshed = self.zombie_generator.bind().current;
+        let zombie_refreshed =
+            self.zombie_generator.bind().current + self.boomer_generator.bind().current;
         let boss_total = self.boss_generator.bind().current_total;
-        let zombie_total = self.zombie_generator.bind().current_total;
+        let zombie_total =
+            self.zombie_generator.bind().current_total + self.boomer_generator.bind().current_total;
         let mut label = self.get_center_container().get_node_as::<Label>("Progress");
         label.set_text(&format!(
             "PROGRESS {}+{}/{}+{}/{}+{}",
@@ -240,6 +256,13 @@ impl RustLevel {
             .min(self.zombie_generator.bind().refresh_barrier);
         let zombie_timer = self.zombie_generator.get_node_as::<Timer>("Timer");
         let zombie_wait_time = zombie_timer.get_wait_time();
+        let boomer_refresh_count = self
+            .boomer_generator
+            .bind()
+            .current_refresh_count
+            .min(self.boomer_generator.bind().refresh_barrier);
+        let boomer_timer = self.boomer_generator.get_node_as::<Timer>("Timer");
+        let boomer_wait_time = boomer_timer.get_wait_time();
         let boss_refresh_count = self
             .boss_generator
             .bind()
@@ -249,7 +272,7 @@ impl RustLevel {
         let boss_wait_time = boss_timer.get_wait_time();
         let mut label = self.get_right_container().get_node_as::<Label>("Refresh");
         label.set_text(&format!(
-            "ZOMBIE {} {}/{:.1}s\nBOSS {} {}/{:.1}s",
+            "ZOMBIE {} {}/{:.1}s\nBOOMER {} {}/{:.1}s\nBOSS {} {}/{:.1}s",
             if zombie_timer.is_stopped() {
                 "COMING"
             } else {
@@ -257,6 +280,13 @@ impl RustLevel {
             },
             zombie_refresh_count,
             zombie_wait_time,
+            if boomer_timer.is_stopped() {
+                "COMING"
+            } else {
+                "INCOMING"
+            },
+            boomer_refresh_count,
+            boomer_wait_time,
             if boss_timer.is_stopped() {
                 "COMING"
             } else {
@@ -304,6 +334,18 @@ impl RustLevel {
                 ZOMBIE_MAX_SCREEN_COUNT
             },
             self.zombie_refresh_time,
+        );
+        self.boomer_generator.bind_mut().level_up(
+            jump,
+            false,
+            rate,
+            BOOMER_REFRESH_BARRIER,
+            if self.hell {
+                (BOOMER_MAX_SCREEN_COUNT as real * 1.6) as u32
+            } else {
+                BOOMER_MAX_SCREEN_COUNT
+            },
+            self.boomer_refresh_time,
         );
         self.boss_generator.bind_mut().level_up(
             jump,
@@ -366,18 +408,23 @@ impl RustLevel {
 
     pub fn start(&mut self) {
         self.zombie_generator.bind_mut().start_timer();
+        self.boomer_generator.bind_mut().start_timer();
         self.boss_generator.bind_mut().start_timer();
     }
 
     pub fn enable_hell(&mut self) {
         self.zombie_refresh_time = 0.2;
-        self.boss_refresh_time = 0.2;
+        self.boomer_refresh_time = 0.5;
+        self.boss_refresh_time = 2.0;
         self.rampage_time = 0.0;
         self.left_rampage_time = self.rampage_time;
         self.hell = true;
         self.zombie_generator
             .bind_mut()
             .refresh_timer(self.zombie_refresh_time);
+        self.boomer_generator
+            .bind_mut()
+            .refresh_timer(self.boomer_refresh_time);
         self.boss_generator
             .bind_mut()
             .refresh_timer(self.boss_refresh_time);

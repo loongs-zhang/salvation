@@ -362,7 +362,7 @@ shape = SubResource("CircleShape2D_xgxvb")
 
 [node name="AnimatedSprite2D" type="ZombieAnimation" parent="."]
 sprite_frames = SubResource("SpriteFrames_a2hqs")
-animation = &"attack"
+animation = &"guard"
 autoplay = "guard"
 
 [node name="ZombieAttackArea" type="ZombieAttackArea" parent="."]

@@ -2,10 +2,8 @@ use crate::common::RustMessage;
 use crate::level::RustLevel;
 use crate::player::RustPlayer;
 use crate::world::RustWorld;
-use crate::zombie::RustZombie;
 use crate::zombie::animation::ZombieAnimation;
 use crate::zombie::attack::{ZombieAttackArea, ZombieDamageArea};
-use crate::zombie::boomer::RustBoomer;
 use crate::zombie::bump::BossBumpArea;
 use crate::{
     BOSS_BUMP_DISTANCE, BOSS_DAMAGE, BOSS_MAX_BODY_COUNT, BOSS_MAX_HEALTH, BOSS_MOVE_SPEED,
@@ -14,7 +12,7 @@ use crate::{
 use godot::builtin::{Vector2, real};
 use godot::classes::{
     AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, GpuParticles2D, ICharacterBody2D,
-    InputEvent, KinematicCollision2D, Node,
+    InputEvent, KinematicCollision2D, Node, PhysicsBody2D,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -178,16 +176,8 @@ impl RustBoss {
             return;
         }
         if let Some(object) = collision.get_collider() {
-            if object.is_class("RustZombie") {
-                let mut to_zombie = object.cast::<RustZombie>();
-                let position = to_zombie.get_global_position();
-                to_zombie.set_global_position(position + velocity);
-                to_zombie.look_at(position + velocity);
-                if let Some(another_collision) = to_zombie.move_and_collide(velocity) {
-                    Self::zombie_collide(another_collision, velocity, push_count - 1);
-                }
-            } else if object.is_class("RustBoomer") {
-                let mut to_zombie = object.cast::<RustBoomer>();
+            if object.is_class("RustZombie") || object.is_class("RustBoomer") {
+                let mut to_zombie = object.cast::<PhysicsBody2D>();
                 let position = to_zombie.get_global_position();
                 to_zombie.set_global_position(position + velocity);
                 to_zombie.look_at(position + velocity);
@@ -373,6 +363,7 @@ impl RustBoss {
             .set_global_position(player_position + random_position(1000.0, 1100.0));
     }
 
+    #[func]
     pub fn get_current_direction(&self) -> Vector2 {
         let rotation = self.base().get_rotation();
         Vector2::new(rotation.cos(), rotation.sin())

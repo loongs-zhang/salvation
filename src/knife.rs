@@ -1,9 +1,8 @@
 use crate::MESSAGE;
 use crate::common::RustMessage;
 use crate::player::RustPlayer;
-use crate::zombie::RustZombie;
 use crate::zombie::boss::RustBoss;
-use godot::builtin::{Array, real};
+use godot::builtin::{Array, Vector2, real};
 use godot::classes::tween::{EaseType, TransitionType};
 use godot::classes::{Area2D, AudioStream, AudioStreamPlayer2D, IArea2D, Node2D};
 use godot::meta::ToGodot;
@@ -103,23 +102,23 @@ impl RustKnife {
     }
 
     #[func]
-    pub fn on_area_2d_body_entered(&mut self, body: Gd<Node2D>) {
+    pub fn on_area_2d_body_entered(&mut self, mut body: Gd<Node2D>) {
         if !self.base().is_visible() {
             return;
         }
         let position = self.base().get_global_position();
-        let mut damage = self.final_damage;
-        if body.is_class("RustZombie") {
+        let mut damage = 0;
+        if body.is_class("RustZombie") || body.is_class("RustBoomer") {
+            damage = self.final_damage;
             #[allow(clippy::borrow_interior_mutable_const)]
             if let Some(audio) = HIT_AUDIOS.pick_random() {
                 self.hit_audio.set_stream(&audio);
                 self.hit_audio.play();
             }
-            let mut zombie = body.cast::<RustZombie>();
-            let zombie_position = zombie.get_global_position();
+            let zombie_position = body.get_global_position();
             let direction = position.direction_to(zombie_position);
             // 暗杀判定
-            if self.try_assassinate(&zombie) {
+            if self.try_assassinate(&mut body) {
                 damage *= 3;
                 if let Some(mut assassinate_label) = MESSAGE.try_instantiate_as::<RustMessage>() {
                     assassinate_label.set_global_position(position);
@@ -131,16 +130,17 @@ impl RustKnife {
                     }
                 }
             }
-            zombie.bind_mut().on_hit(
-                damage,
-                direction,
-                self.final_repel,
-                zombie_position + direction,
+            body.call_deferred(
+                "on_hit",
+                &[
+                    damage.to_variant(),
+                    direction.to_variant(),
+                    self.final_repel.to_variant(),
+                    (zombie_position + direction).to_variant(),
+                ],
             );
-            if damage > 0 {
-                RustPlayer::add_score(damage as u64);
-            }
         } else if body.is_class("RustBoss") {
+            damage = self.final_damage;
             #[allow(clippy::borrow_interior_mutable_const)]
             if let Some(audio) = HIT_AUDIOS.pick_random() {
                 self.hit_audio.set_stream(&audio);
@@ -155,9 +155,9 @@ impl RustKnife {
                 self.final_repel,
                 boss_position + direction,
             );
-            if damage > 0 {
-                RustPlayer::add_score(damage as u64);
-            }
+        }
+        if damage > 0 {
+            RustPlayer::add_score(damage as u64);
         }
     }
 
@@ -168,13 +168,13 @@ impl RustKnife {
     }
 
     // 僵尸背对玩家，则判定可暗杀
-    pub fn try_assassinate(&self, zombie: &Gd<RustZombie>) -> bool {
+    pub fn try_assassinate(&self, zombie: &mut Gd<Node2D>) -> bool {
         let zombie_position = zombie.get_global_position();
         let player_position = RustPlayer::get_position();
         let to_player_dir = player_position.direction_to(zombie_position).normalized();
         let angle = zombie
-            .bind()
-            .get_current_direction()
+            .call("get_current_direction", &[])
+            .to::<Vector2>()
             .angle_to(to_player_dir)
             .to_degrees();
         (-60.0..=60.0).contains(&angle)

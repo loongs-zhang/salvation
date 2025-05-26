@@ -116,6 +116,10 @@ const BOOMER_DAMAGE: i64 = 50;
 
 const BOOMER_REPEL: real = 100.0;
 
+const BOOMER_REFRESH_BARRIER: u32 = 3;
+
+const BOOMER_MAX_SCREEN_COUNT: u32 = 10;
+
 // boss
 const BOSS_MAX_HEALTH: u32 = 7200;
 

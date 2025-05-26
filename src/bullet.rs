@@ -1,6 +1,4 @@
 use crate::player::RustPlayer;
-use crate::zombie::RustZombie;
-use crate::zombie::boomer::RustBoomer;
 use crate::zombie::boss::RustBoss;
 use godot::builtin::{Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
@@ -8,6 +6,7 @@ use godot::classes::{
     Area2D, AudioStreamPlayer2D, CollisionShape2D, IArea2D, INode2D, Node, Node2D, Object,
     RayCast2D,
 };
+use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
 
@@ -157,30 +156,32 @@ impl BulletDamageArea {
     pub fn sig();
 
     #[func]
-    pub fn on_area_2d_body_entered(&mut self, body: Gd<Node2D>) {
+    pub fn on_area_2d_body_entered(&mut self, mut body: Gd<Node2D>) {
         let mut rust_bullet = self
             .base()
             .get_parent()
             .expect("RustBullet not found")
             .cast::<RustBullet>();
-        let mut damage = rust_bullet.bind().final_damage;
-        if body.is_class("RustZombie") {
+        let mut damage = 0;
+        if body.is_class("RustZombie") || body.is_class("RustBoomer") {
+            damage = rust_bullet.bind().final_damage;
             self.hit_audio.play();
             rust_bullet.bind_mut().on_hit(1);
             if self.headshot_ray1.is_colliding() || self.headshot_ray2.is_colliding() {
                 self.get_rust_player().bind_mut().headshot();
                 damage *= 3;
             }
-            body.cast::<RustZombie>().bind_mut().on_hit(
-                damage,
-                rust_bullet.bind().direction,
-                rust_bullet.bind().final_repel,
-                rust_bullet.get_global_position(),
+            body.call_deferred(
+                "on_hit",
+                &[
+                    damage.to_variant(),
+                    rust_bullet.bind().direction.to_variant(),
+                    rust_bullet.bind().final_repel.to_variant(),
+                    rust_bullet.get_global_position().to_variant(),
+                ],
             );
-            if damage > 0 {
-                RustPlayer::add_score(damage as u64);
-            }
         } else if body.is_class("RustBoss") {
+            damage = rust_bullet.bind().final_damage;
             self.hit_audio.play();
             // BOSS身体大，消耗更多穿透
             rust_bullet.bind_mut().on_hit(2);
@@ -194,25 +195,9 @@ impl BulletDamageArea {
                 rust_bullet.bind().final_repel,
                 rust_bullet.get_global_position(),
             );
-            if damage > 0 {
-                RustPlayer::add_score(damage as u64);
-            }
-        } else if body.is_class("RustBoomer") {
-            self.hit_audio.play();
-            rust_bullet.bind_mut().on_hit(1);
-            if self.headshot_ray1.is_colliding() || self.headshot_ray2.is_colliding() {
-                self.get_rust_player().bind_mut().headshot();
-                damage *= 3;
-            }
-            body.cast::<RustBoomer>().bind_mut().on_hit(
-                damage,
-                rust_bullet.bind().direction,
-                rust_bullet.bind().final_repel,
-                rust_bullet.get_global_position(),
-            );
-            if damage > 0 {
-                RustPlayer::add_score(damage as u64);
-            }
+        }
+        if damage > 0 {
+            RustPlayer::add_score(damage as u64);
         }
     }
 

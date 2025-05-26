@@ -1,12 +1,26 @@
-[gd_scene load_steps=3 format=3 uid="uid://tmhqea2scfl1"]
+[gd_scene load_steps=5 format=3 uid="uid://tmhqea2scfl1"]
 
 [ext_resource type="PackedScene" uid="uid://d1fywhnf12yb8" path="res://scenes/rust_player_unlock.tscn" id="2_0v3r5"]
 [ext_resource type="PackedScene" uid="uid://r2dqujonhlji" path="res://scenes/zombies/rust_boomer.tscn" id="2_vd72d"]
+[ext_resource type="PackedScene" uid="uid://5koe2fd6n3fc" path="res://scenes/zombies/rust_zombie.tscn" id="3_0v3r5"]
+[ext_resource type="PackedScene" uid="uid://b8ou2gd7qcb4n" path="res://scenes/zombies/rust_boss.tscn" id="4_n8s2p"]
 
 [node name="RustWorld" type="Node2D"]
 
 [node name="RustPlayer" parent="." instance=ExtResource("2_0v3r5")]
 
 [node name="RustBoomer" parent="." instance=ExtResource("2_vd72d")]
+moveable = false
+rotatable = false
 position = Vector2(300, 0)
+rotation = 3.14159
+
+[node name="RustZombie" parent="." instance=ExtResource("3_0v3r5")]
+moveable = false
+position = Vector2(300, 75)
+rotation = 3.14159
+
+[node name="RustBoss" parent="." instance=ExtResource("4_n8s2p")]
+moveable = false
+position = Vector2(375, 0)
 rotation = 3.14159
