@@ -304,7 +304,7 @@ scale_curve = SubResource("CurveTexture_ulhoy")
 color_ramp = SubResource("GradientTexture1D_fuakc")
 
 [node name="RustPlayer" type="RustPlayer"]
-z_index = 1
+z_index = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 light_mask = 2

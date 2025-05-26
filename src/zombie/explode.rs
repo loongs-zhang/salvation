@@ -37,7 +37,9 @@ impl ZombieExplodeArea {
                 // 僵尸面向玩家才发起攻击
                 boomer.call_deferred("dying", &[]);
                 if let Some(mut tree) = self.base().get_tree() {
-                    if let Some(mut timer) = tree.create_timer(1.5) {
+                    if let Some(mut timer) =
+                        tree.create_timer(boomer.bind().get_explode_countdown() as f64)
+                    {
                         timer.connect("timeout", &boomer.callable("die"));
                     }
                 }

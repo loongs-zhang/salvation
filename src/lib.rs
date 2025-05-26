@@ -9,6 +9,13 @@ use godot::register::GodotConvert;
 use rand::Rng;
 use std::sync::LazyLock;
 
+// todo 整合HUD，HUD增加BOSS血条
+// todo 增加双持刀、双持武器，双持武器时，鼠标左键开一边，鼠标右键开另一边
+// todo 增加存档功能
+// todo 增加僵尸死亡掉落金币，需要过去拾取
+// todo 增加局外可升级的技能树
+// todo 程序生成地图不清理之前生成过的
+
 pub mod common;
 
 pub mod entrance;
@@ -111,6 +118,8 @@ const ZOMBIE_RAMPAGE_TIME: real = 30.0;
 
 // boomer
 const BOOMER_MOVE_SPEED: real = 2.0;
+
+const BOOMER_EXPLODE_COUNTDOWN: real = 1.25;
 
 const BOOMER_DAMAGE: i64 = 50;
 

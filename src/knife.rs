@@ -5,6 +5,7 @@ use crate::zombie::boss::RustBoss;
 use godot::builtin::{Array, Vector2, real};
 use godot::classes::tween::{EaseType, TransitionType};
 use godot::classes::{Area2D, AudioStream, AudioStreamPlayer2D, IArea2D, Node2D};
+use godot::global::godot_error;
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -155,6 +156,10 @@ impl RustKnife {
                 self.final_repel,
                 boss_position + direction,
             );
+        } else if body.is_class("RustPlayer") {
+            // ok
+        } else {
+            godot_error!("Knife hit an unexpected body: {}", body.get_class());
         }
         if damage > 0 {
             RustPlayer::add_score(damage as u64);

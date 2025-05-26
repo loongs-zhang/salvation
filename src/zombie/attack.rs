@@ -2,6 +2,7 @@ use crate::zombie::RustZombie;
 use crate::zombie::animation::ZombieAnimation;
 use crate::zombie::boss::RustBoss;
 use godot::classes::{Area2D, IArea2D, Node, Node2D, Object};
+use godot::global::godot_error;
 use godot::obj::{Base, Gd, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
 
@@ -64,6 +65,11 @@ impl ZombieAttackArea {
             }
         } else if let Ok(mut boss) = self.get_parent().try_cast::<RustBoss>() {
             boss.bind_mut().attack();
+        } else {
+            godot_error!(
+                "An unexpected zombie body: {} attack",
+                self.get_parent().get_class()
+            );
         }
     }
 

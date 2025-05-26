@@ -8,6 +8,9 @@ use std::collections::HashMap;
 
 const GRASS_ATLAS_POSITION: Vector2i = Vector2i::new(0, 2);
 const DIRT_ATLAS_POSITION: Vector2i = Vector2i::new(2, 2);
+const BUSH_ATLAS_POSITION: Vector2i = Vector2i::new(1, 1);
+const MUSHROOM_ATLAS_POSITION: Vector2i = Vector2i::new(3, 0);
+const ROCK_ATLAS_POSITION: Vector2i = Vector2i::new(2, 1);
 #[allow(dead_code)]
 const WATER_ATLAS_POSITION: Vector2i = Vector2i::new(1, 2);
 
@@ -26,8 +29,9 @@ pub struct RustGround {
     object_placed_range: Rect2i,
     object_tiles_position: HashMap<i32, PackedVector2Array>,
     other_tiles_position: PackedVector2Array,
-    ground: OnReady<Gd<TileMapLayer>>,
+    objects_high: OnReady<Gd<TileMapLayer>>,
     objects: OnReady<Gd<TileMapLayer>>,
+    ground: OnReady<Gd<TileMapLayer>>,
     other: OnReady<Gd<TileMapLayer>>,
     base: Base<Node2D>,
 }
@@ -39,6 +43,7 @@ impl INode2D for RustGround {
         object_tiles_position.insert(0, PackedVector2Array::new());
         object_tiles_position.insert(1, PackedVector2Array::new());
         object_tiles_position.insert(2, PackedVector2Array::new());
+        object_tiles_position.insert(3, PackedVector2Array::new());
         Self {
             tile_size: 32,
             chunk_size_x: 64,
@@ -49,8 +54,9 @@ impl INode2D for RustGround {
             object_placed_range: Rect2i::new(Vector2i::ZERO, Vector2i::ZERO),
             object_tiles_position,
             other_tiles_position: PackedVector2Array::new(),
-            ground: OnReady::from_node("Ground"),
+            objects_high: OnReady::from_node("ObjectsHigh"),
             objects: OnReady::from_node("Objects"),
+            ground: OnReady::from_node("Ground"),
             other: OnReady::from_node("Other"),
             base,
         }
@@ -94,8 +100,9 @@ impl INode2D for RustGround {
 #[godot_api]
 impl RustGround {
     pub fn load_chunk(&mut self, x: i32, y: i32) {
-        self.ground.clear();
+        self.objects_high.clear();
         self.objects.clear();
+        self.ground.clear();
         self.other.clear();
 
         for _x in 0..self.chunk_size_x {
@@ -135,12 +142,17 @@ impl RustGround {
                                 }
                             }
                             1 => {
-                                if atlas_position.x == 0 {
+                                if rand::random::<i32>() % 2 == 1 && atlas_position.x == 0 {
                                     array.push(current_tile_position.cast_float());
                                 }
                             }
                             2 => {
                                 if atlas_position.x == 2 {
+                                    array.push(current_tile_position.cast_float());
+                                }
+                            }
+                            3 => {
+                                if rand::random::<i32>() % 2 == 0 && atlas_position.x == 0 {
                                     array.push(current_tile_position.cast_float());
                                 }
                             }
@@ -198,6 +210,17 @@ impl RustGround {
                         }
                     }
                 }
+                3 => {
+                    for tp in 0..array.len() {
+                        if self
+                            .ground
+                            .get_cell_source_id(Vector2::new(array[tp].x, array[tp].y).cast_int())
+                            != -1
+                        {
+                            self.draw_mushroom(array[tp].x as i32, array[tp].y as i32)
+                        }
+                    }
+                }
                 _ => {}
             }
         }
@@ -218,32 +241,36 @@ impl RustGround {
 
     fn draw_tree(&mut self, x: i32, y: i32) {
         if self.ground.get_cell_source_id(Vector2i::new(x, y - 1)) != -1 {
-            self.objects
+            self.objects_high
                 .set_cell_ex(Vector2i::new(x, y - 1))
                 .source_id(0)
                 .atlas_coords(Vector2i::new(0, 0))
                 .done();
         }
         if self.ground.get_cell_source_id(Vector2i::new(x, y)) != -1 {
-            self.objects
+            self.objects_high
                 .set_cell_ex(Vector2i::new(x, y))
                 .source_id(0)
                 .atlas_coords(Vector2i::new(0, 1))
                 .done();
         }
-        if self.objects.get_cell_atlas_coords(Vector2i::new(x, y - 2)) == Vector2i::new(0, 0) {
-            self.objects.erase_cell(Vector2i::new(x, y - 2))
+        if self
+            .objects_high
+            .get_cell_atlas_coords(Vector2i::new(x, y - 2))
+            == Vector2i::new(0, 0)
+        {
+            self.objects_high.erase_cell(Vector2i::new(x, y - 2))
         }
     }
 
     fn draw_bush(&mut self, x: i32, y: i32) {
         if self.ground.get_cell_source_id(Vector2i::new(x, y)) != -1
-            && self.objects.get_cell_source_id(Vector2i::new(x, y)) == -1
+            && self.objects_high.get_cell_source_id(Vector2i::new(x, y)) == -1
         {
-            self.objects
+            self.objects_high
                 .set_cell_ex(Vector2i::new(x, y))
                 .source_id(0)
-                .atlas_coords(Vector2i::new(1, 1))
+                .atlas_coords(BUSH_ATLAS_POSITION)
                 .done();
         }
     }
@@ -255,7 +282,19 @@ impl RustGround {
             self.objects
                 .set_cell_ex(Vector2i::new(x, y))
                 .source_id(0)
-                .atlas_coords(Vector2i::new(2, 1))
+                .atlas_coords(ROCK_ATLAS_POSITION)
+                .done()
+        }
+    }
+
+    fn draw_mushroom(&mut self, x: i32, y: i32) {
+        if self.ground.get_cell_source_id(Vector2i::new(x, y)) != -1
+            && self.objects.get_cell_source_id(Vector2i::new(x, y)) == -1
+        {
+            self.objects
+                .set_cell_ex(Vector2i::new(x, y))
+                .source_id(0)
+                .atlas_coords(MUSHROOM_ATLAS_POSITION)
                 .done()
         }
     }

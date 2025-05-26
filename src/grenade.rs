@@ -6,6 +6,7 @@ use godot::classes::{
     AnimatedSprite2D, Area2D, AudioStreamPlayer2D, IRigidBody2D, Node2D, Object, RigidBody2D,
     TextureRect,
 };
+use godot::global::godot_error;
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -170,6 +171,10 @@ impl RustGrenade {
                 if self.final_damage > 0 {
                     RustPlayer::add_score(self.final_damage as u64);
                 }
+            } else if body.is_class("RustGrenade") {
+                // ok
+            } else {
+                godot_error!("Grenade hit an unexpected body: {}", body.get_class());
             }
         }
     }

@@ -358,6 +358,7 @@ visibility_layer = 0
 shape = SubResource("CircleShape2D_xgxvb")
 
 [node name="AnimatedSprite2D" type="ZombieAnimation" parent="."]
+scale = Vector2(1.25, 1.25)
 sprite_frames = SubResource("SpriteFrames_a2hqs")
 animation = &"guard"
 autoplay = "guard"

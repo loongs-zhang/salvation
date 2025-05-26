@@ -6,16 +6,17 @@ use crate::zombie::NEXT_ATTACK_DIRECTION;
 use crate::zombie::animation::ZombieAnimation;
 use crate::zombie::explode::ZombieExplodeArea;
 use crate::{
-    BOOMER_DAMAGE, BOOMER_MOVE_SPEED, BOOMER_REPEL, EXPLODE_AUDIOS, MESSAGE, PlayerState,
-    ZOMBIE_ALARM_TIME, ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH, ZOMBIE_PURSUIT_DISTANCE,
-    ZOMBIE_RAMPAGE_TIME, ZOMBIE_REFRESH_BARRIER, ZombieState, random_bool, random_direction,
-    random_position,
+    BOOMER_DAMAGE, BOOMER_EXPLODE_COUNTDOWN, BOOMER_MOVE_SPEED, BOOMER_REPEL, EXPLODE_AUDIOS,
+    MESSAGE, PlayerState, ZOMBIE_ALARM_TIME, ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH,
+    ZOMBIE_PURSUIT_DISTANCE, ZOMBIE_RAMPAGE_TIME, ZOMBIE_REFRESH_BARRIER, ZombieState, random_bool,
+    random_direction, random_position,
 };
 use godot::builtin::{GString, Vector2, real};
 use godot::classes::{
     AnimatedSprite2D, Area2D, AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, Control,
     GpuParticles2D, ICharacterBody2D, InputEvent, Label, Node, ProgressBar, RemoteTransform2D,
 };
+use godot::global::godot_error;
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::prelude::{GodotClass, godot_api};
@@ -34,6 +35,8 @@ pub struct RustBoomer {
     rotatable: bool,
     #[export]
     explosive: bool,
+    #[export]
+    explode_countdown: real,
     #[export]
     health: u32,
     #[export]
@@ -77,6 +80,7 @@ impl ICharacterBody2D for RustBoomer {
             moveable: true,
             rotatable: true,
             explosive: true,
+            explode_countdown: BOOMER_EXPLODE_COUNTDOWN,
             speed: BOOMER_MOVE_SPEED,
             rampage_time: ZOMBIE_RAMPAGE_TIME,
             alarm_time: ZOMBIE_ALARM_TIME,
@@ -414,6 +418,10 @@ impl RustBoomer {
                         );
                         RustPlayer::add_score(BOOMER_DAMAGE as u64);
                     }
+                } else if body.is_class("RustGrenade") {
+                    // ok
+                } else {
+                    godot_error!("Boomer hit an unexpected body: {}", body.get_class());
                 }
             }
         }
