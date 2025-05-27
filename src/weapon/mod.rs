@@ -1,26 +1,18 @@
 use crate::bullet::RustBullet;
 use crate::grenade::RustGrenade;
 use crate::player::RustPlayer;
-use crate::weapon::hud::WeaponHUD;
 use crate::{
-    BULLET_DAMAGE, BULLET_DISTANCE, BULLET_PENETRATE, BULLET_REPEL, MAX_AMMO, RELOAD_TIME,
+    BULLET, BULLET_DAMAGE, BULLET_DISTANCE, BULLET_PENETRATE, BULLET_REPEL, MAX_AMMO, RELOAD_TIME,
     WEAPON_FIRE_COOLDOWN, random_direction,
 };
 use godot::builtin::{Array, Vector2, real};
 use godot::classes::{
-    AudioStreamPlayer2D, Control, GpuParticles2D, INode2D, Node2D, Object, PackedScene,
+    AudioStreamPlayer2D, CanvasLayer, Control, GpuParticles2D, INode2D, Node2D, Object, PackedScene,
 };
 use godot::global::godot_error;
-use godot::obj::{Base, Gd, OnReady, WithBaseField, WithUserSignals};
+use godot::meta::ToGodot;
+use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
-use godot::tools::load;
-use std::sync::LazyLock;
-
-pub mod hud;
-
-#[allow(clippy::declare_interior_mutable_const)]
-const BULLET: LazyLock<Gd<PackedScene>> =
-    LazyLock::new(|| load("res://scenes/bullets/rust_bullet.tscn"));
 
 #[derive(GodotClass)]
 #[class(base=Node2D)]
@@ -61,7 +53,6 @@ pub struct RustWeapon {
     ammo: i32,
     current_fire_cooldown: real,
     current_flash_cooldown: f64,
-    hud: OnReady<Gd<WeaponHUD>>,
     bullet_points: OnReady<Gd<Control>>,
     fire_flash: OnReady<Gd<GpuParticles2D>>,
     fire_audio: OnReady<Gd<AudioStreamPlayer2D>>,
@@ -91,7 +82,6 @@ impl INode2D for RustWeapon {
             ammo: MAX_AMMO,
             current_fire_cooldown: WEAPON_FIRE_COOLDOWN,
             current_flash_cooldown: 0.0,
-            hud: OnReady::from_node("WeaponHUD"),
             bullet_scenes: Array::new(),
             bullet_points: OnReady::from_node("BulletPoints"),
             fire_flash: OnReady::from_node("GpuParticles2D"),
@@ -123,12 +113,6 @@ impl INode2D for RustWeapon {
         self.ammo = self.clip;
         self.update_ammo_hud();
         let gd = self.to_gd();
-        self.signals()
-            .visibility_changed()
-            .connect_self(|this: &mut Self| {
-                let visible = this.base().is_visible();
-                this.hud.set_visible(visible);
-            });
         self.clip_out_audio
             .signals()
             .finished()
@@ -160,7 +144,12 @@ impl RustWeapon {
     pub fn sig();
 
     pub fn update_ammo_hud(&mut self) {
-        self.hud.bind_mut().update_ammo_hud(self.ammo, self.clip);
+        self.get_rust_player()
+            .get_node_as::<CanvasLayer>("RustHUD")
+            .call_deferred(
+                "update_ammo_hud",
+                &[self.ammo.to_variant(), self.clip.to_variant()],
+            );
     }
 
     pub fn fire(
@@ -391,5 +380,9 @@ impl RustWeapon {
 
     pub fn must_reload(&self) -> bool {
         0 == self.ammo
+    }
+
+    pub fn get_ammo(&self) -> i32 {
+        self.ammo
     }
 }

@@ -159,6 +159,9 @@ impl RustGrenade {
                 || body.is_class("RustBoomer")
             {
                 let direction = position.direction_to(body.get_global_position());
+                if !body.is_instance_valid() {
+                    return;
+                }
                 body.call_deferred(
                     "on_hit",
                     &[

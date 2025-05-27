@@ -1,12 +1,14 @@
 use godot::builtin::{Array, GString, Vector2, real};
 use godot::classes::{
-    AudioStream, DisplayServer, Input, InputEvent, InputEventAction, PackedScene,
+    AudioStream, DirAccess, DisplayServer, Input, InputEvent, InputEventAction, PackedScene,
+    Texture2D,
 };
 use godot::init::{ExtensionLibrary, gdextension};
 use godot::obj::{Gd, NewGd};
 use godot::prelude::load;
 use godot::register::GodotConvert;
 use rand::Rng;
+use std::collections::HashMap;
 use std::sync::LazyLock;
 
 // todo HUD增加BOSS血条
@@ -15,7 +17,6 @@ use std::sync::LazyLock;
 // todo 增加僵尸死亡掉落金币，需要过去拾取
 // todo 增加局外可升级的技能树
 // todo 程序生成地图不清理之前生成过的
-
 pub mod common;
 
 pub mod entrance;
@@ -46,6 +47,10 @@ const DEFAULT_SCREEN_SIZE: Vector2 = Vector2::new(960.0, 540.0);
 const MESSAGE: LazyLock<Gd<PackedScene>> = LazyLock::new(|| load("res://scenes/rust_message.tscn"));
 
 #[allow(clippy::declare_interior_mutable_const)]
+const BULLET: LazyLock<Gd<PackedScene>> =
+    LazyLock::new(|| load("res://scenes/bullets/rust_bullet.tscn"));
+
+#[allow(clippy::declare_interior_mutable_const)]
 const EXPLODE_AUDIOS: LazyLock<Array<Gd<AudioStream>>> = LazyLock::new(|| {
     let mut audios = Array::new();
     for i in 1..=6 {
@@ -55,6 +60,29 @@ const EXPLODE_AUDIOS: LazyLock<Array<Gd<AudioStream>>> = LazyLock::new(|| {
         )));
     }
     audios
+});
+
+#[allow(clippy::declare_interior_mutable_const)]
+const WEAPON_TEXTURE: LazyLock<HashMap<GString, Gd<Texture2D>>> = LazyLock::new(|| {
+    const WEAPONS_DIR: &str = "res://asserts/player/weapons";
+    const SUFFIX: &str = "_m.png";
+    let mut map = HashMap::new();
+    if let Some(mut weapons_dir) = DirAccess::open(WEAPONS_DIR) {
+        for dir_name in weapons_dir.get_directories().to_vec() {
+            if let Some(mut weapons_dir) = DirAccess::open(&format!("{}/{}", WEAPONS_DIR, dir_name))
+            {
+                for file in weapons_dir.get_files().to_vec() {
+                    if file.ends_with(SUFFIX) {
+                        map.insert(
+                            file.replace(SUFFIX, "").to_upper(),
+                            load(&format!("{}/{}/{}", WEAPONS_DIR, dir_name, file)),
+                        );
+                    }
+                }
+            }
+        }
+    }
+    map
 });
 
 // player

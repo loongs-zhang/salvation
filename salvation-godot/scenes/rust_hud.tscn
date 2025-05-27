@@ -1,9 +1,13 @@
-[gd_scene load_steps=4 format=3 uid="uid://dmthcbsw8nxhs"]
+[gd_scene load_steps=5 format=3 uid="uid://dmthcbsw8nxhs"]
 
 [ext_resource type="FontFile" uid="uid://ctt8sqtdr60ln" path="res://asserts/Xolonium-Regular.ttf" id="1_ml7kj"]
 [ext_resource type="Texture2D" uid="uid://desrpva5a2fgq" path="res://asserts/player/cross_hair.png" id="2_wc0e8"]
 
 [sub_resource type="Theme" id="Theme_g8j1n"]
+default_font = ExtResource("1_ml7kj")
+default_font_size = 12
+
+[sub_resource type="Theme" id="Theme_ml7kj"]
 default_font = ExtResource("1_ml7kj")
 default_font_size = 12
 
@@ -138,6 +142,36 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.133333, 0.2, 0.133333, 1)
 text = "RefreshBoss"
 horizontal_alignment = 2
+
+[node name="VBoxBottomRight" type="VBoxContainer" parent="Control"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -129.0
+offset_top = -54.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 0
+grow_vertical = 0
+size_flags_horizontal = 8
+alignment = 1
+
+[node name="WeaponName" type="Label" parent="Control/VBoxBottomRight"]
+layout_mode = 2
+size_flags_horizontal = 8
+text = "WeaponName"
+
+[node name="WeaponTexture" type="TextureRect" parent="Control/VBoxBottomRight"]
+layout_mode = 2
+
+[node name="WeaponAmmo" type="Label" parent="Control/VBoxBottomRight"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme = SubResource("Theme_ml7kj")
+text = "WeaponAmmo"
 
 [node name="CrossHair" type="TextureRect" parent="."]
 anchors_preset = 8

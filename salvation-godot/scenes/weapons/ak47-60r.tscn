@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://b0c5a38wvdtx"]
+[gd_scene load_steps=14 format=3 uid="uid://b0c5a38wvdtx"]
 
 [ext_resource type="AudioStream" uid="uid://betb4j3xkidb0" path="res://asserts/player/weapons/ak47/ak_long-1.wav" id="2_y0gyc"]
 [ext_resource type="AudioStream" uid="uid://cgkki21wkrgmi" path="res://asserts/player/weapons/ak47/ak47_clipout.wav" id="3_oo337"]
@@ -6,8 +6,6 @@
 [ext_resource type="AudioStream" uid="uid://cdgs588ra2q1n" path="res://asserts/player/weapons/ak47/ak47_clipin.wav" id="4_5813e"]
 [ext_resource type="AudioStream" uid="uid://bga4kitoyynfg" path="res://asserts/player/weapons/ak47/ak47_boltpull.wav" id="5_1qt6k"]
 [ext_resource type="Texture2D" uid="uid://cm3tl1oocqth0" path="res://asserts/player/weapons/ak47/ak47.bmp" id="6_oo337"]
-[ext_resource type="FontFile" uid="uid://ctt8sqtdr60ln" path="res://asserts/Xolonium-Regular.ttf" id="7_4dtln"]
-[ext_resource type="Texture2D" uid="uid://ibsc573opmh7" path="res://asserts/player/weapons/ak47/ak47long_m.png" id="7_mb4ji"]
 
 [sub_resource type="Curve" id="Curve_ait51"]
 _data = [Vector2(0, 0.747967), 0.0, 0.0, 0, 0, Vector2(0.49635, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.5), 0.0, 0.0, 0, 0]
@@ -42,11 +40,7 @@ scale_curve = SubResource("CurveTexture_nrs26")
 color_ramp = SubResource("GradientTexture1D_88lgy")
 alpha_curve = SubResource("CurveTexture_ad62i")
 
-[sub_resource type="Theme" id="Theme_xytds"]
-default_font = ExtResource("7_4dtln")
-default_font_size = 12
-
-[node name="Ak47-60R" type="RustWeapon"]
+[node name="AK47-60R" type="RustWeapon"]
 damage = 40
 weight = 0.9
 distance = 1000.0
@@ -102,48 +96,3 @@ stream = ExtResource("4_5813e")
 
 [node name="BoltPullAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("5_1qt6k")
-
-[node name="WeaponHUD" type="WeaponHUD" parent="."]
-
-[node name="Control" type="Control" parent="WeaponHUD"]
-layout_mode = 3
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -10.0
-offset_top = -10.0
-offset_right = -10.0
-offset_bottom = -10.0
-grow_horizontal = 0
-grow_vertical = 0
-
-[node name="VBoxContainer" type="VBoxContainer" parent="WeaponHUD/Control"]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -235.0
-offset_top = -125.0
-grow_horizontal = 0
-grow_vertical = 0
-size_flags_horizontal = 8
-alignment = 1
-
-[node name="WeaponName" type="Label" parent="WeaponHUD/Control/VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 8
-text = "AK47-60R"
-
-[node name="TextureRect" type="TextureRect" parent="WeaponHUD/Control/VBoxContainer"]
-layout_mode = 2
-texture = ExtResource("7_mb4ji")
-
-[node name="Ammo" type="Label" parent="WeaponHUD/Control/VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 8
-theme = SubResource("Theme_xytds")
-text = "Ammo"

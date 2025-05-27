@@ -132,6 +132,9 @@ impl RustKnife {
                     }
                 }
             }
+            if !body.is_instance_valid() {
+                return;
+            }
             body.call_deferred(
                 "on_hit",
                 &[

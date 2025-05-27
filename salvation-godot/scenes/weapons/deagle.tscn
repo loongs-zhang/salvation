@@ -1,12 +1,10 @@
-[gd_scene load_steps=16 format=3 uid="uid://bq5lki2s1pxuu"]
+[gd_scene load_steps=13 format=3 uid="uid://bq5lki2s1pxuu"]
 
 [ext_resource type="Texture2D" uid="uid://cdgbcw4mrrijp" path="res://asserts/player/weapons/deagle/deagle.bmp" id="1_opbco"]
 [ext_resource type="AudioStream" uid="uid://dhhminiyujdul" path="res://asserts/player/weapons/deagle/deagle-2.wav" id="2_opbco"]
 [ext_resource type="AudioStream" uid="uid://dstjhvvitwylp" path="res://asserts/player/weapons/deagle/dde_clipout.wav" id="3_6p0dp"]
 [ext_resource type="AudioStream" uid="uid://bmctk3f5sidey" path="res://asserts/player/weapons/deagle/dde_clipin.wav" id="4_3d5af"]
 [ext_resource type="AudioStream" uid="uid://cqr3j54kro43i" path="res://asserts/player/weapons/deagle/dde_clipoff.wav" id="5_xlb1r"]
-[ext_resource type="Texture2D" uid="uid://4cp1ek7egcwm" path="res://asserts/player/weapons/deagle/deagle_m.png" id="6_d5ty4"]
-[ext_resource type="FontFile" uid="uid://ctt8sqtdr60ln" path="res://asserts/Xolonium-Regular.ttf" id="7_rx1qh"]
 
 [sub_resource type="Curve" id="Curve_ait51"]
 _data = [Vector2(0, 0.747967), 0.0, 0.0, 0, 0, Vector2(0.49635, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.5), 0.0, 0.0, 0, 0]
@@ -40,10 +38,6 @@ scale_max = 3.0
 scale_curve = SubResource("CurveTexture_nrs26")
 color_ramp = SubResource("GradientTexture1D_88lgy")
 alpha_curve = SubResource("CurveTexture_ad62i")
-
-[sub_resource type="Theme" id="Theme_qaptc"]
-default_font = ExtResource("7_rx1qh")
-default_font_size = 12
 
 [node name="DEAGLE" type="RustWeapon"]
 damage = 54
@@ -93,48 +87,3 @@ stream = ExtResource("4_3d5af")
 
 [node name="BoltPullAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("5_xlb1r")
-
-[node name="WeaponHUD" type="WeaponHUD" parent="."]
-
-[node name="Control" type="Control" parent="WeaponHUD"]
-layout_mode = 3
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -10.0
-offset_top = -10.0
-offset_right = -10.0
-offset_bottom = -10.0
-grow_horizontal = 0
-grow_vertical = 0
-
-[node name="VBoxContainer" type="VBoxContainer" parent="WeaponHUD/Control"]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -100.0
-offset_top = -125.0
-grow_horizontal = 0
-grow_vertical = 0
-size_flags_horizontal = 8
-alignment = 1
-
-[node name="WeaponName" type="Label" parent="WeaponHUD/Control/VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 8
-text = "DEAGLE"
-
-[node name="TextureRect" type="TextureRect" parent="WeaponHUD/Control/VBoxContainer"]
-layout_mode = 2
-texture = ExtResource("6_d5ty4")
-
-[node name="Ammo" type="Label" parent="WeaponHUD/Control/VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 8
-theme = SubResource("Theme_qaptc")
-text = "Ammo"

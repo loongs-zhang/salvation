@@ -1,4 +1,5 @@
 use super::*;
+use crate::WEAPON_TEXTURE;
 use crate::weapon::RustWeapon;
 
 #[godot_api(secondary)]
@@ -21,6 +22,15 @@ impl RustPlayer {
                 let mut weapon = node.cast::<RustWeapon>();
                 if weapon_index == i {
                     weapon.set_visible(true);
+                    let mut hud = self.hud.bind_mut();
+                    let weapon_name = weapon.get_name().to_upper();
+                    hud.update_weapon_name_hud(&weapon_name.to_string());
+                    hud.update_weapon_sprite_hud(
+                        WEAPON_TEXTURE
+                            .get(&weapon_name)
+                            .expect("Weapon texture not found"),
+                    );
+                    hud.update_ammo_hud(weapon.bind().get_ammo(), weapon.bind().get_clip());
                 } else {
                     weapon.set_visible(false);
                     // 打断其他武器的换弹

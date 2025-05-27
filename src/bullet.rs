@@ -171,6 +171,9 @@ impl BulletDamageArea {
                 self.get_rust_player().bind_mut().headshot();
                 damage *= 3;
             }
+            if !body.is_instance_valid() {
+                return;
+            }
             body.call_deferred(
                 "on_hit",
                 &[

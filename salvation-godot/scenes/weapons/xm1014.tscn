@@ -1,12 +1,10 @@
-[gd_scene load_steps=16 format=3 uid="uid://cjqspps1mdrvr"]
+[gd_scene load_steps=13 format=3 uid="uid://cjqspps1mdrvr"]
 
 [ext_resource type="Texture2D" uid="uid://dbo40ln3p3sxf" path="res://asserts/player/weapons/xm1014/xm1014.bmp" id="1_378si"]
 [ext_resource type="AudioStream" uid="uid://c7u17ehoba5gb" path="res://asserts/player/weapons/xm1014/xm1014-1.wav" id="2_ljf7y"]
 [ext_resource type="AudioStream" uid="uid://bebw57ilmpkrh" path="res://asserts/player/weapons/w_roundin.wav" id="3_378si"]
 [ext_resource type="AudioStream" uid="uid://c63kkqatpl88f" path="res://asserts/player/weapons/wpn_reload_start.mp3" id="3_flfq1"]
 [ext_resource type="AudioStream" uid="uid://bcej66qqvikk5" path="res://asserts/player/weapons/wpn_reload_end.mp3" id="4_378si"]
-[ext_resource type="Texture2D" uid="uid://us3ks56kcb0c" path="res://asserts/player/weapons/xm1014/xm1014_m.png" id="6_jixhh"]
-[ext_resource type="FontFile" uid="uid://ctt8sqtdr60ln" path="res://asserts/Xolonium-Regular.ttf" id="7_7jn57"]
 
 [sub_resource type="Curve" id="Curve_ait51"]
 _data = [Vector2(0, 0.747967), 0.0, 0.0, 0, 0, Vector2(0.49635, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.5), 0.0, 0.0, 0, 0]
@@ -40,10 +38,6 @@ scale_max = 3.0
 scale_curve = SubResource("CurveTexture_nrs26")
 color_ramp = SubResource("GradientTexture1D_88lgy")
 alpha_curve = SubResource("CurveTexture_ad62i")
-
-[sub_resource type="Theme" id="Theme_i4k35"]
-default_font = ExtResource("7_7jn57")
-default_font_size = 12
 
 [node name="XM1014" type="RustWeapon"]
 damage = 30
@@ -114,48 +108,3 @@ stream = ExtResource("3_378si")
 stream = ExtResource("4_378si")
 
 [node name="BoltPullAudio" type="AudioStreamPlayer2D" parent="."]
-
-[node name="WeaponHUD" type="WeaponHUD" parent="."]
-
-[node name="Control" type="Control" parent="WeaponHUD"]
-layout_mode = 3
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -10.0
-offset_top = -10.0
-offset_right = -10.0
-offset_bottom = -10.0
-grow_horizontal = 0
-grow_vertical = 0
-
-[node name="VBoxContainer" type="VBoxContainer" parent="WeaponHUD/Control"]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -235.0
-offset_top = -125.0
-grow_horizontal = 0
-grow_vertical = 0
-size_flags_horizontal = 8
-alignment = 1
-
-[node name="WeaponName" type="Label" parent="WeaponHUD/Control/VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 8
-text = "XM1014"
-
-[node name="TextureRect" type="TextureRect" parent="WeaponHUD/Control/VBoxContainer"]
-layout_mode = 2
-texture = ExtResource("6_jixhh")
-
-[node name="Ammo" type="Label" parent="WeaponHUD/Control/VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 8
-theme = SubResource("Theme_i4k35")
-text = "Ammo"

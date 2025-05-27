@@ -3,13 +3,12 @@ use godot::builtin::real;
 use godot::classes::input::MouseMode;
 use godot::classes::notify::NodeNotification;
 use godot::classes::{
-    Button, CanvasLayer, Control, Engine, HBoxContainer, ICanvasLayer, Input, Label, TextureRect,
-    VBoxContainer,
+    Button, CanvasLayer, Control, Engine, HBoxContainer, ICanvasLayer, Input, Label, Texture2D,
+    TextureRect, VBoxContainer,
 };
+use godot::meta::AsObjectArg;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::prelude::{GodotClass, godot_api};
-
-// todo 合并武器的HUD
 
 #[derive(GodotClass)]
 #[class(base=CanvasLayer)]
@@ -98,37 +97,41 @@ impl ICanvasLayer for RustHUD {
 #[godot_api]
 impl RustHUD {
     pub fn update_lives_hud(&mut self, lives: u32, max_lives: u32) {
-        let mut hp_hud = self.get_left_container().get_node_as::<Label>("Lives");
+        let mut hp_hud = self.get_left_top_container().get_node_as::<Label>("Lives");
         hp_hud.set_text(&format!("LIVES {}/{}", lives, max_lives));
         hp_hud.show();
     }
 
     pub fn update_hp_hud(&mut self, hp: u32, max_hp: u32) {
-        let mut hp_hud = self.get_left_container().get_node_as::<Label>("HP");
+        let mut hp_hud = self.get_left_top_container().get_node_as::<Label>("HP");
         hp_hud.set_text(&format!("HP {}/{}", hp, max_hp));
         hp_hud.show();
     }
 
     pub fn update_damage_hud(&mut self, damage: i64) {
-        let mut damage_hud = self.get_left_container().get_node_as::<Label>("Damage");
+        let mut damage_hud = self.get_left_top_container().get_node_as::<Label>("Damage");
         damage_hud.set_text(&format!("DAMAGE {}", damage));
         damage_hud.show();
     }
 
     pub fn update_distance_hud(&mut self, distance: real) {
-        let mut damage_hud = self.get_left_container().get_node_as::<Label>("Distance");
+        let mut damage_hud = self
+            .get_left_top_container()
+            .get_node_as::<Label>("Distance");
         damage_hud.set_text(&format!("DISTANCE {:.0}", distance));
         damage_hud.show();
     }
 
     pub fn update_penetrate_hud(&mut self, penetrate: real) {
-        let mut penetrate_hud = self.get_left_container().get_node_as::<Label>("Penetrate");
+        let mut penetrate_hud = self
+            .get_left_top_container()
+            .get_node_as::<Label>("Penetrate");
         penetrate_hud.set_text(&format!("PENETRATE {:.1}", penetrate));
         penetrate_hud.show();
     }
 
     pub fn update_repel_hud(&mut self, repel: real) {
-        let mut repel_hud = self.get_left_container().get_node_as::<Label>("Repel");
+        let mut repel_hud = self.get_left_top_container().get_node_as::<Label>("Repel");
         repel_hud.set_text(&format!("REPEL {}", repel));
         repel_hud.show();
     }
@@ -191,7 +194,7 @@ impl RustHUD {
         zombie_wait_time: f64,
     ) {
         let mut label = self
-            .get_right_container()
+            .get_right_top_container()
             .get_node_as::<Label>("RefreshZombie");
         label.set_text(&format!(
             "ZOMBIE {} {}/{:.1}s",
@@ -209,7 +212,7 @@ impl RustHUD {
         boomer_wait_time: f64,
     ) {
         let mut label = self
-            .get_right_container()
+            .get_right_top_container()
             .get_node_as::<Label>("RefreshBoomer");
         label.set_text(&format!(
             "BOOMER {} {}/{:.1}s",
@@ -227,7 +230,7 @@ impl RustHUD {
         boss_wait_time: f64,
     ) {
         let mut label = self
-            .get_right_container()
+            .get_right_top_container()
             .get_node_as::<Label>("RefreshBoss");
         label.set_text(&format!(
             "BOSS {} {}/{:.1}s",
@@ -239,7 +242,7 @@ impl RustHUD {
     }
 
     pub fn update_fps_hud(&mut self) {
-        let mut label = self.get_right_container().get_node_as::<Label>("FPS");
+        let mut label = self.get_right_top_container().get_node_as::<Label>("FPS");
         label.set_text(&format!(
             "FPS {}",
             Engine::singleton().get_frames_per_second(),
@@ -247,11 +250,36 @@ impl RustHUD {
         label.show();
     }
 
+    pub fn update_weapon_name_hud(&mut self, weapon_name: &str) {
+        let mut ammo_hud = self
+            .get_right_bottom_container()
+            .get_node_as::<Label>("WeaponName");
+        ammo_hud.set_text(weapon_name);
+        ammo_hud.show();
+    }
+
+    pub fn update_weapon_sprite_hud(&mut self, texture: impl AsObjectArg<Texture2D>) {
+        let mut ammo_hud = self
+            .get_right_bottom_container()
+            .get_node_as::<TextureRect>("WeaponTexture");
+        ammo_hud.set_texture(texture);
+        ammo_hud.show();
+    }
+
+    #[func]
+    pub fn update_ammo_hud(&mut self, ammo: i32, clip: i32) {
+        let mut ammo_hud = self
+            .get_right_bottom_container()
+            .get_node_as::<Label>("WeaponAmmo");
+        ammo_hud.set_text(&format!("AMMO {}/{}", ammo, clip));
+        ammo_hud.show();
+    }
+
     pub fn set_upgrade_visible(&mut self, visible: bool) {
         self.upgrade.set_visible(visible);
     }
 
-    fn get_left_container(&mut self) -> Gd<VBoxContainer> {
+    fn get_left_top_container(&mut self) -> Gd<VBoxContainer> {
         self.control.get_node_as::<VBoxContainer>("VBoxTopLeft")
     }
 
@@ -259,8 +287,12 @@ impl RustHUD {
         self.control.get_node_as::<VBoxContainer>("VBoxTopCenter")
     }
 
-    fn get_right_container(&mut self) -> Gd<VBoxContainer> {
+    fn get_right_top_container(&mut self) -> Gd<VBoxContainer> {
         self.control.get_node_as::<VBoxContainer>("VBoxTopRight")
+    }
+
+    fn get_right_bottom_container(&mut self) -> Gd<VBoxContainer> {
+        self.control.get_node_as::<VBoxContainer>("VBoxBottomRight")
     }
 
     fn get_container(&mut self) -> Gd<VBoxContainer> {

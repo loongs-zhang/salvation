@@ -408,6 +408,9 @@ impl RustBoomer {
                 {
                     if position != body.get_global_position() {
                         let direction = position.direction_to(body.get_global_position());
+                        if !body.is_instance_valid() {
+                            return;
+                        }
                         body.call_deferred(
                             "on_hit",
                             &[
@@ -431,6 +434,7 @@ impl RustBoomer {
         self.hud.queue_free();
         self.head_shape2d.queue_free();
         self.collision_shape2d.queue_free();
+        self.zombie_explode_area.queue_free();
         self.zombie_damage_area.queue_free();
         self.hit_audio.queue_free();
         self.blood_flash.queue_free();

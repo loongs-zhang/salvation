@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://ckikdyjginfce"]
+[gd_scene load_steps=14 format=3 uid="uid://ckikdyjginfce"]
 
 [ext_resource type="PackedScene" uid="uid://dgavaa1gfepoa" path="res://scenes/bullets/rust_grenade_bullet.tscn" id="1_peu4v"]
 [ext_resource type="AudioStream" uid="uid://5kde4ei5ikjl" path="res://asserts/player/weapons/m79/m79-1.wav" id="2_y5g1i"]
@@ -6,7 +6,6 @@
 [ext_resource type="AudioStream" uid="uid://0dnqbyebg1m4" path="res://asserts/player/weapons/m79/m79_clipin.wav" id="4_lb87w"]
 [ext_resource type="AudioStream" uid="uid://da51xwl2fl08u" path="res://asserts/player/weapons/m79/m79_clipon.wav" id="5_b5r84"]
 [ext_resource type="Texture2D" uid="uid://cy2sbcg16yq7h" path="res://asserts/player/weapons/m79/m79_m.png" id="6_peu4v"]
-[ext_resource type="FontFile" uid="uid://ctt8sqtdr60ln" path="res://asserts/Xolonium-Regular.ttf" id="7_12xp6"]
 
 [sub_resource type="Curve" id="Curve_ait51"]
 _data = [Vector2(0, 0.747967), 0.0, 0.0, 0, 0, Vector2(0.49635, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.5), 0.0, 0.0, 0, 0]
@@ -40,10 +39,6 @@ scale_max = 3.0
 scale_curve = SubResource("CurveTexture_b5r84")
 color_ramp = SubResource("GradientTexture1D_lb87w")
 alpha_curve = SubResource("CurveTexture_peu4v")
-
-[sub_resource type="Theme" id="Theme_qaptc"]
-default_font = ExtResource("7_12xp6")
-default_font_size = 12
 
 [node name="M79" type="RustWeapon"]
 damage = 200
@@ -95,48 +90,3 @@ stream = ExtResource("4_lb87w")
 
 [node name="BoltPullAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("5_b5r84")
-
-[node name="WeaponHUD" type="WeaponHUD" parent="."]
-
-[node name="Control" type="Control" parent="WeaponHUD"]
-layout_mode = 3
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -10.0
-offset_top = -10.0
-offset_right = -10.0
-offset_bottom = -10.0
-grow_horizontal = 0
-grow_vertical = 0
-
-[node name="VBoxContainer" type="VBoxContainer" parent="WeaponHUD/Control"]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -135.0
-offset_top = -125.0
-grow_horizontal = 0
-grow_vertical = 0
-size_flags_horizontal = 8
-alignment = 1
-
-[node name="WeaponName" type="Label" parent="WeaponHUD/Control/VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 8
-text = "M79"
-
-[node name="TextureRect" type="TextureRect" parent="WeaponHUD/Control/VBoxContainer"]
-layout_mode = 2
-texture = ExtResource("6_peu4v")
-
-[node name="Ammo" type="Label" parent="WeaponHUD/Control/VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 8
-theme = SubResource("Theme_qaptc")
-text = "Ammo"
