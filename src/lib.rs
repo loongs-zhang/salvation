@@ -11,7 +11,6 @@ use rand::Rng;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
-// todo HUD增加BOSS血条
 // todo 增加双持刀、双持武器，双持武器时，鼠标左键开一边，鼠标右键开另一边
 // todo 增加存档功能
 // todo 增加僵尸死亡掉落金币，需要过去拾取

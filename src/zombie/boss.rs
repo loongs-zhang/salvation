@@ -9,10 +9,11 @@ use crate::{
     BOSS_BUMP_DISTANCE, BOSS_DAMAGE, BOSS_MAX_BODY_COUNT, BOSS_MAX_HEALTH, BOSS_MOVE_SPEED,
     MESSAGE, PlayerState, ZOMBIE_MAX_DISTANCE, ZombieState, random_position,
 };
-use godot::builtin::{Vector2, real};
+use godot::builtin::{GString, Vector2, real};
 use godot::classes::{
-    AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, GpuParticles2D, ICharacterBody2D,
-    InputEvent, KinematicCollision2D, Node, PhysicsBody2D,
+    AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, Control, GpuParticles2D,
+    ICharacterBody2D, InputEvent, KinematicCollision2D, Label, Node, PhysicsBody2D, ProgressBar,
+    RemoteTransform2D,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -24,6 +25,8 @@ static BODY_COUNT: AtomicU32 = AtomicU32::new(0);
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
 pub struct RustBoss {
+    #[export]
+    boss_name: GString,
     #[export]
     invincible: bool,
     #[export]
@@ -40,6 +43,7 @@ pub struct RustBoss {
     last_player_position: Vector2,
     last_record_time: Instant,
     record_cooldown: Duration,
+    hud: OnReady<Gd<RemoteTransform2D>>,
     head_shape2d: OnReady<Gd<CollisionShape2D>>,
     collision_shape2d: OnReady<Gd<CollisionShape2D>>,
     animated_sprite2d: OnReady<Gd<ZombieAnimation>>,
@@ -61,6 +65,7 @@ pub struct RustBoss {
 impl ICharacterBody2D for RustBoss {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
+            boss_name: GString::new(),
             invincible: false,
             moveable: true,
             attackable: true,
@@ -73,6 +78,7 @@ impl ICharacterBody2D for RustBoss {
             last_player_position: Vector2::ZERO,
             last_record_time: Instant::now(),
             record_cooldown: Duration::from_secs(3),
+            hud: OnReady::from_node("RemoteTransform2D"),
             head_shape2d: OnReady::from_node("HeadShape2D"),
             collision_shape2d: OnReady::from_node("CollisionShape2D"),
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
@@ -92,6 +98,9 @@ impl ICharacterBody2D for RustBoss {
     }
 
     fn process(&mut self, _delta: f64) {
+        if self.hud.is_instance_valid() {
+            self.hud.set_global_rotation_degrees(0.0);
+        }
         if RustWorld::is_paused() {
             return;
         }
@@ -122,6 +131,7 @@ impl ICharacterBody2D for RustBoss {
             self.flash();
             return;
         }
+        self.update_hp_progress_hud();
         let to_player_dir = zombie_position.direction_to(player_position).normalized();
         let velocity = if distance >= BOSS_BUMP_DISTANCE {
             // 走向玩家
@@ -160,6 +170,12 @@ impl ICharacterBody2D for RustBoss {
         let mut animated_sprite2d = self.animated_sprite2d.bind_mut();
         animated_sprite2d.set_hurt_frames(self.hurt_frames.clone());
         animated_sprite2d.set_damage(BOSS_DAMAGE);
+        if !self.boss_name.is_empty() {
+            let name = self.boss_name.clone();
+            let mut name_label = self.hud.get_node_as::<Label>("Name");
+            name_label.set_text(&name);
+            name_label.show();
+        }
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
@@ -302,6 +318,7 @@ impl RustBoss {
         }
         // 释放资源
         self.base_mut().set_z_index(0);
+        self.hud.queue_free();
         self.head_shape2d.queue_free();
         self.collision_shape2d.queue_free();
         self.bump_damage_area.queue_free();
@@ -362,6 +379,16 @@ impl RustBoss {
         let player_position = RustPlayer::get_position();
         self.base_mut()
             .set_global_position(player_position + random_position(1000.0, 1100.0));
+    }
+
+    pub fn update_hp_progress_hud(&mut self) {
+        if !self.hud.is_instance_valid() {
+            return;
+        }
+        self.hud
+            .get_node_as::<Control>("HpProgress")
+            .get_node_as::<ProgressBar>("ProgressBar")
+            .set_value_no_signal((self.health as f64 / BOSS_MAX_HEALTH as f64) * 100.0);
     }
 
     #[func]

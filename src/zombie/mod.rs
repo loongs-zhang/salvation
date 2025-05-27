@@ -501,7 +501,7 @@ impl RustZombie {
         if !self.hud.is_instance_valid() {
             return;
         }
-        let mut alarm_progress = self.get_alarm_progress();
+        let mut alarm_progress = self.hud.get_node_as::<Control>("AlarmProgress");
         if 0.0 == self.current_alarm_time || RustLevel::is_rampage() {
             alarm_progress.set_visible(false);
         } else {
@@ -521,10 +521,6 @@ impl RustZombie {
         alarm_progress
             .get_node_as::<ProgressBar>("ProgressBar")
             .set_value_no_signal(progress);
-    }
-
-    pub fn get_alarm_progress(&self) -> Gd<Control> {
-        self.hud.get_node_as::<Control>("AlarmProgress")
     }
 
     pub fn is_rampage_run(&self) -> bool {
