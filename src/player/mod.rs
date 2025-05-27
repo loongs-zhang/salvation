@@ -27,7 +27,11 @@ pub mod weapon;
 
 pub mod upgrade;
 
+const NO_NOISE: Vector2 = Vector2::new(real::MAX, real::MAX);
+
 static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
+
+static NOISE_POSITION: AtomicCell<Vector2> = AtomicCell::new(NO_NOISE);
 
 static IMPACT_POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
@@ -303,6 +307,8 @@ impl ICharacterBody2D for RustPlayer {
             self.change_weapon(8);
         } else if event.is_action_pressed("0") {
             self.change_weapon(9);
+        } else if event.is_action_pressed("p") {
+            self.change_weapon(10);
         }
     }
 }
@@ -449,5 +455,10 @@ impl RustPlayer {
 
     pub fn get_position() -> Vector2 {
         POSITION.load()
+    }
+
+    pub fn get_noise_position() -> Option<Vector2> {
+        let r = NOISE_POSITION.load();
+        if NO_NOISE == r { None } else { Some(r) }
     }
 }

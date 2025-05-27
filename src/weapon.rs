@@ -17,6 +17,9 @@ use godot::register::{GodotClass, godot_api};
 #[derive(GodotClass)]
 #[class(base=Node2D)]
 pub struct RustWeapon {
+    //是否消音
+    #[export]
+    silenced: bool,
     //武器伤害
     #[export]
     damage: i64,
@@ -67,6 +70,7 @@ pub struct RustWeapon {
 impl INode2D for RustWeapon {
     fn init(base: Base<Self::Base>) -> Self {
         Self {
+            silenced: false,
             damage: BULLET_DAMAGE,
             weight: 1.0,
             distance: BULLET_DISTANCE,
@@ -384,5 +388,9 @@ impl RustWeapon {
 
     pub fn get_ammo(&self) -> i32 {
         self.ammo
+    }
+
+    pub fn get_noise_source(&self) -> Vector2 {
+        self.bullet_points.get_global_position()
     }
 }

@@ -134,6 +134,8 @@ const ZOMBIE_MAX_BODY_COUNT: u32 = 60;
 
 const ZOMBIE_DAMAGE: i64 = 5;
 
+const ZOMBIE_ALARM_DISTANCE: real = 400.0;
+
 const ZOMBIE_PURSUIT_DISTANCE: real = 225.0;
 
 const ZOMBIE_MAX_DISTANCE: real = 1600.0;

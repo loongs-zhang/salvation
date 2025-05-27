@@ -5,7 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://dl2e2alxr88ti" path="res://asserts/zombie/zombie.png" id="2_53o8o"]
 [ext_resource type="Texture2D" uid="uid://b4ohe06jqwoww" path="res://asserts/player/player_walk.png" id="3_53o8o"]
 [ext_resource type="Texture2D" uid="uid://bwhbmsgxcswh" path="res://asserts/player/player_gun_reload.png" id="3_g8j1n"]
-[ext_resource type="PackedScene" uid="uid://bq5lki2s1pxuu" path="res://scenes/weapons/deagle.tscn" id="6_xpqh4"]
+[ext_resource type="PackedScene" uid="uid://bgd81o6fdx45w" path="res://scenes/weapons/usp.tscn" id="7_3nwbu"]
 [ext_resource type="PackedScene" uid="uid://dmthcbsw8nxhs" path="res://scenes/rust_hud.tscn" id="8_3nwbu"]
 [ext_resource type="AudioStream" uid="uid://dxkj5niiqothq" path="res://asserts/player/player_run.mp3" id="8_e5vhl"]
 [ext_resource type="AudioStream" uid="uid://rxfjna7uyc3n" path="res://asserts/player/player_hurt1.mp3" id="9_dmfm0"]
@@ -339,7 +339,7 @@ rotation = -1.1781
 [node name="Weapon" type="Node2D" parent="."]
 position = Vector2(10, 2)
 
-[node name="DEAGLE" parent="Weapon" instance=ExtResource("6_xpqh4")]
+[node name="USP" parent="Weapon" instance=ExtResource("7_3nwbu")]
 
 [node name="GpuParticles2D" type="GPUParticles2D" parent="."]
 emitting = false

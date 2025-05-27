@@ -1,6 +1,7 @@
 use super::*;
 use crate::WEAPON_TEXTURE;
 use crate::weapon::RustWeapon;
+use godot::global::godot_warn;
 
 #[godot_api(secondary)]
 impl RustPlayer {
@@ -25,11 +26,12 @@ impl RustPlayer {
                     let mut hud = self.hud.bind_mut();
                     let weapon_name = weapon.get_name().to_upper();
                     hud.update_weapon_name_hud(&weapon_name.to_string());
-                    hud.update_weapon_sprite_hud(
-                        WEAPON_TEXTURE
-                            .get(&weapon_name)
-                            .expect("Weapon texture not found"),
-                    );
+                    if let Some(weapon_texture) = WEAPON_TEXTURE.get(&weapon_name) {
+                        hud.update_weapon_sprite_hud(weapon_texture);
+                    } else {
+                        hud.update_weapon_sprite_hud(Gd::null_arg());
+                        godot_warn!("Weapon texture not found for: {}", weapon_name);
+                    }
                     hud.update_ammo_hud(weapon.bind().get_ammo(), weapon.bind().get_clip());
                 } else {
                     weapon.set_visible(false);
@@ -70,40 +72,44 @@ impl RustPlayer {
             .cast::<RustWeapon>()
     }
 
+    pub fn unlock_deagle(&mut self) {
+        self.unlock_weapon("deagle", 1);
+    }
+
     pub fn unlock_xm1014(&mut self) {
-        self.unlock_weapon("xm1014", 1);
+        self.unlock_weapon("xm1014", 2);
     }
 
     pub fn unlock_awp(&mut self) {
-        self.unlock_weapon("awp", 2);
+        self.unlock_weapon("awp", 3);
     }
 
     pub fn unlock_m79(&mut self) {
-        self.unlock_weapon("m79", 3);
+        self.unlock_weapon("m79", 4);
     }
 
     pub fn unlock_m4a1(&mut self) {
-        self.unlock_weapon("m4a1", 4);
+        self.unlock_weapon("m4a1", 5);
     }
 
     pub fn unlock_ak47(&mut self) {
-        self.unlock_weapon("ak47", 5);
+        self.unlock_weapon("ak47", 6);
     }
 
     pub fn unlock_ak47_60r(&mut self) {
-        self.unlock_weapon("ak47-60r", 6);
+        self.unlock_weapon("ak47-60r", 7);
     }
 
     pub fn unlock_m249(&mut self) {
-        self.unlock_weapon("m249", 7);
+        self.unlock_weapon("m249", 8);
     }
 
     pub fn unlock_mg3(&mut self) {
-        self.unlock_weapon("mg3", 8);
+        self.unlock_weapon("mg3", 9);
     }
 
     pub fn unlock_m134(&mut self) {
-        self.unlock_weapon("m134", 9);
+        self.unlock_weapon("m134", 10);
     }
 
     pub fn unlock_weapon(&mut self, weapon_name: &str, index: i32) {

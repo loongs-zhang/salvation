@@ -74,6 +74,12 @@ impl RustPlayer {
             self.reload();
             return;
         }
+        if !rust_weapon.bind().get_silenced() {
+            //武器未消音
+            NOISE_POSITION.store(rust_weapon.bind().get_noise_source());
+        } else {
+            NOISE_POSITION.store(NO_NOISE);
+        }
         rust_weapon.set_visible(true);
         self.animated_sprite2d.play_ex().name("guard").done();
         self.current_speed = self.speed * 0.5 * rust_weapon.bind().get_weight();
@@ -123,6 +129,7 @@ impl RustPlayer {
         let mut rust_weapon = self.get_current_weapon();
         if PlayerState::Dead == self.state
             || PlayerState::Impact == self.state
+            || PlayerState::Reload == self.state
             || PlayerState::Chop == self.state
             || !rust_weapon.bind_mut().reload()
         {

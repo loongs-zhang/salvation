@@ -5,10 +5,10 @@ use crate::world::RustWorld;
 use crate::zombie::animation::ZombieAnimation;
 use crate::zombie::attack::{ZombieAttackArea, ZombieDamageArea};
 use crate::{
-    MESSAGE, PlayerState, ZOMBIE_ALARM_TIME, ZOMBIE_DAMAGE, ZOMBIE_MAX_BODY_COUNT,
-    ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH, ZOMBIE_MOVE_SPEED, ZOMBIE_PURSUIT_DISTANCE,
-    ZOMBIE_RAMPAGE_TIME, ZOMBIE_REFRESH_BARRIER, ZOMBIE_SKIP_FRAME, ZombieState, random_bool,
-    random_direction, random_position,
+    MESSAGE, PlayerState, ZOMBIE_ALARM_DISTANCE, ZOMBIE_ALARM_TIME, ZOMBIE_DAMAGE,
+    ZOMBIE_MAX_BODY_COUNT, ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH, ZOMBIE_MOVE_SPEED,
+    ZOMBIE_PURSUIT_DISTANCE, ZOMBIE_RAMPAGE_TIME, ZOMBIE_REFRESH_BARRIER, ZOMBIE_SKIP_FRAME,
+    ZombieState, random_bool, random_direction, random_position,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{GString, Vector2, real};
@@ -180,7 +180,20 @@ impl ICharacterBody2D for RustZombie {
                 self.guard();
             }
             let now = Instant::now();
-            if distance <= ZOMBIE_PURSUIT_DISTANCE
+            if let Some(noise_position) = RustPlayer::get_noise_position() {
+                let distance_to_noise = zombie_position.distance_to(noise_position);
+                if ZOMBIE_PURSUIT_DISTANCE < distance_to_noise
+                    && distance_to_noise < ZOMBIE_ALARM_DISTANCE
+                {
+                    // 向噪音位置移动
+                    self.base_mut().look_at(noise_position);
+                    self.current_alarm_time = self.alarm_time;
+                    zombie_position.direction_to(noise_position).normalized() * self.current_speed
+                } else {
+                    self.guard();
+                    self.get_current_direction() * self.current_speed
+                }
+            } else if distance <= ZOMBIE_PURSUIT_DISTANCE
                 && self.current_alarm_time > 0.0
                 && self.is_face_to_user()
             {

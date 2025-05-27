@@ -48,7 +48,7 @@ bullet_scenes = Array[PackedScene]([ExtResource("1_peu4v")])
 pull_after_reload = true
 repel = 100.0
 penetrate = -9999.0
-fire_cooldown = 3.0
+fire_cooldown = 0.0
 reload_time = 3.0
 
 [node name="BulletPoints" type="Control" parent="."]
