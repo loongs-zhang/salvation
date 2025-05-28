@@ -1,6 +1,6 @@
 use crate::player::RustPlayer;
 use crate::{BOSS_DAMAGE, ZombieState};
-use godot::classes::{Area2D, IArea2D, Node, Node2D, Object};
+use godot::classes::{Area2D, IArea2D, Node2D, Object};
 use godot::obj::{Base, Gd, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
 use std::time::{Duration, Instant};
@@ -55,21 +55,10 @@ impl BossBumpArea {
         {
             // 撞击玩家，如果无冷却就会一直撞击，不攻击
             let position = self.base().get_global_position();
-            self.get_rust_player()
+            RustPlayer::get()
                 .bind_mut()
                 .on_impact(BOSS_DAMAGE * 4, position);
             self.last_bump_time = now;
         }
-    }
-
-    pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {
-        if let Some(tree) = self.base().get_tree() {
-            if let Some(root) = tree.get_root() {
-                return root
-                    .get_node_as::<Node>("RustWorld")
-                    .get_node_as::<RustPlayer>("RustPlayer");
-            }
-        }
-        panic!("RustPlayer not found");
     }
 }

@@ -1,14 +1,18 @@
 use crate::common::RustMessage;
+use crate::grenade::RustGrenade;
 use crate::level::RustLevel;
 use crate::player::RustPlayer;
+use crate::weapon::RustWeapon;
 use crate::world::RustWorld;
 use crate::zombie::animation::ZombieAnimation;
 use crate::zombie::attack::{ZombieAttackArea, ZombieDamageArea};
+use crate::zombie::boomer::RustBoomer;
 use crate::{
-    MESSAGE, PlayerState, ZOMBIE_ALARM_DISTANCE, ZOMBIE_ALARM_TIME, ZOMBIE_DAMAGE,
-    ZOMBIE_MAX_BODY_COUNT, ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH, ZOMBIE_MOVE_SPEED,
-    ZOMBIE_PURSUIT_DISTANCE, ZOMBIE_RAMPAGE_TIME, ZOMBIE_REFRESH_BARRIER, ZOMBIE_SKIP_FRAME,
-    ZombieState, random_bool, random_direction, random_position,
+    BOOMER_ALARM_DISTANCE, GRENADE_ALARM_DISTANCE, GUN_ALARM_DISTANCE, MESSAGE, PlayerState,
+    ZOMBIE_ALARM_TIME, ZOMBIE_DAMAGE, ZOMBIE_MAX_BODY_COUNT, ZOMBIE_MAX_DISTANCE,
+    ZOMBIE_MAX_HEALTH, ZOMBIE_MOVE_SPEED, ZOMBIE_PURSUIT_DISTANCE, ZOMBIE_RAMPAGE_TIME,
+    ZOMBIE_REFRESH_BARRIER, ZOMBIE_SKIP_FRAME, ZombieState, random_bool, random_direction,
+    random_position,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{GString, Vector2, real};
@@ -180,26 +184,19 @@ impl ICharacterBody2D for RustZombie {
                 self.guard();
             }
             let now = Instant::now();
-            if let Some(noise_position) = RustPlayer::get_noise_position() {
-                let distance_to_noise = zombie_position.distance_to(noise_position);
-                if ZOMBIE_PURSUIT_DISTANCE < distance_to_noise
-                    && distance_to_noise < ZOMBIE_ALARM_DISTANCE
-                {
-                    // 向噪音位置移动
-                    self.base_mut().look_at(noise_position);
-                    self.current_alarm_time = self.alarm_time;
-                    zombie_position.direction_to(noise_position).normalized() * self.current_speed
-                } else {
-                    self.guard();
-                    self.get_current_direction() * self.current_speed
-                }
-            } else if distance <= ZOMBIE_PURSUIT_DISTANCE
+            if distance <= ZOMBIE_PURSUIT_DISTANCE
                 && self.current_alarm_time > 0.0
                 && self.is_face_to_user()
             {
                 // 向玩家移动，并累计警戒条
                 self.base_mut().look_at(player_position);
                 real_to_player_dir * self.current_speed
+            } else if let Some(noise_position) = RustGrenade::get_noise_position() {
+                self.alarmed_by_sound(noise_position, GRENADE_ALARM_DISTANCE)
+            } else if let Some(noise_position) = RustBoomer::get_noise_position() {
+                self.alarmed_by_sound(noise_position, BOOMER_ALARM_DISTANCE)
+            } else if let Some(noise_position) = RustWeapon::get_noise_position() {
+                self.alarmed_by_sound(noise_position, GUN_ALARM_DISTANCE)
             } else if self.rotatable
                 && now.duration_since(self.last_rotate_time) >= self.rotate_cooldown
             {
@@ -272,6 +269,24 @@ impl ICharacterBody2D for RustZombie {
 
 #[godot_api]
 impl RustZombie {
+    pub fn alarmed_by_sound(
+        &mut self,
+        noise_position: Vector2,
+        max_alarm_distance: real,
+    ) -> Vector2 {
+        let zombie_position = self.base().get_global_position();
+        let distance_to_noise = zombie_position.distance_to(noise_position);
+        if ZOMBIE_PURSUIT_DISTANCE < distance_to_noise && distance_to_noise < max_alarm_distance {
+            // 向噪音位置移动
+            self.base_mut().look_at(noise_position);
+            self.current_alarm_time = self.alarm_time;
+            zombie_position.direction_to(noise_position).normalized() * self.current_speed
+        } else {
+            self.guard();
+            self.get_current_direction() * self.current_speed
+        }
+    }
+
     #[func]
     pub fn on_hit(&mut self, hit_val: i64, direction: Vector2, repel: real, hit_position: Vector2) {
         let zombie_position = self.base().get_global_position();

@@ -1,6 +1,7 @@
-use crate::EXPLODE_AUDIOS;
 use crate::player::RustPlayer;
-use godot::builtin::{Vector2, real};
+use crate::{EXPLODE_AUDIOS, NO_NOISE};
+use crossbeam_utils::atomic::AtomicCell;
+use godot::builtin::{Callable, Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
     AnimatedSprite2D, Area2D, AudioStreamPlayer2D, IRigidBody2D, Node2D, Object, RigidBody2D,
@@ -10,6 +11,8 @@ use godot::global::godot_error;
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
+
+static NOISE_POSITION: AtomicCell<Vector2> = AtomicCell::new(NO_NOISE);
 
 #[derive(GodotClass)]
 #[class(base=RigidBody2D)]
@@ -150,6 +153,9 @@ impl RustGrenade {
         }
         let position = self.base().get_global_position();
         for mut body in self.damage_area.get_overlapping_bodies().iter_shared() {
+            if !body.is_instance_valid() {
+                continue;
+            }
             if body.is_class("RustPlayer") {
                 body.cast::<RustPlayer>()
                     .bind_mut()
@@ -159,9 +165,6 @@ impl RustGrenade {
                 || body.is_class("RustBoomer")
             {
                 let direction = position.direction_to(body.get_global_position());
-                if !body.is_instance_valid() {
-                    return;
-                }
                 body.call_deferred(
                     "on_hit",
                     &[
@@ -172,12 +175,24 @@ impl RustGrenade {
                     ],
                 );
                 if self.final_damage > 0 {
-                    RustPlayer::add_score(self.final_damage as u64);
+                    RustPlayer::get().call_deferred("add_score", &[self.final_damage.to_variant()]);
                 }
             } else if body.is_class("RustGrenade") {
                 // ok
             } else {
                 godot_error!("Grenade hit an unexpected body: {}", body.get_class());
+            }
+        }
+        NOISE_POSITION.store(position);
+        if let Some(mut tree) = self.base().get_tree() {
+            if let Some(mut timer) = tree.create_timer(8.0) {
+                timer.connect(
+                    "timeout",
+                    &Callable::from_sync_fn("clean_grenade_noise", |_| {
+                        NOISE_POSITION.store(NO_NOISE);
+                        Ok(().to_variant())
+                    }),
+                );
             }
         }
     }
@@ -189,5 +204,10 @@ impl RustGrenade {
                 .get_viewport()
                 .expect("Viewport not found")
                 .get_mouse_position()
+    }
+
+    pub fn get_noise_position() -> Option<Vector2> {
+        let r = NOISE_POSITION.load();
+        if NO_NOISE == r { None } else { Some(r) }
     }
 }

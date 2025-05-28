@@ -114,6 +114,7 @@ impl RustWorld {
 
     #[func]
     pub fn on_exit_pressed(&mut self) {
+        // todo save/load game
         if let Some(world) = self.entrance_scene.try_instantiate_as::<RustEntrance>() {
             if let Some(tree) = self.base().get_tree() {
                 if let Some(mut root) = tree.get_root() {

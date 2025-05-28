@@ -1,7 +1,7 @@
 use crate::PlayerUpgrade;
 use godot::classes::{INode2D, Label, Node2D};
+use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
-use godot::prelude::ToGodot;
 use godot::register::{GodotClass, godot_api};
 
 #[derive(GodotClass)]

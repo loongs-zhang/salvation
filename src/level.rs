@@ -8,8 +8,8 @@ use crate::{
 use godot::builtin::{Array, real};
 use godot::classes::{AudioStreamPlayer2D, INode2D, InputEvent, Node, Node2D, PackedScene, Timer};
 use godot::global::{godot_error, godot_warn};
+use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
-use godot::prelude::ToGodot;
 use godot::register::{GodotClass, godot_api};
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -105,12 +105,12 @@ impl INode2D for RustLevel {
             && SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .expect("1970-01-01 00:00:00 UTC was {} seconds ago!")
-                .as_secs_f64()
+                .as_secs()
                 - RustPlayer::get_last_score_update()
                 >= boss_timer
                     .get_wait_time()
                     .max(zombie_timer.get_wait_time())
-                    .max(30.0)
+                    .max(30.0) as u64
         {
             RustPlayer::reset_last_score_update();
             //30s内玩家未造成任何伤害，认为卡关了，实际上玩家击杀数足够，但击杀统计少了，强制刷新一批僵尸
@@ -199,18 +199,18 @@ impl RustLevel {
     pub fn kill_confirmed(&mut self) {
         self.zombie_killed.fetch_add(1, Ordering::Release);
         self.update_progress_hud();
-        RustPlayer::add_kill_count();
+        RustPlayer::get().call_deferred("add_kill_count", &[]);
     }
 
     #[func]
     pub fn kill_boss_confirmed(&mut self) {
         self.boss_killed.fetch_add(1, Ordering::Release);
         self.update_progress_hud();
-        RustPlayer::add_kill_boss_count();
+        RustPlayer::get().call_deferred("add_kill_boss_count", &[]);
     }
 
     pub fn update_level_hud(&mut self) {
-        self.get_rust_player()
+        RustPlayer::get()
             .bind()
             .get_hud()
             .bind_mut()
@@ -218,7 +218,7 @@ impl RustLevel {
     }
 
     pub fn update_rampage_hud(&mut self) {
-        self.get_rust_player()
+        RustPlayer::get()
             .bind()
             .get_hud()
             .bind_mut()
@@ -232,7 +232,7 @@ impl RustLevel {
         let boss_total = self.boss_generator.bind().current_total;
         let zombie_total =
             self.zombie_generator.bind().current_total + self.boomer_generator.bind().current_total;
-        self.get_rust_player()
+        RustPlayer::get()
             .bind()
             .get_hud()
             .bind_mut()
@@ -269,7 +269,7 @@ impl RustLevel {
             .min(self.boss_generator.bind().refresh_barrier);
         let boss_timer = self.boss_generator.get_node_as::<Timer>("Timer");
         let boss_wait_time = boss_timer.get_wait_time();
-        let mut hud = self.get_rust_player().bind().get_hud();
+        let mut hud = RustPlayer::get().bind().get_hud();
         hud.bind_mut().update_refresh_zombie_hud(
             zombie_timer.is_stopped(),
             zombie_refresh_count,
@@ -330,26 +330,41 @@ impl RustLevel {
         self.update_level_hud();
         self.update_refresh_hud();
         self.update_progress_hud();
+        self.unlock_weapons();
+    }
+
+    fn unlock_weapons(&mut self) {
+        // 这里的判断不加else，为了后续恢复存档准备
+        let mut player = RustPlayer::get();
         if self.level >= 30 {
-            self.get_rust_player().bind_mut().unlock_m134();
-        } else if self.level >= 27 {
-            self.get_rust_player().bind_mut().unlock_mg3();
-        } else if self.level >= 24 {
-            self.get_rust_player().bind_mut().unlock_m249();
-        } else if self.level >= 21 {
-            self.get_rust_player().bind_mut().unlock_ak47_60r();
-        } else if self.level >= 18 {
-            self.get_rust_player().bind_mut().unlock_ak47();
-        } else if self.level >= 15 {
-            self.get_rust_player().bind_mut().unlock_m4a1();
-        } else if self.level >= 12 {
-            self.get_rust_player().bind_mut().unlock_m79();
-        } else if self.level >= 9 {
-            self.get_rust_player().bind_mut().unlock_awp();
-        } else if self.level >= 6 {
-            self.get_rust_player().bind_mut().unlock_xm1014();
-        } else if self.level >= 3 {
-            self.get_rust_player().bind_mut().unlock_deagle();
+            player.call_deferred("unlock_m134", &[]);
+        }
+        if self.level >= 27 {
+            player.call_deferred("unlock_mg3", &[]);
+        }
+        if self.level >= 24 {
+            player.call_deferred("unlock_m249", &[]);
+        }
+        if self.level >= 21 {
+            player.call_deferred("unlock_ak47_60r", &[]);
+        }
+        if self.level >= 18 {
+            player.call_deferred("unlock_ak47", &[]);
+        }
+        if self.level >= 15 {
+            player.call_deferred("unlock_m4a1", &[]);
+        }
+        if self.level >= 12 {
+            player.call_deferred("unlock_m79", &[]);
+        }
+        if self.level >= 9 {
+            player.call_deferred("unlock_awp", &[]);
+        }
+        if self.level >= 6 {
+            player.call_deferred("unlock_xm1014", &[]);
+        }
+        if self.level >= 3 {
+            player.call_deferred("unlock_deagle", &[]);
         }
     }
 
@@ -381,6 +396,7 @@ impl RustLevel {
     }
 
     pub fn start(&mut self) {
+        RustPlayer::reset_last_score_update();
         self.zombie_generator.bind_mut().start_timer();
         self.boomer_generator.bind_mut().start_timer();
         self.boss_generator.bind_mut().start_timer();
@@ -402,17 +418,6 @@ impl RustLevel {
         self.boss_generator
             .bind_mut()
             .refresh_timer(self.boss_refresh_time);
-    }
-
-    pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {
-        if let Some(tree) = self.base().get_tree() {
-            if let Some(root) = tree.get_root() {
-                return root
-                    .get_node_as::<Node>("RustWorld")
-                    .get_node_as::<RustPlayer>("RustPlayer");
-            }
-        }
-        panic!("RustPlayer not found");
     }
 
     pub fn is_rampage() -> bool {

@@ -1,6 +1,6 @@
 use crate::player::RustPlayer;
 use crate::{PlayerState, ZombieState};
-use godot::classes::{AnimatedSprite2D, IAnimatedSprite2D, Node, Object};
+use godot::classes::{AnimatedSprite2D, IAnimatedSprite2D, Object};
 use godot::obj::{Base, Gd, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
 
@@ -92,20 +92,7 @@ impl ZombieAnimation {
         {
             // 伤害玩家
             let position = base.get_global_position();
-            self.get_rust_player()
-                .bind_mut()
-                .on_hit(self.damage, position);
+            RustPlayer::get().bind_mut().on_hit(self.damage, position);
         }
-    }
-
-    pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {
-        if let Some(tree) = self.base().get_tree() {
-            if let Some(root) = tree.get_root() {
-                return root
-                    .get_node_as::<Node>("RustWorld")
-                    .get_node_as::<RustPlayer>("RustPlayer");
-            }
-        }
-        panic!("RustPlayer not found");
     }
 }

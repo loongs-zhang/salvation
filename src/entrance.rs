@@ -3,8 +3,8 @@ use crate::world::RustWorld;
 use godot::classes::{
     AudioStreamPlayer2D, Button, ColorRect, Control, IControl, PackedScene, Tween, VBoxContainer,
 };
+use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
-use godot::prelude::ToGodot;
 use godot::register::{GodotClass, godot_api};
 
 #[derive(GodotClass)]

@@ -3,8 +3,7 @@ use crate::zombie::boss::RustBoss;
 use godot::builtin::{Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
-    Area2D, AudioStreamPlayer2D, CollisionShape2D, IArea2D, INode2D, Node, Node2D, Object,
-    RayCast2D,
+    Area2D, AudioStreamPlayer2D, CollisionShape2D, IArea2D, INode2D, Node2D, Object, RayCast2D,
 };
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField, WithUserSignals};
@@ -168,7 +167,7 @@ impl BulletDamageArea {
             self.hit_audio.play();
             rust_bullet.bind_mut().on_hit(1);
             if self.headshot_ray1.is_colliding() || self.headshot_ray2.is_colliding() {
-                self.get_rust_player().bind_mut().headshot();
+                RustPlayer::get().bind_mut().headshot();
                 damage *= 3;
             }
             if !body.is_instance_valid() {
@@ -189,7 +188,7 @@ impl BulletDamageArea {
             // BOSS身体大，消耗更多穿透
             rust_bullet.bind_mut().on_hit(2);
             if self.headshot_ray1.is_colliding() || self.headshot_ray2.is_colliding() {
-                self.get_rust_player().bind_mut().headshot();
+                RustPlayer::get().bind_mut().headshot();
                 damage *= 3;
             }
             body.cast::<RustBoss>().bind_mut().on_hit(
@@ -200,18 +199,7 @@ impl BulletDamageArea {
             );
         }
         if damage > 0 {
-            RustPlayer::add_score(damage as u64);
+            RustPlayer::get().call_deferred("add_score", &[damage.to_variant()]);
         }
-    }
-
-    pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {
-        if let Some(tree) = self.base().get_tree() {
-            if let Some(root) = tree.get_root() {
-                return root
-                    .get_node_as::<Node>("RustWorld")
-                    .get_node_as::<RustPlayer>("RustPlayer");
-            }
-        }
-        panic!("RustPlayer not found");
     }
 }

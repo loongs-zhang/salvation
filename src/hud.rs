@@ -8,7 +8,7 @@ use godot::classes::{
 };
 use godot::meta::AsObjectArg;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
-use godot::prelude::{GodotClass, godot_api};
+use godot::register::{GodotClass, godot_api};
 
 #[derive(GodotClass)]
 #[class(base=CanvasLayer)]
@@ -136,25 +136,21 @@ impl RustHUD {
         repel_hud.show();
     }
 
-    pub fn update_killed_hud(&mut self) {
+    pub fn update_killed_hud(&mut self, kill_boss_count: u64, kill_count: u64) {
         let mut repel_hud = self.get_hcontainer().get_node_as::<Label>("Killed");
-        repel_hud.set_text(&format!(
-            "KILLED {}+{}",
-            RustPlayer::get_kill_boss_count(),
-            RustPlayer::get_kill_count()
-        ));
+        repel_hud.set_text(&format!("KILLED {}+{}", kill_boss_count, kill_count,));
         repel_hud.show();
     }
 
-    pub fn update_score_hud(&mut self) {
+    pub fn update_score_hud(&mut self, score: u64) {
         let mut repel_hud = self.get_hcontainer().get_node_as::<Label>("Score");
-        repel_hud.set_text(&format!("SCORE {}", RustPlayer::get_score()));
+        repel_hud.set_text(&format!("SCORE {}", score));
         repel_hud.show();
     }
 
-    pub fn update_died_hud(&mut self) {
+    pub fn update_died_hud(&mut self, died: u64) {
         let mut repel_hud = self.get_hcontainer().get_node_as::<Label>("Died");
-        repel_hud.set_text(&format!("DIED {}", RustPlayer::get_died()));
+        repel_hud.set_text(&format!("DIED {}", died));
         repel_hud.show();
     }
 

@@ -2,10 +2,11 @@ use crate::bullet::RustBullet;
 use crate::grenade::RustGrenade;
 use crate::player::RustPlayer;
 use crate::{
-    BULLET, BULLET_DAMAGE, BULLET_DISTANCE, BULLET_PENETRATE, BULLET_REPEL, MAX_AMMO, RELOAD_TIME,
-    WEAPON_FIRE_COOLDOWN, WeaponState, random_direction,
+    BULLET_DAMAGE, BULLET_DISTANCE, BULLET_PENETRATE, BULLET_REPEL, MAX_AMMO, NO_NOISE,
+    RELOAD_TIME, WEAPON_FIRE_COOLDOWN, WeaponState, random_direction,
 };
-use godot::builtin::{Array, Vector2, real};
+use crossbeam_utils::atomic::AtomicCell;
+use godot::builtin::{Array, Callable, Vector2, real};
 use godot::classes::{
     AudioStreamPlayer2D, CanvasLayer, Control, GpuParticles2D, INode2D, Node2D, Object, PackedScene,
 };
@@ -13,6 +14,14 @@ use godot::global::godot_error;
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
+use godot::tools::load;
+use std::sync::LazyLock;
+
+static NOISE_POSITION: AtomicCell<Vector2> = AtomicCell::new(NO_NOISE);
+
+#[allow(clippy::declare_interior_mutable_const)]
+const BULLET: LazyLock<Gd<PackedScene>> =
+    LazyLock::new(|| load("res://scenes/bullets/rust_bullet.tscn"));
 
 #[derive(GodotClass)]
 #[class(base=Node2D)]
@@ -154,7 +163,7 @@ impl RustWeapon {
     }
 
     pub fn update_ammo_hud(&mut self) {
-        self.get_rust_player()
+        RustPlayer::get()
             .get_node_as::<CanvasLayer>("RustHUD")
             .call_deferred(
                 "update_ammo_hud",
@@ -240,6 +249,23 @@ impl RustWeapon {
             self.ammo -= 1;
             self.state = WeaponState::Firing;
             self.update_ammo_hud();
+            if !self.silenced {
+                //武器未消音
+                NOISE_POSITION.store(self.bullet_points.get_global_position());
+                if let Some(mut tree) = self.base().get_tree() {
+                    if let Some(mut timer) = tree.create_timer(5.0) {
+                        timer.connect(
+                            "timeout",
+                            &Callable::from_sync_fn("clean_weapon_noise", |_| {
+                                NOISE_POSITION.store(NO_NOISE);
+                                Ok(().to_variant())
+                            }),
+                        );
+                    }
+                }
+            } else {
+                NOISE_POSITION.store(NO_NOISE);
+            }
         }
     }
 
@@ -264,7 +290,7 @@ impl RustWeapon {
             gd_mut.set_final_repel(player_repel + self.repel);
             gd_mut.set_direction(direction);
             drop(gd_mut);
-            if let Some(mut parent) = self.get_rust_player().get_parent() {
+            if let Some(mut parent) = RustPlayer::get().get_parent() {
                 parent.add_child(&bullet);
                 return Ok(());
             }
@@ -277,7 +303,7 @@ impl RustWeapon {
             gd_mut.set_final_repel(player_repel + self.repel);
             gd_mut.throw(direction);
             drop(gd_mut);
-            if let Some(mut parent) = self.get_rust_player().get_parent() {
+            if let Some(mut parent) = RustPlayer::get().get_parent() {
                 parent.add_child(&grenade);
                 return Ok(());
             }
@@ -340,7 +366,7 @@ impl RustWeapon {
         self.ammo += 1;
         self.ammo = self.ammo.min(self.clip);
         self.update_ammo_hud();
-        self.get_rust_player().call_deferred("reloading", &[]);
+        RustPlayer::get().call_deferred("reloading", &[]);
         if self.ammo == self.clip {
             self.clip_in_audio.play();
             return;
@@ -366,7 +392,7 @@ impl RustWeapon {
         self.weapon_ready();
         self.ammo = self.clip;
         self.update_ammo_hud();
-        self.get_rust_player().call_deferred("reloaded", &[]);
+        RustPlayer::get().call_deferred("reloaded", &[]);
     }
 
     pub fn stop_reload(&mut self) {
@@ -386,15 +412,6 @@ impl RustWeapon {
                 .get_mouse_position()
     }
 
-    pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {
-        if let Some(parent) = self.base().get_parent() {
-            if let Some(node) = parent.get_parent() {
-                return node.cast::<RustPlayer>();
-            }
-        }
-        panic!("RustPlayer not found");
-    }
-
     pub fn must_reload(&self) -> bool {
         0 == self.ammo
     }
@@ -403,7 +420,8 @@ impl RustWeapon {
         self.ammo
     }
 
-    pub fn get_noise_source(&self) -> Vector2 {
-        self.bullet_points.get_global_position()
+    pub fn get_noise_position() -> Option<Vector2> {
+        let r = NOISE_POSITION.load();
+        if NO_NOISE == r { None } else { Some(r) }
     }
 }

@@ -1,17 +1,21 @@
 use crate::common::RustMessage;
+use crate::grenade::RustGrenade;
 use crate::level::RustLevel;
 use crate::player::RustPlayer;
+use crate::weapon::RustWeapon;
 use crate::world::RustWorld;
 use crate::zombie::NEXT_ATTACK_DIRECTION;
 use crate::zombie::animation::ZombieAnimation;
 use crate::zombie::explode::ZombieExplodeArea;
 use crate::{
-    BOOMER_DAMAGE, BOOMER_EXPLODE_COUNTDOWN, BOOMER_MOVE_SPEED, BOOMER_REPEL, EXPLODE_AUDIOS,
-    MESSAGE, PlayerState, ZOMBIE_ALARM_DISTANCE, ZOMBIE_ALARM_TIME, ZOMBIE_MAX_DISTANCE,
-    ZOMBIE_MAX_HEALTH, ZOMBIE_PURSUIT_DISTANCE, ZOMBIE_RAMPAGE_TIME, ZOMBIE_REFRESH_BARRIER,
-    ZombieState, random_bool, random_direction, random_position,
+    BOOMER_ALARM_DISTANCE, BOOMER_DAMAGE, BOOMER_EXPLODE_COUNTDOWN, BOOMER_MOVE_SPEED,
+    BOOMER_REPEL, EXPLODE_AUDIOS, GRENADE_ALARM_DISTANCE, GUN_ALARM_DISTANCE, MESSAGE, NO_NOISE,
+    PlayerState, ZOMBIE_ALARM_TIME, ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH,
+    ZOMBIE_PURSUIT_DISTANCE, ZOMBIE_RAMPAGE_TIME, ZOMBIE_REFRESH_BARRIER, ZombieState, random_bool,
+    random_direction, random_position,
 };
-use godot::builtin::{GString, Vector2, real};
+use crossbeam_utils::atomic::AtomicCell;
+use godot::builtin::{Callable, GString, Vector2, real};
 use godot::classes::{
     AnimatedSprite2D, Area2D, AudioStreamPlayer2D, CharacterBody2D, CollisionShape2D, Control,
     GpuParticles2D, ICharacterBody2D, InputEvent, Label, Node, ProgressBar, RemoteTransform2D,
@@ -19,8 +23,10 @@ use godot::classes::{
 use godot::global::godot_error;
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
-use godot::prelude::{GodotClass, godot_api};
+use godot::register::{GodotClass, godot_api};
 use std::time::{Duration, Instant};
+
+static NOISE_POSITION: AtomicCell<Vector2> = AtomicCell::new(NO_NOISE);
 
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
@@ -156,26 +162,19 @@ impl ICharacterBody2D for RustBoomer {
                 self.guard();
             }
             let now = Instant::now();
-            if let Some(noise_position) = RustPlayer::get_noise_position() {
-                let distance_to_noise = zombie_position.distance_to(noise_position);
-                if ZOMBIE_PURSUIT_DISTANCE < distance_to_noise
-                    && distance_to_noise < ZOMBIE_ALARM_DISTANCE
-                {
-                    // 向噪音位置移动
-                    self.base_mut().look_at(noise_position);
-                    self.current_alarm_time = self.alarm_time;
-                    zombie_position.direction_to(noise_position).normalized() * self.current_speed
-                } else {
-                    self.guard();
-                    self.get_current_direction() * self.current_speed
-                }
-            } else if distance <= ZOMBIE_PURSUIT_DISTANCE
+            if distance <= ZOMBIE_PURSUIT_DISTANCE
                 && self.current_alarm_time > 0.0
                 && self.is_face_to_user()
             {
                 // 向玩家移动，并累计警戒条
                 self.base_mut().look_at(player_position);
                 real_to_player_dir * self.current_speed
+            } else if let Some(noise_position) = RustGrenade::get_noise_position() {
+                self.alarmed_by_sound(noise_position, GRENADE_ALARM_DISTANCE)
+            } else if let Some(noise_position) = Self::get_noise_position() {
+                self.alarmed_by_sound(noise_position, BOOMER_ALARM_DISTANCE)
+            } else if let Some(noise_position) = RustWeapon::get_noise_position() {
+                self.alarmed_by_sound(noise_position, GUN_ALARM_DISTANCE)
             } else if self.rotatable
                 && now.duration_since(self.last_rotate_time) >= self.rotate_cooldown
             {
@@ -231,10 +230,6 @@ impl ICharacterBody2D for RustBoomer {
             .signals()
             .animation_finished()
             .connect_obj(&gd, Self::clean);
-        self.scream_audio
-            .signals()
-            .finished()
-            .connect_obj(&gd, Self::clean_scream_audio);
         self.last_rotate_time -= self.rotate_cooldown;
         self.guard();
         if !self.boomer_name.is_empty() {
@@ -254,6 +249,24 @@ impl ICharacterBody2D for RustBoomer {
 
 #[godot_api]
 impl RustBoomer {
+    pub fn alarmed_by_sound(
+        &mut self,
+        noise_position: Vector2,
+        max_alarm_distance: real,
+    ) -> Vector2 {
+        let zombie_position = self.base().get_global_position();
+        let distance_to_noise = zombie_position.distance_to(noise_position);
+        if ZOMBIE_PURSUIT_DISTANCE < distance_to_noise && distance_to_noise < max_alarm_distance {
+            // 向噪音位置移动
+            self.base_mut().look_at(noise_position);
+            self.current_alarm_time = self.alarm_time;
+            zombie_position.direction_to(noise_position).normalized() * self.current_speed
+        } else {
+            self.guard();
+            self.get_current_direction() * self.current_speed
+        }
+    }
+
     #[func]
     pub fn on_hit(&mut self, hit_val: i64, direction: Vector2, repel: real, hit_position: Vector2) {
         let zombie_position = self.base().get_global_position();
@@ -294,13 +307,6 @@ impl RustBoomer {
         }
     }
 
-    fn notify_animation(&mut self) {
-        self.animated_sprite2d
-            .signals()
-            .change_zombie_state()
-            .emit(self.state);
-    }
-
     #[func]
     pub fn guard(&mut self) {
         if ZombieState::Dead == self.state {
@@ -317,7 +323,6 @@ impl RustBoomer {
             }
             self.guard_audio.play();
         }
-        self.notify_animation();
     }
 
     pub fn run(&mut self) {
@@ -330,7 +335,6 @@ impl RustBoomer {
         if !self.run_audio.is_playing() && self.run_audio.is_inside_tree() {
             self.run_audio.play();
         }
-        self.notify_animation();
     }
 
     pub fn hit(&mut self, direction: Vector2, hit_position: Vector2) {
@@ -352,7 +356,6 @@ impl RustBoomer {
         if self.scream_audio.is_inside_tree() {
             self.scream_audio.play();
         }
-        self.notify_animation();
     }
 
     pub fn rampage(&mut self) {
@@ -373,7 +376,6 @@ impl RustBoomer {
             }
             self.rampage_audio.play();
         }
-        self.notify_animation();
     }
 
     #[func]
@@ -408,6 +410,9 @@ impl RustBoomer {
                 .get_overlapping_bodies()
                 .iter_shared()
             {
+                if !body.is_instance_valid() {
+                    continue;
+                }
                 if body.is_class("RustPlayer") {
                     body.cast::<RustPlayer>()
                         .bind_mut()
@@ -418,9 +423,6 @@ impl RustBoomer {
                 {
                     if position != body.get_global_position() {
                         let direction = position.direction_to(body.get_global_position());
-                        if !body.is_instance_valid() {
-                            return;
-                        }
                         body.call_deferred(
                             "on_hit",
                             &[
@@ -430,7 +432,7 @@ impl RustBoomer {
                                 position.to_variant(),
                             ],
                         );
-                        RustPlayer::add_score(BOOMER_DAMAGE as u64);
+                        RustPlayer::get().call_deferred("add_score", &[BOOMER_DAMAGE.to_variant()]);
                     }
                 } else if body.is_class("RustGrenade") {
                     // ok
@@ -439,8 +441,19 @@ impl RustBoomer {
                 }
             }
         }
+        NOISE_POSITION.store(self.base().get_global_position());
+        if let Some(mut tree) = self.base().get_tree() {
+            if let Some(mut timer) = tree.create_timer(3.0) {
+                timer.connect(
+                    "timeout",
+                    &Callable::from_sync_fn("clean_boomer_noise", |_| {
+                        NOISE_POSITION.store(NO_NOISE);
+                        Ok(().to_variant())
+                    }),
+                );
+            }
+        }
         // 释放资源
-        self.base_mut().set_z_index(0);
         self.hud.queue_free();
         self.head_shape2d.queue_free();
         self.collision_shape2d.queue_free();
@@ -448,11 +461,11 @@ impl RustBoomer {
         self.zombie_damage_area.queue_free();
         self.hit_audio.queue_free();
         self.blood_flash.queue_free();
+        self.scream_audio.queue_free();
         self.guard_audio.queue_free();
         self.run_audio.queue_free();
         self.rampage_audio.queue_free();
         self.attack_scream_audio.queue_free();
-        self.notify_animation();
         // 击杀僵尸确认
         self.base()
             .get_tree()
@@ -471,11 +484,6 @@ impl RustBoomer {
         self.die_audio.queue_free();
         // 自动清理尸体
         self.base_mut().queue_free();
-    }
-
-    #[func]
-    pub fn clean_scream_audio(&mut self) {
-        self.scream_audio.queue_free();
     }
 
     pub fn flash(&mut self) {
@@ -565,5 +573,10 @@ impl RustBoomer {
             .angle_to(to_player_dir)
             .to_degrees();
         (-60.0..=60.0).contains(&angle)
+    }
+
+    pub fn get_noise_position() -> Option<Vector2> {
+        let r = NOISE_POSITION.load();
+        if NO_NOISE == r { None } else { Some(r) }
     }
 }

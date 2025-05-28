@@ -74,12 +74,6 @@ impl RustPlayer {
             self.reload();
             return;
         }
-        if !rust_weapon.bind().get_silenced() {
-            //武器未消音
-            NOISE_POSITION.store(rust_weapon.bind().get_noise_source());
-        } else {
-            NOISE_POSITION.store(NO_NOISE);
-        }
         rust_weapon.set_visible(true);
         self.animated_sprite2d.play_ex().name("guard").done();
         self.current_speed = self.speed * 0.5 * rust_weapon.bind().get_weight();
@@ -210,7 +204,7 @@ impl RustPlayer {
         STATE.store(self.state);
         //打断正在持续的换弹
         self.get_current_weapon().bind_mut().stop_reload();
-        IMPACT_POSITION.store(impact_position);
+        self.impact_position = impact_position;
     }
 
     pub fn impacting(&mut self) {
@@ -221,7 +215,7 @@ impl RustPlayer {
         self.current_speed = self.speed * 1.25;
         self.state = PlayerState::Impact;
         STATE.store(self.state);
-        let hit_position = IMPACT_POSITION.load();
+        let hit_position = self.impact_position;
         self.base_mut().look_at(hit_position);
         if !self.scream_audio.is_playing() {
             self.scream_audio.play();
@@ -236,8 +230,8 @@ impl RustPlayer {
         self.blood_flash.set_emitting(false);
         self.blood_flash.set_one_shot(true);
         self.blood_flash.restart();
-        IMPACT_POSITION.store(Vector2::ZERO);
-        IMPACTING.store(0.0);
+        self.impact_position = Vector2::ZERO;
+        self.left_impact_time = 0.0;
         self.guard();
     }
 
@@ -254,7 +248,7 @@ impl RustPlayer {
         //打断换弹
         self.get_current_weapon().bind_mut().stop_reload();
         self.die_audio.play();
-        DIED.fetch_add(1, Ordering::Release);
+        self.died += 1;
         if 0 == self.current_lives {
             if let Some(tree) = self.base().get_tree() {
                 if let Some(root) = tree.get_root() {

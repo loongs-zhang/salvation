@@ -1,14 +1,12 @@
 use godot::builtin::{Array, GString, Vector2, real};
 use godot::classes::{
-    AudioStream, DirAccess, DisplayServer, Input, InputEvent, InputEventAction, PackedScene,
-    Texture2D,
+    AudioStream, DisplayServer, Input, InputEvent, InputEventAction, PackedScene,
 };
 use godot::init::{ExtensionLibrary, gdextension};
 use godot::obj::{Gd, NewGd};
-use godot::prelude::load;
 use godot::register::GodotConvert;
+use godot::tools::load;
 use rand::Rng;
-use std::collections::HashMap;
 use std::sync::LazyLock;
 
 // todo 增加双持刀、双持武器，双持武器时，鼠标左键开一边，鼠标右键开另一边
@@ -46,14 +44,6 @@ const DEFAULT_SCREEN_SIZE: Vector2 = Vector2::new(960.0, 540.0);
 const MESSAGE: LazyLock<Gd<PackedScene>> = LazyLock::new(|| load("res://scenes/rust_message.tscn"));
 
 #[allow(clippy::declare_interior_mutable_const)]
-const GRENADE: LazyLock<Gd<PackedScene>> =
-    LazyLock::new(|| load("res://scenes/grenades/fgrenade.tscn"));
-
-#[allow(clippy::declare_interior_mutable_const)]
-const BULLET: LazyLock<Gd<PackedScene>> =
-    LazyLock::new(|| load("res://scenes/bullets/rust_bullet.tscn"));
-
-#[allow(clippy::declare_interior_mutable_const)]
 const EXPLODE_AUDIOS: LazyLock<Array<Gd<AudioStream>>> = LazyLock::new(|| {
     let mut audios = Array::new();
     for i in 1..=6 {
@@ -63,29 +53,6 @@ const EXPLODE_AUDIOS: LazyLock<Array<Gd<AudioStream>>> = LazyLock::new(|| {
         )));
     }
     audios
-});
-
-#[allow(clippy::declare_interior_mutable_const)]
-const WEAPON_TEXTURE: LazyLock<HashMap<GString, Gd<Texture2D>>> = LazyLock::new(|| {
-    const WEAPONS_DIR: &str = "res://asserts/player/weapons";
-    const SUFFIX: &str = "_m.png";
-    let mut map = HashMap::new();
-    if let Some(mut weapons_dir) = DirAccess::open(WEAPONS_DIR) {
-        for dir_name in weapons_dir.get_directories().to_vec() {
-            if let Some(mut weapons_dir) = DirAccess::open(&format!("{}/{}", WEAPONS_DIR, dir_name))
-            {
-                for file in weapons_dir.get_files().to_vec() {
-                    if file.ends_with(SUFFIX) {
-                        map.insert(
-                            file.replace(SUFFIX, "").to_upper(),
-                            load(&format!("{}/{}/{}", WEAPONS_DIR, dir_name, file)),
-                        );
-                    }
-                }
-            }
-        }
-    }
-    map
 });
 
 // player
@@ -106,6 +73,8 @@ const GRENADE_REPEL: real = 120.0;
 
 const GRENADE_DISTANCE: real = 400.0;
 
+const GRENADE_ALARM_DISTANCE: real = 800.0;
+
 // weapon
 const WEAPON_FIRE_COOLDOWN: real = 0.1;
 
@@ -120,6 +89,10 @@ const BULLET_PENETRATE: real = 2.0;
 const MAX_AMMO: i32 = 30;
 
 const RELOAD_TIME: real = 1.0;
+
+const NO_NOISE: Vector2 = Vector2::new(real::MAX, real::MAX);
+
+const GUN_ALARM_DISTANCE: real = 400.0;
 
 // level
 const LEVEL_GROW_RATE: real = 1.1;
@@ -136,8 +109,6 @@ const ZOMBIE_REFRESH_BARRIER: u32 = 40;
 const ZOMBIE_MAX_BODY_COUNT: u32 = 60;
 
 const ZOMBIE_DAMAGE: i64 = 5;
-
-const ZOMBIE_ALARM_DISTANCE: real = 400.0;
 
 const ZOMBIE_PURSUIT_DISTANCE: real = 225.0;
 
@@ -163,6 +134,8 @@ const BOOMER_REPEL: real = 100.0;
 const BOOMER_REFRESH_BARRIER: u32 = 3;
 
 const BOOMER_MAX_SCREEN_COUNT: u32 = 10;
+
+const BOOMER_ALARM_DISTANCE: real = 600.0;
 
 // boss
 const BOSS_MAX_HEALTH: u32 = 7200;

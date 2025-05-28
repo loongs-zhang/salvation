@@ -4,14 +4,14 @@ use crate::{PLAYER_LEVEL_UP_GROW_RATE, PlayerUpgrade};
 #[godot_api(secondary)]
 impl RustPlayer {
     pub fn level_up(&mut self) {
-        if Self::get_score() < self.current_level_up_barrier {
+        if self.score < self.current_level_up_barrier {
             return;
         }
         //防止重复触发升级
         let damage = self
             .damage
             .saturating_add(self.get_current_weapon().bind().get_damage());
-        RustPlayer::add_score(damage as u64);
+        self.add_score(damage as u64);
         self.level_up_barrier = (self.level_up_barrier as real * PLAYER_LEVEL_UP_GROW_RATE) as u32;
         self.current_level_up_barrier += self.level_up_barrier as u64;
         RustWorld::pause();

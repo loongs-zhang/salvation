@@ -4,20 +4,21 @@ use crate::hud::RustHUD;
 use crate::knife::RustKnife;
 use crate::world::RustWorld;
 use crate::{
-    GRENADE, GRENADE_DAMAGE, GRENADE_DISTANCE, GRENADE_REPEL, MESSAGE, PLAYER_LEVEL_UP_BARRIER,
+    GRENADE_DAMAGE, GRENADE_DISTANCE, GRENADE_REPEL, MESSAGE, PLAYER_LEVEL_UP_BARRIER,
     PLAYER_MAX_HEALTH, PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState, scale_rate,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Array, GString, Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
-    AnimatedSprite2D, AudioStreamPlayer2D, Camera2D, CharacterBody2D, GpuParticles2D,
-    ICharacterBody2D, Input, InputEvent, Label, Node2D, PackedScene, RemoteTransform2D,
+    AnimatedSprite2D, AudioStreamPlayer2D, Camera2D, CharacterBody2D, Engine, GpuParticles2D,
+    ICharacterBody2D, Input, InputEvent, Label, Node2D, PackedScene, RemoteTransform2D, SceneTree,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use godot::tools::load;
-use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
+use std::sync::LazyLock;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub mod state;
@@ -26,25 +27,13 @@ pub mod weapon;
 
 pub mod upgrade;
 
-const NO_NOISE: Vector2 = Vector2::new(real::MAX, real::MAX);
-
 static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
-static NOISE_POSITION: AtomicCell<Vector2> = AtomicCell::new(NO_NOISE);
+static LAST_SCORE_UPDATE: AtomicU64 = AtomicU64::new(0);
 
-static IMPACT_POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
-
-static IMPACTING: AtomicCell<f64> = AtomicCell::new(0.0);
-
-static KILL_COUNT: AtomicU32 = AtomicU32::new(0);
-
-static KILL_BOSS_COUNT: AtomicU32 = AtomicU32::new(0);
-
-static SCORE: AtomicU64 = AtomicU64::new(0);
-
-static DIED: AtomicU64 = AtomicU64::new(0);
-
-static LAST_SCORE_UPDATE: AtomicCell<f64> = AtomicCell::new(0.0);
+#[allow(clippy::declare_interior_mutable_const)]
+const GRENADE: LazyLock<Gd<PackedScene>> =
+    LazyLock::new(|| load("res://scenes/grenades/fgrenade.tscn"));
 
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
@@ -94,6 +83,16 @@ pub struct RustPlayer {
     current_health: u32,
     state: PlayerState,
     current_speed: real,
+    impact_position: Vector2,
+    left_impact_time: f64,
+    // 玩家获得的分数
+    score: u64,
+    // 玩家死亡的次数
+    died: u64,
+    // 击杀普通僵尸数
+    kill_count: u64,
+    // 击杀BOSS数
+    kill_boss_count: u64,
     remote_transform2d: OnReady<Gd<RemoteTransform2D>>,
     animated_sprite2d: OnReady<Gd<AnimatedSprite2D>>,
     camera: OnReady<Gd<Camera2D>>,
@@ -139,6 +138,12 @@ impl ICharacterBody2D for RustPlayer {
             current_level_up_barrier: PLAYER_LEVEL_UP_BARRIER as u64,
             current_lives: PLAYER_MAX_LIVES,
             current_speed: PLAYER_MOVE_SPEED,
+            impact_position: Vector2::ZERO,
+            left_impact_time: 0.0,
+            score: 0,
+            died: 0,
+            kill_count: 0,
+            kill_boss_count: 0,
             remote_transform2d: OnReady::from_node("RemoteTransform2D"),
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             camera: OnReady::from_node("Camera2D"),
@@ -172,14 +177,13 @@ impl ICharacterBody2D for RustPlayer {
         self.current_chop_cooldown -= delta;
         self.level_up();
         let mut hud = self.hud.bind_mut();
-        hud.update_killed_hud();
-        hud.update_score_hud();
-        hud.update_died_hud();
+        hud.update_killed_hud(self.kill_boss_count, self.kill_count);
+        hud.update_score_hud(self.score);
+        hud.update_died_hud(self.died);
         drop(hud);
         if PlayerState::Impact == self.state {
-            let impact_cost = IMPACTING.load() + delta;
-            IMPACTING.store(impact_cost);
-            if impact_cost < 1.0 {
+            self.left_impact_time += delta;
+            if self.left_impact_time < 1.0 {
                 self.impacting();
             } else {
                 self.impacted();
@@ -211,11 +215,11 @@ impl ICharacterBody2D for RustPlayer {
                 .animated_sprite2d
                 .look_at(player_position + move_direction),
             PlayerState::Impact => {
-                move_direction = IMPACT_POSITION
-                    .load()
+                move_direction = self
+                    .impact_position
                     .direction_to(player_position)
                     .normalized();
-                self.animated_sprite2d.look_at(IMPACT_POSITION.load());
+                self.animated_sprite2d.look_at(self.impact_position);
             }
             _ => self.animated_sprite2d.look_at(mouse_position),
         }
@@ -250,9 +254,9 @@ impl ICharacterBody2D for RustPlayer {
         hud.update_distance_hud(self.distance + rust_weapon.bind().get_distance());
         hud.update_repel_hud(self.repel + rust_weapon.bind().get_repel());
         hud.update_penetrate_hud(self.penetrate + rust_weapon.bind().get_penetrate());
-        hud.update_killed_hud();
-        hud.update_score_hud();
-        hud.update_died_hud();
+        hud.update_killed_hud(self.kill_boss_count, self.kill_count);
+        hud.update_score_hud(self.score);
+        hud.update_died_hud(self.died);
         if self.grenade_scenes.is_empty() {
             #[allow(clippy::borrow_interior_mutable_const)]
             self.grenade_scenes.push(&*GRENADE);
@@ -263,6 +267,7 @@ impl ICharacterBody2D for RustPlayer {
             name_label.set_text(&name);
             name_label.show();
         }
+        Self::reset_last_score_update();
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
@@ -379,7 +384,7 @@ impl RustPlayer {
     pub fn create_message(&mut self) -> Option<Gd<RustMessage>> {
         #[allow(clippy::borrow_interior_mutable_const)]
         if let Some(mut message_label) = MESSAGE.try_instantiate_as::<RustMessage>() {
-            message_label.set_global_position(RustPlayer::get_position());
+            message_label.set_global_position(Self::get_position());
             if let Some(tree) = self.base().get_tree() {
                 if let Some(mut root) = tree.get_root() {
                     root.add_child(&message_label);
@@ -403,37 +408,24 @@ impl RustPlayer {
                 .get_mouse_position()
     }
 
-    pub fn add_kill_count() {
-        KILL_COUNT.fetch_add(1, Ordering::Release);
+    #[func]
+    pub fn add_kill_count(&mut self) {
+        self.kill_count += 1;
     }
 
-    pub fn get_kill_count() -> u32 {
-        KILL_COUNT.load(Ordering::Acquire)
+    #[func]
+    pub fn add_kill_boss_count(&mut self) {
+        self.kill_boss_count += 1;
     }
 
-    pub fn add_kill_boss_count() {
-        KILL_BOSS_COUNT.fetch_add(1, Ordering::Release);
-    }
-
-    pub fn get_kill_boss_count() -> u32 {
-        KILL_BOSS_COUNT.load(Ordering::Acquire)
-    }
-
-    pub fn add_score(score: u64) {
-        SCORE.fetch_add(score, Ordering::Release);
+    #[func]
+    pub fn add_score(&mut self, score: u64) {
+        self.score += score;
         Self::reset_last_score_update();
     }
 
-    pub fn get_score() -> u64 {
-        SCORE.load(Ordering::Acquire)
-    }
-
-    pub fn get_died() -> u64 {
-        DIED.load(Ordering::Acquire)
-    }
-
-    pub fn get_last_score_update() -> f64 {
-        LAST_SCORE_UPDATE.load()
+    pub fn get_last_score_update() -> u64 {
+        LAST_SCORE_UPDATE.load(Ordering::Acquire)
     }
 
     pub fn reset_last_score_update() {
@@ -441,7 +433,8 @@ impl RustPlayer {
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .expect("1970-01-01 00:00:00 UTC was {} seconds ago!")
-                .as_secs_f64(),
+                .as_secs(),
+            Ordering::Release,
         );
     }
 
@@ -449,8 +442,14 @@ impl RustPlayer {
         POSITION.load()
     }
 
-    pub fn get_noise_position() -> Option<Vector2> {
-        let r = NOISE_POSITION.load();
-        if NO_NOISE == r { None } else { Some(r) }
+    pub fn get() -> Gd<RustPlayer> {
+        Engine::singleton()
+            .get_main_loop()
+            .unwrap()
+            .cast::<SceneTree>()
+            .get_root()
+            .unwrap()
+            .get_node_as::<Node2D>("RustWorld")
+            .get_node_as::<RustPlayer>("RustPlayer")
     }
 }

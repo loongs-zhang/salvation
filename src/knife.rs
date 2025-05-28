@@ -166,14 +166,14 @@ impl RustKnife {
             godot_error!("Knife hit an unexpected body: {}", body.get_class());
         }
         if damage > 0 {
-            RustPlayer::add_score(damage as u64);
+            RustPlayer::get().call_deferred("add_score", &[damage.to_variant()]);
         }
     }
 
     #[func]
     pub fn hide(&mut self) {
         self.base_mut().set_visible(false);
-        self.get_rust_player().bind_mut().chopped();
+        RustPlayer::get().bind_mut().chopped();
     }
 
     // 僵尸背对玩家，则判定可暗杀
@@ -187,12 +187,5 @@ impl RustKnife {
             .angle_to(to_player_dir)
             .to_degrees();
         (-60.0..=60.0).contains(&angle)
-    }
-
-    pub fn get_rust_player(&mut self) -> Gd<RustPlayer> {
-        if let Some(node) = self.base().get_parent() {
-            return node.cast::<RustPlayer>();
-        }
-        panic!("RustPlayer not found");
     }
 }
