@@ -11,7 +11,6 @@ position = Vector2(300, 0)
 rotation = 3.14159
 
 [node name="RustZombie1" parent="." instance=ExtResource("3_rycuj")]
-name = "1"
 invincible = true
 moveable = false
 attackable = false

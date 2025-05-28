@@ -4,7 +4,7 @@ use crate::hud::RustHUD;
 use crate::knife::RustKnife;
 use crate::world::RustWorld;
 use crate::{
-    GRENADE, GRENADE_DAMAGE, GRENADE_DISTANCE, GRENADE_REPEL, PLAYER_LEVEL_UP_BARRIER,
+    GRENADE, GRENADE_DAMAGE, GRENADE_DISTANCE, GRENADE_REPEL, MESSAGE, PLAYER_LEVEL_UP_BARRIER,
     PLAYER_MAX_HEALTH, PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState, scale_rate,
 };
 use crossbeam_utils::atomic::AtomicCell;
@@ -110,7 +110,6 @@ pub struct RustPlayer {
     change_fail_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     zoom_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     headshot_audio: OnReady<Gd<AudioStreamPlayer2D>>,
-    message_scene: OnReady<Gd<PackedScene>>,
     grenade_point: OnReady<Gd<Node2D>>,
     base: Base<CharacterBody2D>,
 }
@@ -156,7 +155,6 @@ impl ICharacterBody2D for RustPlayer {
             change_fail_audio: OnReady::from_node("ChangeWeaponFail"),
             zoom_audio: OnReady::from_node("ZoomAudio"),
             headshot_audio: OnReady::from_node("HeadshotAudio"),
-            message_scene: OnReady::from_loaded("res://scenes/rust_message.tscn"),
             grenade_point: OnReady::from_node("GrenadePoint"),
             base,
         }
@@ -370,18 +368,17 @@ impl RustPlayer {
                 gd_mut.set_final_repel(GRENADE_REPEL + self.repel);
                 gd_mut.throw(direction);
                 drop(gd_mut);
-                if let Some(tree) = self.base().get_tree() {
-                    if let Some(mut root) = tree.get_root() {
-                        root.add_child(&grenade);
-                        self.current_grenade_cooldown = self.grenade_cooldown;
-                    }
+                if let Some(mut parent) = self.base().get_parent() {
+                    parent.add_child(&grenade);
+                    self.current_grenade_cooldown = self.grenade_cooldown;
                 }
             }
         }
     }
 
-    pub fn create_message(&self) -> Option<Gd<RustMessage>> {
-        if let Some(mut message_label) = self.message_scene.try_instantiate_as::<RustMessage>() {
+    pub fn create_message(&mut self) -> Option<Gd<RustMessage>> {
+        #[allow(clippy::borrow_interior_mutable_const)]
+        if let Some(mut message_label) = MESSAGE.try_instantiate_as::<RustMessage>() {
             message_label.set_global_position(RustPlayer::get_position());
             if let Some(tree) = self.base().get_tree() {
                 if let Some(mut root) = tree.get_root() {

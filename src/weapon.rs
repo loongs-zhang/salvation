@@ -3,7 +3,7 @@ use crate::grenade::RustGrenade;
 use crate::player::RustPlayer;
 use crate::{
     BULLET, BULLET_DAMAGE, BULLET_DISTANCE, BULLET_PENETRATE, BULLET_REPEL, MAX_AMMO, RELOAD_TIME,
-    WEAPON_FIRE_COOLDOWN, random_direction,
+    WEAPON_FIRE_COOLDOWN, WeaponState, random_direction,
 };
 use godot::builtin::{Array, Vector2, real};
 use godot::classes::{
@@ -52,6 +52,7 @@ pub struct RustWeapon {
     reload_time: real,
     #[export]
     reload_part: bool,
+    state: WeaponState,
     reloading: real,
     ammo: i32,
     current_fire_cooldown: real,
@@ -81,6 +82,7 @@ impl INode2D for RustWeapon {
             penetrate: BULLET_PENETRATE,
             fire_cooldown: WEAPON_FIRE_COOLDOWN,
             reload_time: RELOAD_TIME,
+            state: WeaponState::Ready,
             reload_part: false,
             reloading: 0.0,
             ammo: MAX_AMMO,
@@ -147,6 +149,10 @@ impl RustWeapon {
     #[signal]
     pub fn sig();
 
+    pub fn weapon_ready(&mut self) {
+        self.state = WeaponState::Ready;
+    }
+
     pub fn update_ammo_hud(&mut self) {
         self.get_rust_player()
             .get_node_as::<CanvasLayer>("RustHUD")
@@ -163,7 +169,10 @@ impl RustWeapon {
         player_penetrate: real,
         player_repel: real,
     ) {
-        if 0 == self.ammo || self.current_fire_cooldown > 0.0 {
+        if 0 == self.ammo
+            || self.current_fire_cooldown > 0.0
+            || WeaponState::Reloading == self.state && !self.reload_part
+        {
             return;
         }
         let vec: Vec<Gd<PackedScene>> = self.bullet_scenes.iter_shared().collect();
@@ -229,6 +238,7 @@ impl RustWeapon {
             self.fire_audio.play();
             self.current_fire_cooldown = self.fire_cooldown;
             self.ammo -= 1;
+            self.state = WeaponState::Firing;
             self.update_ammo_hud();
         }
     }
@@ -254,11 +264,9 @@ impl RustWeapon {
             gd_mut.set_final_repel(player_repel + self.repel);
             gd_mut.set_direction(direction);
             drop(gd_mut);
-            if let Some(tree) = self.base().get_tree() {
-                if let Some(mut root) = tree.get_root() {
-                    root.add_child(&bullet);
-                    return Ok(());
-                }
+            if let Some(mut parent) = self.get_rust_player().get_parent() {
+                parent.add_child(&bullet);
+                return Ok(());
             }
         } else if let Some(mut grenade) = bullet_scene.try_instantiate_as::<RustGrenade>() {
             grenade.set_global_position(bullet_point);
@@ -269,11 +277,9 @@ impl RustWeapon {
             gd_mut.set_final_repel(player_repel + self.repel);
             gd_mut.throw(direction);
             drop(gd_mut);
-            if let Some(tree) = self.base().get_tree() {
-                if let Some(mut root) = tree.get_root() {
-                    root.add_child(&grenade);
-                    return Ok(());
-                }
+            if let Some(mut parent) = self.get_rust_player().get_parent() {
+                parent.add_child(&grenade);
+                return Ok(());
             }
         }
         Err(std::io::Error::other(
@@ -282,7 +288,8 @@ impl RustWeapon {
     }
 
     pub fn reload(&mut self) -> bool {
-        if self.is_reloaded()
+        if self.clip == self.ammo
+            || WeaponState::Reloading == self.state
             || self.reloading > 0.0
             || self.clip_out_audio.is_playing()
             || self.reload_part && self.clip_part_in_audio.is_playing()
@@ -295,19 +302,24 @@ impl RustWeapon {
             - self.clip_out_audio.get_stream().unwrap().get_length() as real
             - self.clip_in_audio.get_stream().unwrap().get_length() as real;
         if self.reload_part {
-            self.reloading -= self.clip_part_in_audio.get_stream().unwrap().get_length() as real;
+            for _ in 0..self.clip {
+                self.reloading -=
+                    self.clip_part_in_audio.get_stream().unwrap().get_length() as real;
+            }
         }
         if self.pull_after_reload {
             self.reloading -= self.clip_in_audio.get_stream().unwrap().get_length() as real;
         }
         self.reloading = self.reloading.max(0.0);
         self.clip_out_audio.play();
+        self.state = WeaponState::Reloading;
         true
     }
 
     #[func]
     pub fn on_clip_out_finished(&mut self) {
-        if self.reloading > 0.0
+        if WeaponState::Reloading != self.state
+            || self.reloading > 0.0
             || self.clip_in_audio.is_playing()
             || self.clip_part_in_audio.is_playing()
         {
@@ -322,6 +334,9 @@ impl RustWeapon {
 
     #[func]
     pub fn on_clip_part_in_finished(&mut self) {
+        if WeaponState::Reloading != self.state {
+            return;
+        }
         self.ammo += 1;
         self.ammo = self.ammo.min(self.clip);
         self.update_ammo_hud();
@@ -335,6 +350,9 @@ impl RustWeapon {
 
     #[func]
     pub fn on_clip_in_finished(&mut self) {
+        if WeaponState::Reloading != self.state {
+            return;
+        }
         if self.pull_after_reload {
             self.bolt_pull_audio.play();
             return;
@@ -345,23 +363,18 @@ impl RustWeapon {
 
     #[func]
     pub fn on_bolt_pull_finished(&mut self) {
+        self.weapon_ready();
         self.ammo = self.clip;
         self.update_ammo_hud();
         self.get_rust_player().call_deferred("reloaded", &[]);
     }
 
     pub fn stop_reload(&mut self) {
-        if self.is_reloaded() {
-            return;
-        }
         self.clip_out_audio.stop();
         self.clip_part_in_audio.stop();
         self.clip_in_audio.stop();
         self.bolt_pull_audio.stop();
-    }
-
-    pub fn is_reloaded(&self) -> bool {
-        self.clip == self.ammo
+        self.weapon_ready();
     }
 
     pub fn get_mouse_position(&self) -> Vector2 {

@@ -197,6 +197,15 @@ pub enum PlayerState {
 
 #[derive(GodotConvert, Default, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
 #[godot(via = GString)]
+pub enum WeaponState {
+    #[default]
+    Ready,
+    Firing,
+    Reloading,
+}
+
+#[derive(GodotConvert, Default, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
+#[godot(via = GString)]
 pub enum PlayerUpgrade {
     #[default]
     Health,

@@ -34,6 +34,7 @@ impl RustPlayer {
                         godot_warn!("Weapon texture not found for: {}", weapon_name);
                     }
                     hud.update_ammo_hud(weapon.bind().get_ammo(), weapon.bind().get_clip());
+                    weapon.bind_mut().weapon_ready();
                 } else {
                     weapon.set_visible(false);
                     // 打断其他武器的换弹
@@ -41,6 +42,7 @@ impl RustPlayer {
                 }
             }
         }
+        self.state = PlayerState::Guard;
         self.guard();
         if weapon_index == self.current_weapon_index {
             self.change_fail_audio.play();
