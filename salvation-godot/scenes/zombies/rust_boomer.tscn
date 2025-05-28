@@ -120,7 +120,7 @@ animations = [{
 }]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_4lcne"]
-radius = 64.0
+radius = 30.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_ojx4y"]
 radius = 100.0
@@ -278,7 +278,7 @@ animations = [{
 "speed": 4.0
 }]
 
-[node name="RustBoomer" type="RustBoomer"]
+[node name="RustBoomer" type="RustBoomer" groups=["zombie"]]
 z_index = 2
 
 [node name="RemoteTransform2D" type="RemoteTransform2D" parent="."]

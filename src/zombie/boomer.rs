@@ -116,10 +116,7 @@ impl ICharacterBody2D for RustBoomer {
         if self.hud.is_instance_valid() {
             self.hud.set_global_rotation_degrees(0.0);
         }
-        if RustWorld::is_paused() {
-            return;
-        }
-        if ZombieState::Dead == self.state {
+        if RustWorld::is_paused() || ZombieState::Dead == self.state {
             return;
         }
         let player_state = RustPlayer::get_state();

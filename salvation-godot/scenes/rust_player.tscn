@@ -294,7 +294,7 @@ scale_max = 4.0
 scale_curve = SubResource("CurveTexture_ulhoy")
 color_ramp = SubResource("GradientTexture1D_fuakc")
 
-[node name="RustPlayer" type="RustPlayer"]
+[node name="RustPlayer" type="RustPlayer" groups=["survivor"]]
 z_index = 2
 
 [node name="RemoteTransform2D" type="RemoteTransform2D" parent="."]

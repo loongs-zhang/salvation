@@ -46,6 +46,10 @@ const DEFAULT_SCREEN_SIZE: Vector2 = Vector2::new(960.0, 540.0);
 const MESSAGE: LazyLock<Gd<PackedScene>> = LazyLock::new(|| load("res://scenes/rust_message.tscn"));
 
 #[allow(clippy::declare_interior_mutable_const)]
+const GRENADE: LazyLock<Gd<PackedScene>> =
+    LazyLock::new(|| load("res://scenes/grenades/fgrenade.tscn"));
+
+#[allow(clippy::declare_interior_mutable_const)]
 const BULLET: LazyLock<Gd<PackedScene>> =
     LazyLock::new(|| load("res://scenes/bullets/rust_bullet.tscn"));
 

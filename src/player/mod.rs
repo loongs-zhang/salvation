@@ -4,8 +4,8 @@ use crate::hud::RustHUD;
 use crate::knife::RustKnife;
 use crate::world::RustWorld;
 use crate::{
-    GRENADE_DAMAGE, GRENADE_DISTANCE, GRENADE_REPEL, PLAYER_LEVEL_UP_BARRIER, PLAYER_MAX_HEALTH,
-    PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState, scale_rate,
+    GRENADE, GRENADE_DAMAGE, GRENADE_DISTANCE, GRENADE_REPEL, PLAYER_LEVEL_UP_BARRIER,
+    PLAYER_MAX_HEALTH, PLAYER_MAX_LIVES, PLAYER_MOVE_SPEED, PlayerState, scale_rate,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Array, GString, Vector2, real};
@@ -17,7 +17,6 @@ use godot::classes::{
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use godot::tools::load;
-use std::sync::LazyLock;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -46,10 +45,6 @@ static SCORE: AtomicU64 = AtomicU64::new(0);
 static DIED: AtomicU64 = AtomicU64::new(0);
 
 static LAST_SCORE_UPDATE: AtomicCell<f64> = AtomicCell::new(0.0);
-
-#[allow(clippy::declare_interior_mutable_const)]
-const GRENADE: LazyLock<Gd<PackedScene>> =
-    LazyLock::new(|| load("res://scenes/grenades/fgrenade.tscn"));
 
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
