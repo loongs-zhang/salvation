@@ -43,9 +43,10 @@ pub struct RustPlayer {
     // 玩家无敌
     #[export]
     invincible: bool,
+    // 当前武器下标
     #[export]
     current_weapon_index: i32,
-    // 玩家穿透
+    // 玩家剩余生命条数
     #[export]
     lives: u32,
     // 玩家伤害
@@ -78,7 +79,7 @@ pub struct RustPlayer {
     chop_cooldown: real,
     current_chop_cooldown: f64,
     current_grenade_cooldown: real,
-    current_level_up_barrier: u64,
+    current_level_up_barrier: u32,
     current_lives: u32,
     current_health: u32,
     state: PlayerState,
@@ -86,13 +87,13 @@ pub struct RustPlayer {
     impact_position: Vector2,
     left_impact_time: f64,
     // 玩家获得的分数
-    score: u64,
+    score: u32,
     // 玩家死亡的次数
-    died: u64,
+    died: u32,
     // 击杀普通僵尸数
-    kill_count: u64,
+    kill_count: u32,
     // 击杀BOSS数
-    kill_boss_count: u64,
+    kill_boss_count: u32,
     remote_transform2d: OnReady<Gd<RemoteTransform2D>>,
     animated_sprite2d: OnReady<Gd<AnimatedSprite2D>>,
     camera: OnReady<Gd<Camera2D>>,
@@ -135,7 +136,7 @@ impl ICharacterBody2D for RustPlayer {
             grenade_scenes: Array::new(),
             chop_cooldown: 0.5,
             current_chop_cooldown: 0.0,
-            current_level_up_barrier: PLAYER_LEVEL_UP_BARRIER as u64,
+            current_level_up_barrier: PLAYER_LEVEL_UP_BARRIER,
             current_lives: PLAYER_MAX_LIVES,
             current_speed: PLAYER_MOVE_SPEED,
             impact_position: Vector2::ZERO,
@@ -250,6 +251,7 @@ impl ICharacterBody2D for RustPlayer {
         let mut hud = self.hud.bind_mut();
         hud.update_lives_hud(self.current_lives, self.lives);
         hud.update_hp_hud(self.current_health, self.health);
+        hud.update_speed_hud(self.current_speed);
         hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
         hud.update_distance_hud(self.distance + rust_weapon.bind().get_distance());
         hud.update_repel_hud(self.repel + rust_weapon.bind().get_repel());
@@ -419,7 +421,7 @@ impl RustPlayer {
     }
 
     #[func]
-    pub fn add_score(&mut self, score: u64) {
+    pub fn add_score(&mut self, score: u32) {
         self.score += score;
         Self::reset_last_score_update();
     }

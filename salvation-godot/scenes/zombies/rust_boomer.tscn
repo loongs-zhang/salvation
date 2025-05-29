@@ -278,7 +278,7 @@ animations = [{
 "speed": 4.0
 }]
 
-[node name="RustBoomer" type="RustBoomer" groups=["zombie"]]
+[node name="RustBoomer" type="RustBoomer" groups=["preservable", "zombie"]]
 z_index = 2
 
 [node name="RemoteTransform2D" type="RemoteTransform2D" parent="."]

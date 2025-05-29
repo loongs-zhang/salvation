@@ -38,6 +38,11 @@ layout_mode = 2
 theme = SubResource("Theme_g8j1n")
 text = "HP"
 
+[node name="Speed" type="Label" parent="Control/VBoxTopLeft"]
+layout_mode = 2
+theme = SubResource("Theme_g8j1n")
+text = "SPEED"
+
 [node name="Damage" type="Label" parent="Control/VBoxTopLeft"]
 layout_mode = 2
 theme = SubResource("Theme_g8j1n")

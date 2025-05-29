@@ -23,6 +23,7 @@ impl RustPlayer {
         self.hud
             .bind_mut()
             .update_hp_hud(self.current_health, self.health);
+        self.hud.bind_mut().update_speed_hud(self.current_speed);
     }
 
     #[func]
@@ -40,6 +41,7 @@ impl RustPlayer {
         self.current_speed = self.speed * self.get_current_weapon().bind().get_weight();
         self.state = PlayerState::Guard;
         STATE.store(self.state);
+        self.hud.bind_mut().update_speed_hud(self.current_speed);
     }
 
     pub fn run(&mut self) {
@@ -54,6 +56,7 @@ impl RustPlayer {
         self.current_speed = self.speed * 1.5 * self.get_current_weapon().bind().get_weight();
         self.state = PlayerState::Run;
         STATE.store(self.state);
+        self.hud.bind_mut().update_speed_hud(self.current_speed);
         //打断换弹
         self.get_current_weapon().bind_mut().stop_reload();
         if !self.run_audio.is_playing() {
@@ -79,6 +82,7 @@ impl RustPlayer {
         self.current_speed = self.speed * 0.5 * rust_weapon.bind().get_weight();
         self.state = PlayerState::Shoot;
         STATE.store(self.state);
+        self.hud.bind_mut().update_speed_hud(self.current_speed);
         //打断正在持续的换弹
         rust_weapon.bind_mut().stop_reload();
         rust_weapon
@@ -103,6 +107,7 @@ impl RustPlayer {
         self.current_speed = self.speed * 0.75;
         self.state = PlayerState::Chop;
         STATE.store(self.state);
+        self.hud.bind_mut().update_speed_hud(self.current_speed);
         //打断换弹
         self.get_current_weapon().bind_mut().stop_reload();
         let damage = 80 + self.damage;
@@ -134,6 +139,7 @@ impl RustPlayer {
         self.current_speed = self.speed * 0.75 * rust_weapon.bind().get_weight();
         self.state = PlayerState::Reload;
         STATE.store(self.state);
+        self.hud.bind_mut().update_speed_hud(self.current_speed);
     }
 
     #[func]
@@ -145,6 +151,7 @@ impl RustPlayer {
         self.current_speed = self.speed * 0.75 * self.get_current_weapon().bind().get_weight();
         self.state = PlayerState::Reloading;
         STATE.store(self.state);
+        self.hud.bind_mut().update_speed_hud(self.current_speed);
     }
 
     #[func]
@@ -171,6 +178,7 @@ impl RustPlayer {
         self.blood_flash.look_at(hit_position);
         self.blood_flash.restart();
         STATE.store(self.state);
+        self.hud.bind_mut().update_speed_hud(self.current_speed);
         if random_bool() {
             self.body_hurt.play();
         } else {
@@ -202,6 +210,7 @@ impl RustPlayer {
         self.blood_flash.set_emitting(true);
         self.blood_flash.restart();
         STATE.store(self.state);
+        self.hud.bind_mut().update_speed_hud(self.current_speed);
         //打断正在持续的换弹
         self.get_current_weapon().bind_mut().stop_reload();
         self.impact_position = impact_position;
@@ -215,6 +224,7 @@ impl RustPlayer {
         self.current_speed = self.speed * 1.25;
         self.state = PlayerState::Impact;
         STATE.store(self.state);
+        self.hud.bind_mut().update_speed_hud(self.current_speed);
         let hit_position = self.impact_position;
         self.base_mut().look_at(hit_position);
         if !self.scream_audio.is_playing() {
@@ -245,6 +255,7 @@ impl RustPlayer {
         self.current_speed = 0.0;
         self.state = PlayerState::Dead;
         STATE.store(self.state);
+        self.hud.bind_mut().update_speed_hud(self.current_speed);
         //打断换弹
         self.get_current_weapon().bind_mut().stop_reload();
         self.die_audio.play();

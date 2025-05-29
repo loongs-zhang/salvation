@@ -108,6 +108,12 @@ impl RustHUD {
         hp_hud.show();
     }
 
+    pub fn update_speed_hud(&mut self, speed: real) {
+        let mut hp_hud = self.get_left_top_container().get_node_as::<Label>("Speed");
+        hp_hud.set_text(&format!("SPEED {:.0}", speed));
+        hp_hud.show();
+    }
+
     pub fn update_damage_hud(&mut self, damage: i64) {
         let mut damage_hud = self.get_left_top_container().get_node_as::<Label>("Damage");
         damage_hud.set_text(&format!("DAMAGE {}", damage));
@@ -136,19 +142,19 @@ impl RustHUD {
         repel_hud.show();
     }
 
-    pub fn update_killed_hud(&mut self, kill_boss_count: u64, kill_count: u64) {
+    pub fn update_killed_hud(&mut self, kill_boss_count: u32, kill_count: u32) {
         let mut repel_hud = self.get_hcontainer().get_node_as::<Label>("Killed");
         repel_hud.set_text(&format!("KILLED {}+{}", kill_boss_count, kill_count,));
         repel_hud.show();
     }
 
-    pub fn update_score_hud(&mut self, score: u64) {
+    pub fn update_score_hud(&mut self, score: u32) {
         let mut repel_hud = self.get_hcontainer().get_node_as::<Label>("Score");
         repel_hud.set_text(&format!("SCORE {}", score));
         repel_hud.show();
     }
 
-    pub fn update_died_hud(&mut self, died: u64) {
+    pub fn update_died_hud(&mut self, died: u32) {
         let mut repel_hud = self.get_hcontainer().get_node_as::<Label>("Died");
         repel_hud.set_text(&format!("DIED {}", died));
         repel_hud.show();

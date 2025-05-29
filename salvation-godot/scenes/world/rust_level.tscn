@@ -7,7 +7,7 @@
 [ext_resource type="AudioStream" uid="uid://b25ros5jwuyrs" path="res://asserts/bgm/CounterStrikeOnline.mp3" id="4_t7jsg"]
 [ext_resource type="AudioStream" uid="uid://dvevkyu0q4fsi" path="res://asserts/bgm/ForWhomTheBellTolls.mp3" id="4_ww368"]
 
-[node name="RustLevel" type="RustLevel"]
+[node name="RustLevel" type="RustLevel" groups=["preservable"]]
 
 [node name="ZombieGenerator" type="ZombieGenerator" parent="."]
 zombie_scenes = Array[PackedScene]([ExtResource("1_4leux")])

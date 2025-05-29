@@ -78,7 +78,7 @@ pub struct RustWeapon {
 
 #[godot_api]
 impl INode2D for RustWeapon {
-    fn init(base: Base<Self::Base>) -> Self {
+    fn init(base: Base<Node2D>) -> Self {
         Self {
             silenced: false,
             damage: BULLET_DAMAGE,

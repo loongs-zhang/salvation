@@ -11,9 +11,9 @@ impl RustPlayer {
         let damage = self
             .damage
             .saturating_add(self.get_current_weapon().bind().get_damage());
-        self.add_score(damage as u64);
+        self.add_score(damage as u32);
         self.level_up_barrier = (self.level_up_barrier as real * PLAYER_LEVEL_UP_GROW_RATE) as u32;
-        self.current_level_up_barrier += self.level_up_barrier as u64;
+        self.current_level_up_barrier += self.level_up_barrier;
         RustWorld::pause();
         self.hud.bind_mut().set_upgrade_visible(true);
     }

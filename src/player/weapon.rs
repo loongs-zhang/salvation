@@ -86,6 +86,7 @@ impl RustPlayer {
         let mut rust_weapon = self.get_current_weapon();
         rust_weapon.bind_mut().update_ammo_hud();
         let mut hud = self.hud.bind_mut();
+        hud.update_speed_hud(self.current_speed);
         hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
         hud.update_distance_hud(self.distance + rust_weapon.bind().get_distance());
         hud.update_repel_hud(self.repel + rust_weapon.bind().get_repel());

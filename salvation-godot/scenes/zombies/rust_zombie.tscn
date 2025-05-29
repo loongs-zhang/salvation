@@ -281,7 +281,7 @@ scale_max = 6.0
 scale_curve = SubResource("CurveTexture_ulhoy")
 color_ramp = SubResource("GradientTexture1D_fuakc")
 
-[node name="RustZombie" type="RustZombie" groups=["zombie"]]
+[node name="RustZombie" type="RustZombie" groups=["preservable", "zombie"]]
 z_index = 2
 
 [node name="RemoteTransform2D" type="RemoteTransform2D" parent="."]

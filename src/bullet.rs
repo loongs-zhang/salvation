@@ -26,7 +26,7 @@ pub struct RustBullet {
 
 #[godot_api]
 impl INode2D for RustBullet {
-    fn init(base: Base<Self::Base>) -> Self {
+    fn init(base: Base<Node2D>) -> Self {
         Self {
             speed: 1000.0,
             bullet_point: Vector2::ZERO,
