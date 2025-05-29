@@ -40,7 +40,7 @@ scale_curve = SubResource("CurveTexture_nrs26")
 color_ramp = SubResource("GradientTexture1D_88lgy")
 alpha_curve = SubResource("CurveTexture_ad62i")
 
-[node name="AK47-60R" type="RustWeapon"]
+[node name="AK47-60R" type="RustWeapon" groups=["preservable"]]
 damage = 40
 weight = 0.9
 distance = 1000.0

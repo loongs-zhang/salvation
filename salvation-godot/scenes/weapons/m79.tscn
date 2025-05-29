@@ -40,7 +40,7 @@ scale_curve = SubResource("CurveTexture_b5r84")
 color_ramp = SubResource("GradientTexture1D_lb87w")
 alpha_curve = SubResource("CurveTexture_peu4v")
 
-[node name="M79" type="RustWeapon"]
+[node name="M79" type="RustWeapon" groups=["preservable"]]
 damage = 200
 distance = 325.0
 clip = 1

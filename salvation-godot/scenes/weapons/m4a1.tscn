@@ -40,7 +40,7 @@ scale_curve = SubResource("CurveTexture_nrs26")
 color_ramp = SubResource("GradientTexture1D_88lgy")
 alpha_curve = SubResource("CurveTexture_ad62i")
 
-[node name="M4A1" type="RustWeapon"]
+[node name="M4A1" type="RustWeapon" groups=["preservable"]]
 silenced = true
 damage = 33
 weight = 0.88

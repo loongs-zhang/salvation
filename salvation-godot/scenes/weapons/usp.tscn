@@ -40,7 +40,7 @@ scale_curve = SubResource("CurveTexture_nrs26")
 color_ramp = SubResource("GradientTexture1D_88lgy")
 alpha_curve = SubResource("CurveTexture_ad62i")
 
-[node name="USP" type="RustWeapon"]
+[node name="USP" type="RustWeapon" groups=["preservable"]]
 silenced = true
 damage = 35
 distance = 400.0

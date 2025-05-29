@@ -1,3 +1,4 @@
+use dashmap::DashMap;
 use godot::builtin::{Array, GString, Vector2, real};
 use godot::classes::{
     AudioStream, DisplayServer, Input, InputEvent, InputEventAction, PackedScene,
@@ -7,6 +8,7 @@ use godot::obj::{Gd, NewGd};
 use godot::register::GodotConvert;
 use godot::tools::load;
 use rand::Rng;
+use std::collections::HashSet;
 use std::sync::LazyLock;
 
 // todo 增加双持刀、双持武器，双持武器时，鼠标左键开一边，鼠标右键开另一边
@@ -14,6 +16,8 @@ use std::sync::LazyLock;
 // todo 增加僵尸死亡掉落金币，需要过去拾取
 // todo 增加局外可升级的技能树
 // todo 程序生成地图不清理之前生成过的
+// todo 多存档
+
 pub mod common;
 
 pub mod entrance;
@@ -36,8 +40,16 @@ pub mod knife;
 
 pub mod zombie;
 
+pub mod save;
+
 // game info
 const DEFAULT_SCREEN_SIZE: Vector2 = Vector2::new(960.0, 540.0);
+
+// save
+const SAVE_PATH: &str = "res://data/rust_data.json";
+//todo 改为user路径
+
+static SAVE: LazyLock<DashMap<String, HashSet<String>>> = LazyLock::new(DashMap::new);
 
 // common
 #[allow(clippy::declare_interior_mutable_const)]

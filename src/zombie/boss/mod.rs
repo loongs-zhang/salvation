@@ -20,6 +20,8 @@ use godot::register::{GodotClass, godot_api};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{Duration, Instant};
 
+pub mod save;
+
 static BODY_COUNT: AtomicU32 = AtomicU32::new(0);
 
 #[derive(GodotClass)]

@@ -39,7 +39,7 @@ scale_curve = SubResource("CurveTexture_nrs26")
 color_ramp = SubResource("GradientTexture1D_88lgy")
 alpha_curve = SubResource("CurveTexture_ad62i")
 
-[node name="DEAGLE" type="RustWeapon"]
+[node name="DEAGLE" type="RustWeapon" groups=["preservable"]]
 damage = 54
 distance = 400.0
 clip = 7

@@ -109,6 +109,10 @@ offset_bottom = -50.0
 grow_vertical = 0
 theme_override_constants/separation = 8
 
+[node name="Load" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Load"
+
 [node name="EndlessMode" type="Button" parent="VBoxContainer"]
 layout_mode = 2
 text = "Endless"

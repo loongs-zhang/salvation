@@ -49,7 +49,11 @@ impl RustPlayer {
                     weapon.set_visible(true);
                     let mut hud = self.hud.bind_mut();
                     let weapon_name = weapon.get_name().to_upper();
-                    hud.update_weapon_name_hud(&weapon_name.to_string());
+                    hud.update_weapon_name_hud(&if weapon.bind().get_silenced() {
+                        format!("SILENCED {}", weapon_name)
+                    } else {
+                        weapon_name.to_string()
+                    });
                     #[allow(clippy::borrow_interior_mutable_const)]
                     if let Some(weapon_texture) = WEAPON_TEXTURE.get(&weapon_name) {
                         hud.update_weapon_sprite_hud(weapon_texture);

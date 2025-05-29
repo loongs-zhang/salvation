@@ -2,6 +2,7 @@ use crate::PlayerState;
 use crate::entrance::RustEntrance;
 use crate::level::RustLevel;
 use crate::player::RustPlayer;
+use crate::save::RustSaveLoader;
 use godot::builtin::Vector2;
 use godot::classes::{
     Button, CanvasLayer, Control, HBoxContainer, INode2D, InputEvent, Label, Node, Node2D, Object,
@@ -20,6 +21,8 @@ static PAUSED: AtomicBool = AtomicBool::new(false);
 pub struct RustWorld {
     #[export]
     hell: bool,
+    #[export]
+    load: bool,
     entrance_scene: OnReady<Gd<PackedScene>>,
     rust_player: OnReady<Gd<RustPlayer>>,
     rust_level: OnReady<Gd<RustLevel>>,
@@ -34,6 +37,7 @@ impl INode2D for RustWorld {
         // Alternatively to init(), you can use #[init(...)] on the struct fields.
         Self {
             hell: false,
+            load: false,
             entrance_scene: OnReady::from_loaded("res://scenes/rust_entrance.tscn"),
             rust_player: OnReady::from_node("RustPlayer"),
             rust_level: OnReady::from_node("RustLevel"),
@@ -75,6 +79,9 @@ impl INode2D for RustWorld {
         if self.hell {
             self.rust_level.bind_mut().enable_hell();
         }
+        if self.load {
+            RustSaveLoader::get().bind().load_game();
+        }
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
@@ -114,7 +121,7 @@ impl RustWorld {
 
     #[func]
     pub fn on_exit_pressed(&mut self) {
-        // todo save/load game
+        RustSaveLoader::get().bind().save_game();
         if let Some(world) = self.entrance_scene.try_instantiate_as::<RustEntrance>() {
             if let Some(tree) = self.base().get_tree() {
                 if let Some(mut root) = tree.get_root() {

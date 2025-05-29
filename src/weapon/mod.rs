@@ -17,6 +17,8 @@ use godot::register::{GodotClass, godot_api};
 use godot::tools::load;
 use std::sync::LazyLock;
 
+pub mod save;
+
 static NOISE_POSITION: AtomicCell<Vector2> = AtomicCell::new(NO_NOISE);
 
 #[allow(clippy::declare_interior_mutable_const)]

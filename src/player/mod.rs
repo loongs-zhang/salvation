@@ -27,6 +27,8 @@ pub mod weapon;
 
 pub mod upgrade;
 
+pub mod save;
+
 static POSITION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
 static LAST_SCORE_UPDATE: AtomicU64 = AtomicU64::new(0);
@@ -444,7 +446,7 @@ impl RustPlayer {
         POSITION.load()
     }
 
-    pub fn get() -> Gd<RustPlayer> {
+    pub fn get() -> Gd<Self> {
         Engine::singleton()
             .get_main_loop()
             .unwrap()
@@ -452,6 +454,6 @@ impl RustPlayer {
             .get_root()
             .unwrap()
             .get_node_as::<Node2D>("RustWorld")
-            .get_node_as::<RustPlayer>("RustPlayer")
+            .get_node_as::<Self>("RustPlayer")
     }
 }
