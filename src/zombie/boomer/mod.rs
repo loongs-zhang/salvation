@@ -42,9 +42,9 @@ pub struct RustBoomer {
     #[export]
     rotatable: bool,
     #[export]
-    explosive: bool,
+    detonable: bool,
     #[export]
-    explode_countdown: real,
+    detonate_countdown: f64,
     #[export]
     health: u32,
     #[export]
@@ -87,8 +87,8 @@ impl ICharacterBody2D for RustBoomer {
             invincible: false,
             moveable: true,
             rotatable: true,
-            explosive: true,
-            explode_countdown: BOOMER_EXPLODE_COUNTDOWN,
+            detonable: true,
+            detonate_countdown: BOOMER_EXPLODE_COUNTDOWN,
             speed: BOOMER_MOVE_SPEED,
             rampage_time: ZOMBIE_RAMPAGE_TIME,
             alarm_time: ZOMBIE_ALARM_TIME,
@@ -395,7 +395,7 @@ impl RustBoomer {
         }
         self.current_speed = 0.0;
         self.state = ZombieState::Dead;
-        if self.die_audio.is_inside_tree() && self.explosive {
+        if self.die_audio.is_inside_tree() && self.detonable {
             //播放爆炸音效
             #[allow(clippy::borrow_interior_mutable_const)]
             if let Some(audio) = EXPLODE_AUDIOS.pick_random() {

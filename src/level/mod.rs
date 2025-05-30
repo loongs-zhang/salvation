@@ -192,7 +192,9 @@ impl INode2D for RustLevel {
         if event.is_action_pressed("l") {
             self.left_rampage_time = 0.0;
         } else if event.is_action_pressed("j") {
+            //在这一帧清理所有僵尸
             kill_all_zombies();
+            //下一帧跳关
             self.base_mut()
                 .call_deferred("level_up", &[true.to_variant()]);
         }
@@ -411,6 +413,13 @@ impl RustLevel {
         self.boss_generator.bind_mut().start_timer();
     }
 
+    pub fn stop(&mut self) {
+        RustPlayer::reset_last_score_update();
+        self.zombie_generator.bind_mut().stop_timer();
+        self.boomer_generator.bind_mut().stop_timer();
+        self.boss_generator.bind_mut().stop_timer();
+    }
+
     pub fn enable_hell(&mut self) {
         self.zombie_refresh_time = 0.2;
         self.boomer_refresh_time = 0.5;
@@ -445,14 +454,12 @@ impl RustLevel {
         LIVE_COUNT.load(Ordering::Acquire)
     }
 
-    pub fn get() -> Gd<Self> {
+    pub fn get() -> Option<Gd<Self>> {
         Engine::singleton()
-            .get_main_loop()
-            .unwrap()
+            .get_main_loop()?
             .cast::<SceneTree>()
-            .get_root()
-            .unwrap()
+            .get_root()?
             .get_node_as::<Node2D>("RustWorld")
-            .get_node_as::<Self>("RustLevel")
+            .try_get_node_as::<Self>("RustLevel")
     }
 }

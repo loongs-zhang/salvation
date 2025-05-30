@@ -7,7 +7,9 @@ use godot::classes::{INode2D, InputEvent, Node, Node2D, PackedScene, Timer};
 use godot::global::godot_error;
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
-use godot::prelude::{GodotClass, godot_api};
+use godot::register::{GodotClass, godot_api};
+
+pub mod save;
 
 #[derive(GodotClass, Debug)]
 #[class(base=Node2D)]
@@ -126,6 +128,11 @@ impl ZombieGenerator {
         self.update_refresh_hud();
     }
 
+    pub fn stop_timer(&mut self) {
+        self.timer.stop();
+        self.update_refresh_hud();
+    }
+
     #[func]
     pub fn generate(&mut self) {
         for _ in 0..self.current_refresh_count {
@@ -138,8 +145,7 @@ impl ZombieGenerator {
                 break;
             }
             if self.current >= self.current_total {
-                self.timer.stop();
-                self.update_refresh_hud();
+                self.stop_timer();
                 break;
             }
             self.generate_zombie();

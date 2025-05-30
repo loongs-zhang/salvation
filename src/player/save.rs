@@ -38,7 +38,7 @@ impl Serialize for RustPlayer {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Deserialize)]
 struct PlayerData {
     global_position: Vector2,
     player_name: GString,

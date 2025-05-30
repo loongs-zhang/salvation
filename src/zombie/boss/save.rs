@@ -1,8 +1,15 @@
 use super::*;
 use crate::SAVE;
+use crate::level::generator::ZombieGenerator;
+use godot::classes::PackedScene;
+use godot::tools::load;
 use serde::ser::SerializeStruct;
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 use std::collections::HashSet;
+use std::sync::OnceLock;
+
+#[allow(clippy::declare_interior_mutable_const)]
+const SELF: OnceLock<Gd<PackedScene>> = OnceLock::new();
 
 impl Serialize for RustBoss {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -26,6 +33,18 @@ impl Serialize for RustBoss {
     }
 }
 
+#[derive(Debug, Deserialize)]
+struct BossData {
+    global_position: Vector2,
+    global_rotation_degrees: f32,
+    boss_name: GString,
+    invincible: bool,
+    moveable: bool,
+    attackable: bool,
+    health: u32,
+    speed: real,
+}
+
 #[godot_api(secondary)]
 impl RustBoss {
     #[func]
@@ -47,5 +66,41 @@ impl RustBoss {
         }
     }
 
-    // todo on_load
+    #[func]
+    pub fn on_load(&mut self) {
+        let name = self.base().get_class().to_string();
+        if let Some((_, vec)) = SAVE.remove(&name) {
+            if let Some(mut parent) = self.base().get_parent() {
+                for json in &vec {
+                    if let Ok(save_data) = serde_json::from_str::<BossData>(json) {
+                        #[allow(clippy::borrow_interior_mutable_const)]
+                        if let Some(mut boss) = SELF
+                            .get_or_init(|| load(&self.base().get_scene_file_path()))
+                            .try_instantiate_as::<Self>()
+                        {
+                            boss.set_global_position(save_data.global_position);
+                            boss.set_global_rotation_degrees(save_data.global_rotation_degrees);
+                            boss.bind_mut().boss_name = save_data.boss_name;
+                            boss.bind_mut().invincible = save_data.invincible;
+                            boss.bind_mut().moveable = save_data.moveable;
+                            boss.bind_mut().attackable = save_data.attackable;
+                            boss.bind_mut().health = save_data.health;
+                            boss.bind_mut().speed = save_data.speed;
+                            parent.add_child(&boss);
+                            if let Some(level) = RustLevel::get() {
+                                if let Some(mut generator) =
+                                    level.try_get_node_as::<ZombieGenerator>("BossGenerator")
+                                {
+                                    generator.bind_mut().current += 1;
+                                }
+                            }
+                        }
+                    }
+                }
+                // 清理自己
+                parent.remove_child(&self.to_gd());
+                self.base_mut().queue_free();
+            }
+        }
+    }
 }

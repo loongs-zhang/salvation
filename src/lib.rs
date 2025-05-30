@@ -12,7 +12,6 @@ use std::collections::HashSet;
 use std::sync::LazyLock;
 
 // todo 增加双持刀、双持武器，双持武器时，鼠标左键开一边，鼠标右键开另一边
-// todo 增加存档功能
 // todo 增加僵尸死亡掉落金币，需要过去拾取
 // todo 增加局外可升级的技能树
 // todo 程序生成地图不清理之前生成过的
@@ -46,8 +45,7 @@ pub mod save;
 const DEFAULT_SCREEN_SIZE: Vector2 = Vector2::new(960.0, 540.0);
 
 // save
-const SAVE_PATH: &str = "res://data/rust_data.json";
-//todo 改为user路径
+const SAVE_PATH: &str = "user://data/rust_data.json";
 
 static SAVE: LazyLock<DashMap<String, HashSet<String>>> = LazyLock::new(DashMap::new);
 
@@ -137,7 +135,7 @@ const ZOMBIE_RAMPAGE_TIME: real = 30.0;
 // boomer
 const BOOMER_MOVE_SPEED: real = 2.0;
 
-const BOOMER_EXPLODE_COUNTDOWN: real = 1.25;
+const BOOMER_EXPLODE_COUNTDOWN: f64 = 1.25;
 
 const BOOMER_DAMAGE: i64 = 50;
 
@@ -255,7 +253,6 @@ fn random_half_position(from: real, to: real) -> real {
 }
 
 pub fn kill_all_zombies() {
-    //在这一帧清理所有僵尸
     let mut event = InputEventAction::new_gd();
     event.set_action("k");
     event.set_pressed(true);

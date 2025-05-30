@@ -308,6 +308,7 @@ impl RustBoss {
         self.notify_animation();
     }
 
+    #[func]
     pub fn die(&mut self) {
         if ZombieState::Dead == self.state {
             return;

@@ -9,12 +9,12 @@
 
 [node name="RustLevel" type="RustLevel" groups=["preservable"]]
 
-[node name="ZombieGenerator" type="ZombieGenerator" parent="."]
+[node name="ZombieGenerator" type="ZombieGenerator" parent="." groups=["preservable"]]
 zombie_scenes = Array[PackedScene]([ExtResource("1_4leux")])
 
 [node name="Timer" type="Timer" parent="ZombieGenerator"]
 
-[node name="BoomerGenerator" type="ZombieGenerator" parent="."]
+[node name="BoomerGenerator" type="ZombieGenerator" parent="." groups=["preservable"]]
 total = 10
 refresh_count = 1
 refresh_barrier = 3
@@ -24,7 +24,7 @@ zombie_scenes = Array[PackedScene]([ExtResource("3_l44ew")])
 
 [node name="Timer" type="Timer" parent="BoomerGenerator"]
 
-[node name="BossGenerator" type="ZombieGenerator" parent="."]
+[node name="BossGenerator" type="ZombieGenerator" parent="." groups=["preservable"]]
 immediate = true
 total = 2
 refresh_count = 1

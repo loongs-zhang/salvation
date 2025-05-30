@@ -1,8 +1,15 @@
 use super::*;
 use crate::SAVE;
+use crate::level::generator::ZombieGenerator;
+use godot::classes::PackedScene;
+use godot::tools::load;
 use serde::ser::SerializeStruct;
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 use std::collections::HashSet;
+use std::sync::OnceLock;
+
+#[allow(clippy::declare_interior_mutable_const)]
+const SELF: OnceLock<Gd<PackedScene>> = OnceLock::new();
 
 impl Serialize for RustZombie {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -31,6 +38,23 @@ impl Serialize for RustZombie {
     }
 }
 
+#[derive(Debug, Deserialize)]
+struct ZombieData {
+    global_position: Vector2,
+    global_rotation_degrees: f32,
+    zombie_name: GString,
+    invincible: bool,
+    moveable: bool,
+    rotatable: bool,
+    attackable: bool,
+    health: u32,
+    speed: real,
+    rampage_time: real,
+    alarm_time: real,
+    current_alarm_time: real,
+    pursuit_direction: bool,
+}
+
 #[godot_api(secondary)]
 impl RustZombie {
     #[func]
@@ -52,5 +76,49 @@ impl RustZombie {
         }
     }
 
-    // todo on_load
+    #[func]
+    pub fn on_load(&mut self) {
+        let name = self.base().get_class().to_string();
+        if let Some((_, vec)) = SAVE.remove(&name) {
+            if let Some(mut parent) = self.base().get_parent() {
+                for json in &vec {
+                    if let Ok(save_data) = serde_json::from_str::<ZombieData>(json) {
+                        #[allow(clippy::borrow_interior_mutable_const)]
+                        if let Some(mut zombie) = SELF
+                            .get_or_init(|| load(&self.base().get_scene_file_path()))
+                            .try_instantiate_as::<Self>()
+                        {
+                            zombie.set_global_position(
+                                RustPlayer::get_position() + RustWorld::random_position(),
+                            );
+                            zombie.set_global_position(save_data.global_position);
+                            zombie.set_global_rotation_degrees(save_data.global_rotation_degrees);
+                            zombie.bind_mut().zombie_name = save_data.zombie_name;
+                            zombie.bind_mut().invincible = save_data.invincible;
+                            zombie.bind_mut().moveable = save_data.moveable;
+                            zombie.bind_mut().rotatable = save_data.rotatable;
+                            zombie.bind_mut().attackable = save_data.attackable;
+                            zombie.bind_mut().health = save_data.health;
+                            zombie.bind_mut().speed = save_data.speed;
+                            zombie.bind_mut().rampage_time = save_data.rampage_time;
+                            zombie.bind_mut().alarm_time = save_data.alarm_time;
+                            zombie.bind_mut().current_alarm_time = save_data.current_alarm_time;
+                            zombie.bind_mut().pursuit_direction = save_data.pursuit_direction;
+                            parent.add_child(&zombie);
+                            if let Some(level) = RustLevel::get() {
+                                if let Some(mut generator) =
+                                    level.try_get_node_as::<ZombieGenerator>("ZombieGenerator")
+                                {
+                                    generator.bind_mut().current += 1;
+                                }
+                            }
+                        }
+                    }
+                }
+                // 清理自己
+                parent.remove_child(&self.to_gd());
+                self.base_mut().queue_free();
+            }
+        }
+    }
 }

@@ -1,7 +1,8 @@
 use super::*;
 use crate::SAVE;
+use godot::builtin::StringName;
 use serde::ser::SerializeStruct;
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 use std::collections::HashSet;
 
 impl Serialize for RustWeapon {
@@ -29,6 +30,25 @@ impl Serialize for RustWeapon {
     }
 }
 
+#[derive(Debug, Deserialize)]
+struct WeaponData {
+    name: StringName,
+    silenced: bool,
+    damage: i64,
+    weight: real,
+    distance: real,
+    clip: i32,
+    explode: bool,
+    pull_after_reload: bool,
+    repel: real,
+    penetrate: real,
+    fire_cooldown: real,
+    reload_time: real,
+    reload_part: bool,
+    reloading: real,
+    ammo: i32,
+}
+
 #[godot_api(secondary)]
 impl RustWeapon {
     #[func]
@@ -42,5 +62,32 @@ impl RustWeapon {
         }
     }
 
-    // todo on_load
+    #[func]
+    pub fn on_load(&mut self) {
+        let name = self.base().get_class().to_string();
+        if let Some((_, vec)) = SAVE.remove(&name) {
+            for json in &vec {
+                if let Ok(save_data) = serde_json::from_str::<WeaponData>(json) {
+                    if self.base().get_name() != save_data.name {
+                        continue;
+                    }
+                    self.silenced = save_data.silenced;
+                    self.damage = save_data.damage;
+                    self.weight = save_data.weight;
+                    self.distance = save_data.distance;
+                    self.clip = save_data.clip;
+                    self.explode = save_data.explode;
+                    self.pull_after_reload = save_data.pull_after_reload;
+                    self.repel = save_data.repel;
+                    self.penetrate = save_data.penetrate;
+                    self.fire_cooldown = save_data.fire_cooldown;
+                    self.reload_time = save_data.reload_time;
+                    self.reload_part = save_data.reload_part;
+                    self.reloading = save_data.reloading;
+                    self.ammo = save_data.ammo;
+                    self.update_ammo_hud();
+                }
+            }
+        }
+    }
 }

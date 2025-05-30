@@ -1,7 +1,14 @@
 use super::*;
+use crate::level::generator::ZombieGenerator;
+use godot::classes::PackedScene;
+use godot::tools::load;
 use serde::ser::SerializeStruct;
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 use std::collections::HashSet;
+use std::sync::OnceLock;
+
+#[allow(clippy::declare_interior_mutable_const)]
+const SELF: OnceLock<Gd<PackedScene>> = OnceLock::new();
 
 impl Serialize for RustBoomer {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -19,8 +26,8 @@ impl Serialize for RustBoomer {
         state.serialize_field("invincible", &self.invincible)?;
         state.serialize_field("moveable", &self.moveable)?;
         state.serialize_field("rotatable", &self.rotatable)?;
-        state.serialize_field("explosive", &self.explosive)?;
-        state.serialize_field("explode_countdown", &self.explode_countdown)?;
+        state.serialize_field("detonable", &self.detonable)?;
+        state.serialize_field("detonate_countdown", &self.detonate_countdown)?;
         state.serialize_field("health", &self.health)?;
         state.serialize_field("speed", &self.speed)?;
         state.serialize_field("rampage_time", &self.rampage_time)?;
@@ -29,6 +36,24 @@ impl Serialize for RustBoomer {
         state.serialize_field("pursuit_direction", &self.pursuit_direction)?;
         state.end()
     }
+}
+
+#[derive(Debug, Deserialize)]
+struct BoomerData {
+    global_position: Vector2,
+    global_rotation_degrees: f32,
+    boomer_name: GString,
+    invincible: bool,
+    moveable: bool,
+    rotatable: bool,
+    detonable: bool,
+    detonate_countdown: f64,
+    health: u32,
+    speed: real,
+    rampage_time: real,
+    alarm_time: real,
+    current_alarm_time: real,
+    pursuit_direction: bool,
 }
 
 #[godot_api(secondary)]
@@ -52,5 +77,47 @@ impl RustBoomer {
         }
     }
 
-    // todo on_load
+    #[func]
+    pub fn on_load(&mut self) {
+        let name = self.base().get_class().to_string();
+        if let Some((_, vec)) = SAVE.remove(&name) {
+            if let Some(mut parent) = self.base().get_parent() {
+                for json in &vec {
+                    if let Ok(save_data) = serde_json::from_str::<BoomerData>(json) {
+                        #[allow(clippy::borrow_interior_mutable_const)]
+                        if let Some(mut boomer) = SELF
+                            .get_or_init(|| load(&self.base().get_scene_file_path()))
+                            .try_instantiate_as::<Self>()
+                        {
+                            boomer.set_global_position(save_data.global_position);
+                            boomer.set_global_rotation_degrees(save_data.global_rotation_degrees);
+                            boomer.bind_mut().boomer_name = save_data.boomer_name;
+                            boomer.bind_mut().invincible = save_data.invincible;
+                            boomer.bind_mut().moveable = save_data.moveable;
+                            boomer.bind_mut().rotatable = save_data.rotatable;
+                            boomer.bind_mut().detonable = save_data.detonable;
+                            boomer.bind_mut().detonate_countdown = save_data.detonate_countdown;
+                            boomer.bind_mut().health = save_data.health;
+                            boomer.bind_mut().speed = save_data.speed;
+                            boomer.bind_mut().rampage_time = save_data.rampage_time;
+                            boomer.bind_mut().alarm_time = save_data.alarm_time;
+                            boomer.bind_mut().current_alarm_time = save_data.current_alarm_time;
+                            boomer.bind_mut().pursuit_direction = save_data.pursuit_direction;
+                            parent.add_child(&boomer);
+                            if let Some(level) = RustLevel::get() {
+                                if let Some(mut generator) =
+                                    level.try_get_node_as::<ZombieGenerator>("BoomerGenerator")
+                                {
+                                    generator.bind_mut().current += 1;
+                                }
+                            }
+                        }
+                    }
+                }
+                // 清理自己
+                parent.remove_child(&self.to_gd());
+                self.base_mut().queue_free();
+            }
+        }
+    }
 }
