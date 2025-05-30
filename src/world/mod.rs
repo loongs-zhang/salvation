@@ -5,8 +5,8 @@ use crate::player::RustPlayer;
 use crate::save::RustSaveLoader;
 use godot::builtin::Vector2;
 use godot::classes::{
-    Button, CanvasLayer, Control, HBoxContainer, INode2D, InputEvent, Label, Node, Node2D, Object,
-    PackedScene,
+    Button, CanvasLayer, Control, Engine, HBoxContainer, INode2D, InputEvent, Label, Node, Node2D,
+    Object, PackedScene, SceneTree,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
@@ -158,5 +158,15 @@ impl RustWorld {
 
     pub fn is_paused() -> bool {
         PAUSED.load(Ordering::Acquire)
+    }
+
+    pub fn get() -> Gd<Node> {
+        Engine::singleton()
+            .get_main_loop()
+            .unwrap()
+            .cast::<SceneTree>()
+            .get_root()
+            .unwrap()
+            .get_node_as::<Node>("RustWorld")
     }
 }

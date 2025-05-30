@@ -1,7 +1,8 @@
+use crate::world::RustWorld;
 use crate::{SAVE, SAVE_PATH};
 use dashmap::DashMap;
 use godot::classes::file_access::ModeFlags;
-use godot::classes::{Engine, FileAccess, INode, Node, Node2D, SceneTree};
+use godot::classes::{FileAccess, INode, Node};
 use godot::obj::{Base, Gd, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use std::collections::HashSet;
@@ -73,13 +74,6 @@ impl RustSaveLoader {
     }
 
     pub fn get() -> Gd<Self> {
-        Engine::singleton()
-            .get_main_loop()
-            .unwrap()
-            .cast::<SceneTree>()
-            .get_root()
-            .unwrap()
-            .get_node_as::<Node2D>("RustWorld")
-            .get_node_as::<Self>("RustSaveLoader")
+        RustWorld::get().get_node_as::<Self>("RustSaveLoader")
     }
 }

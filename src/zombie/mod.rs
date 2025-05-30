@@ -336,6 +336,17 @@ impl RustZombie {
             .set_global_position(player_position + random_position(900.0, 1100.0));
     }
 
+    #[func]
+    pub fn clean_body(&mut self) {
+        self.base_mut().queue_free();
+        BODY_COUNT.fetch_sub(1, Ordering::Release);
+    }
+
+    #[func]
+    pub fn clean_audio(&mut self) {
+        self.die_audio.queue_free();
+    }
+
     pub fn move_back(&mut self) {
         //僵尸往玩家相反的方向移动一段距离
         self.guard();
@@ -397,10 +408,6 @@ impl RustZombie {
     pub fn get_current_direction(&self) -> Vector2 {
         let rotation = self.base().get_rotation();
         Vector2::new(rotation.cos(), rotation.sin())
-    }
-
-    pub fn get_current_speed(&self) -> real {
-        self.current_speed
     }
 
     pub fn is_face_to_user(&self) -> bool {

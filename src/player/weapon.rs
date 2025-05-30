@@ -105,56 +105,61 @@ impl RustPlayer {
     }
 
     #[func]
+    pub fn unlock_usp(&mut self) {
+        self.unlock_weapon("usp", 0, "1");
+    }
+
+    #[func]
     pub fn unlock_deagle(&mut self) {
-        self.unlock_weapon("deagle", 1);
+        self.unlock_weapon("deagle", 1, "2");
     }
 
     #[func]
     pub fn unlock_xm1014(&mut self) {
-        self.unlock_weapon("xm1014", 2);
+        self.unlock_weapon("xm1014", 2, "3");
     }
 
     #[func]
     pub fn unlock_awp(&mut self) {
-        self.unlock_weapon("awp", 3);
+        self.unlock_weapon("awp", 3, "4");
     }
 
     #[func]
     pub fn unlock_m79(&mut self) {
-        self.unlock_weapon("m79", 4);
+        self.unlock_weapon("m79", 4, "5");
     }
 
     #[func]
     pub fn unlock_m4a1(&mut self) {
-        self.unlock_weapon("m4a1", 5);
+        self.unlock_weapon("m4a1", 5, "6");
     }
 
     #[func]
     pub fn unlock_ak47(&mut self) {
-        self.unlock_weapon("ak47", 6);
+        self.unlock_weapon("ak47", 6, "7");
     }
 
     #[func]
     pub fn unlock_ak47_60r(&mut self) {
-        self.unlock_weapon("ak47-60r", 7);
+        self.unlock_weapon("ak47-60r", 7, "8");
     }
 
     #[func]
     pub fn unlock_m249(&mut self) {
-        self.unlock_weapon("m249", 8);
+        self.unlock_weapon("m249", 8, "9");
     }
 
     #[func]
     pub fn unlock_mg3(&mut self) {
-        self.unlock_weapon("mg3", 9);
+        self.unlock_weapon("mg3", 9, "0");
     }
 
     #[func]
     pub fn unlock_m134(&mut self) {
-        self.unlock_weapon("m134", 10);
+        self.unlock_weapon("m134", 10, "P");
     }
 
-    pub fn unlock_weapon(&mut self, weapon_name: &str, index: i32) {
+    pub fn unlock_weapon(&mut self, weapon_name: &str, index: i32, key: &str) {
         if self.weapons.get_child_count() > index {
             return;
         }
@@ -166,8 +171,8 @@ impl RustPlayer {
             if let Some(mut unlock_label) = self.create_message() {
                 unlock_label.bind_mut().show_message(&format!(
                     "WEAPON {} UNLOCKED, PRESS {} TO USE IT",
-                    weapon_name,
-                    index + 1
+                    weapon_name.to_uppercase(),
+                    key
                 ));
             }
             self.change_weapon(index);

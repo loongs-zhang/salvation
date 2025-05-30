@@ -1,4 +1,5 @@
 use crate::player::RustPlayer;
+use crate::world::RustWorld;
 use godot::builtin::{PackedVector2Array, Rect2i, Vector2, Vector2i};
 use godot::classes::fast_noise_lite::NoiseType;
 use godot::classes::{FastNoiseLite, INode2D, Node2D, TileMapLayer};
@@ -297,5 +298,13 @@ impl RustGround {
                 .atlas_coords(MUSHROOM_ATLAS_POSITION)
                 .done()
         }
+    }
+
+    pub fn get() -> Gd<Self> {
+        RustWorld::get().get_node_as::<Self>("RustGround")
+    }
+
+    pub fn get_objects_z_index() -> i32 {
+        Self::get().bind().objects.get_z_index()
     }
 }

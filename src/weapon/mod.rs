@@ -1,5 +1,6 @@
 use crate::bullet::RustBullet;
 use crate::grenade::RustGrenade;
+use crate::hud::RustHUD;
 use crate::player::RustPlayer;
 use crate::{
     BULLET_DAMAGE, BULLET_DISTANCE, BULLET_PENETRATE, BULLET_REPEL, MAX_AMMO, NO_NOISE,
@@ -8,7 +9,7 @@ use crate::{
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Array, Callable, Vector2, real};
 use godot::classes::{
-    AudioStreamPlayer2D, CanvasLayer, Control, GpuParticles2D, INode2D, Node2D, Object, PackedScene,
+    AudioStreamPlayer2D, Control, GpuParticles2D, INode2D, Node2D, Object, PackedScene,
 };
 use godot::global::godot_error;
 use godot::meta::ToGodot;
@@ -165,12 +166,10 @@ impl RustWeapon {
     }
 
     pub fn update_ammo_hud(&mut self) {
-        RustPlayer::get()
-            .get_node_as::<CanvasLayer>("RustHUD")
-            .call_deferred(
-                "update_ammo_hud",
-                &[self.ammo.to_variant(), self.clip.to_variant()],
-            );
+        RustHUD::get().call_deferred(
+            "update_ammo_hud",
+            &[self.ammo.to_variant(), self.clip.to_variant()],
+        );
     }
 
     pub fn fire(

@@ -305,4 +305,8 @@ impl RustHUD {
         self.get_center_container()
             .get_node_as::<HBoxContainer>("HBoxContainer")
     }
+
+    pub fn get() -> Gd<Self> {
+        RustPlayer::get().get_node_as::<Self>("RustHUD")
+    }
 }

@@ -1,3 +1,4 @@
+use crate::hud::RustHUD;
 use crate::level::generator::ZombieGenerator;
 use crate::player::RustPlayer;
 use crate::save::RustSaveLoader;
@@ -8,7 +9,7 @@ use crate::{
     kill_all_zombies, random_bool,
 };
 use godot::builtin::real;
-use godot::classes::{AudioStreamPlayer2D, Engine, INode2D, InputEvent, Node2D, SceneTree, Timer};
+use godot::classes::{AudioStreamPlayer2D, INode2D, InputEvent, Node2D, Timer};
 use godot::global::godot_warn;
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
@@ -96,11 +97,12 @@ impl INode2D for RustLevel {
         let zombie_generator = self.zombie_generator.bind();
         let boomer_generator = self.boomer_generator.bind();
         let boss_generator = self.boss_generator.bind();
-        let zombie_current = zombie_generator.current;
+        let zombie_current = zombie_generator.current + boomer_generator.current;
         let boss_current = boss_generator.current;
-        let zombie_total = zombie_generator.current_total;
+        let zombie_total = zombie_generator.current_total + boomer_generator.current_total;
         let boss_total = boss_generator.current_total;
-        let zombie_refresh_count = zombie_generator.current_refresh_count;
+        let zombie_refresh_count =
+            zombie_generator.current_refresh_count + boomer_generator.current_refresh_count;
         let boss_refresh_count = boss_generator.current_refresh_count;
         let zombie_timer = self.zombie_generator.get_node_as::<Timer>("Timer");
         let boomer_timer = self.boomer_generator.get_node_as::<Timer>("Timer");
@@ -122,10 +124,10 @@ impl INode2D for RustLevel {
             //30s内玩家未造成任何伤害，认为卡关了，实际上玩家击杀数足够，但击杀统计少了，强制刷新一批僵尸
             let refresh_zombie_count = zombie_total
                 .saturating_sub(zombie_killed)
-                .min(boss_refresh_count);
+                .min(zombie_refresh_count);
             let refresh_boss_count = boss_total
                 .saturating_sub(boss_killed)
-                .min(zombie_refresh_count);
+                .min(boss_refresh_count);
             for _ in 0..refresh_zombie_count {
                 if random_bool() {
                     zombie_generator.generate_zombie();
@@ -218,17 +220,11 @@ impl RustLevel {
     }
 
     pub fn update_level_hud(&mut self) {
-        RustPlayer::get()
-            .bind()
-            .get_hud()
-            .bind_mut()
-            .update_level_hud(self.level);
+        RustHUD::get().bind_mut().update_level_hud(self.level);
     }
 
     pub fn update_rampage_hud(&mut self) {
-        RustPlayer::get()
-            .bind()
-            .get_hud()
+        RustHUD::get()
             .bind_mut()
             .update_rampage_hud(self.left_rampage_time);
     }
@@ -240,18 +236,14 @@ impl RustLevel {
         let boss_total = self.boss_generator.bind().current_total;
         let zombie_total =
             self.zombie_generator.bind().current_total + self.boomer_generator.bind().current_total;
-        RustPlayer::get()
-            .bind()
-            .get_hud()
-            .bind_mut()
-            .update_progress_hud(
-                self.boss_killed.load(Ordering::Acquire),
-                self.zombie_killed.load(Ordering::Acquire),
-                boss_refreshed,
-                zombie_refreshed,
-                boss_total,
-                zombie_total,
-            );
+        RustHUD::get().bind_mut().update_progress_hud(
+            self.boss_killed.load(Ordering::Acquire),
+            self.zombie_killed.load(Ordering::Acquire),
+            boss_refreshed,
+            zombie_refreshed,
+            boss_total,
+            zombie_total,
+        );
     }
 
     #[func]
@@ -277,7 +269,7 @@ impl RustLevel {
             .min(self.boss_generator.bind().refresh_barrier);
         let boss_timer = self.boss_generator.get_node_as::<Timer>("Timer");
         let boss_wait_time = boss_timer.get_wait_time();
-        let mut hud = RustPlayer::get().bind().get_hud();
+        let mut hud = RustHUD::get();
         hud.bind_mut().update_refresh_zombie_hud(
             zombie_timer.is_stopped(),
             zombie_refresh_count,
@@ -455,11 +447,6 @@ impl RustLevel {
     }
 
     pub fn get() -> Option<Gd<Self>> {
-        Engine::singleton()
-            .get_main_loop()?
-            .cast::<SceneTree>()
-            .get_root()?
-            .get_node_as::<Node2D>("RustWorld")
-            .try_get_node_as::<Self>("RustLevel")
+        RustWorld::get().try_get_node_as::<Self>("RustLevel")
     }
 }

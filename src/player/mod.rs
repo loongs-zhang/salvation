@@ -11,8 +11,8 @@ use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Array, GString, Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
-    AnimatedSprite2D, AudioStreamPlayer2D, Camera2D, CharacterBody2D, Engine, GpuParticles2D,
-    ICharacterBody2D, Input, InputEvent, Label, Node2D, PackedScene, RemoteTransform2D, SceneTree,
+    AnimatedSprite2D, AudioStreamPlayer2D, Camera2D, CharacterBody2D, GpuParticles2D,
+    ICharacterBody2D, Input, InputEvent, Label, Node2D, PackedScene, RemoteTransform2D,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -399,10 +399,6 @@ impl RustPlayer {
         None
     }
 
-    pub fn get_hud(&self) -> Gd<RustHUD> {
-        self.base().get_node_as::<RustHUD>("RustHUD")
-    }
-
     pub fn get_mouse_position(&self) -> Vector2 {
         self.base().get_canvas_transform().affine_inverse()
             * self
@@ -447,13 +443,6 @@ impl RustPlayer {
     }
 
     pub fn get() -> Gd<Self> {
-        Engine::singleton()
-            .get_main_loop()
-            .unwrap()
-            .cast::<SceneTree>()
-            .get_root()
-            .unwrap()
-            .get_node_as::<Node2D>("RustWorld")
-            .get_node_as::<Self>("RustPlayer")
+        RustWorld::get().get_node_as::<Self>("RustPlayer")
     }
 }
