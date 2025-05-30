@@ -25,7 +25,6 @@ zombie_scenes = Array[PackedScene]([ExtResource("3_l44ew")])
 [node name="Timer" type="Timer" parent="BoomerGenerator"]
 
 [node name="BossGenerator" type="ZombieGenerator" parent="." groups=["preservable"]]
-immediate = true
 total = 2
 refresh_count = 1
 refresh_barrier = 6

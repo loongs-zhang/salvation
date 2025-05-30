@@ -43,6 +43,7 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 damage = 33
 weight = 0.75
 clip = 200
+jitter = 15.0
 pull_after_reload = true
 repel = 25.0
 fire_cooldown = 0.04

@@ -118,6 +118,11 @@ impl ZombieGenerator {
     }
 
     pub fn refresh_timer(&mut self, refresh_time: f64) {
+        let current_wait_time = self.timer.get_wait_time();
+        if 0.2 == current_wait_time || current_wait_time == refresh_time && !self.timer.is_stopped()
+        {
+            return;
+        }
         self.timer.set_wait_time(refresh_time);
         self.timer.start();
         self.update_refresh_hud();

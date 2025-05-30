@@ -43,6 +43,7 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 damage = 54
 distance = 400.0
 clip = 7
+jitter = 8.0
 pull_after_reload = true
 repel = 36.0
 penetrate = 3.5

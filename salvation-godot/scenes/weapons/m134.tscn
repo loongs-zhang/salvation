@@ -44,6 +44,7 @@ damage = 30
 weight = 0.6
 distance = 666.0
 clip = 300
+jitter = 17.0
 pull_after_reload = true
 repel = 16.0
 penetrate = 2.5

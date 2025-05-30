@@ -42,6 +42,7 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 [node name="AK47" type="RustWeapon" groups=["preservable"]]
 damage = 36
 weight = 0.86
+jitter = 16.0
 repel = 24.0
 penetrate = 2.5
 reload_time = 2.5

@@ -45,6 +45,7 @@ silenced = true
 damage = 33
 weight = 0.88
 distance = 1000.0
+jitter = 12.0
 pull_after_reload = true
 repel = 12.0
 penetrate = 1.9

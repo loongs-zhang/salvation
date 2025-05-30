@@ -45,6 +45,7 @@ damage = 40
 weight = 0.9
 distance = 1000.0
 clip = 60
+jitter = 12.0
 repel = 30.0
 penetrate = 3.5
 fire_cooldown = 0.08

@@ -56,16 +56,17 @@ size_flags_horizontal = 0
 size_flags_vertical = 0
 theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
 text = "Weapons
-1: DEAGLE
-2: XM1014
-3: AWP
-4: M79
-5: M4A1
-6: AK47
-7: AK47-60R
-8: M249
-9: MG3
-0: M134"
+1: USP
+2: DEAGLE
+3: XM1014
+4: AWP
+5: M79
+6: M4A1
+7: AK47
+8: AK47-60R
+9: M249
+0: MG3
+P: M134"
 vertical_alignment = 1
 
 [node name="Fight" type="Label" parent="HBoxContainer"]

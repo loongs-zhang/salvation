@@ -4,7 +4,7 @@ use crate::hud::RustHUD;
 use crate::player::RustPlayer;
 use crate::{
     BULLET_DAMAGE, BULLET_DISTANCE, BULLET_PENETRATE, BULLET_REPEL, MAX_AMMO, NO_NOISE,
-    RELOAD_TIME, WEAPON_FIRE_COOLDOWN, WeaponState, random_direction,
+    RELOAD_TIME, WEAPON_FIRE_COOLDOWN, WeaponState,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Array, Callable, Vector2, real};
@@ -16,6 +16,8 @@ use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use godot::tools::load;
+use rand::Rng;
+use rand::rngs::ThreadRng;
 use std::sync::LazyLock;
 
 pub mod save;
@@ -44,6 +46,9 @@ pub struct RustWeapon {
     //武器弹夹容量
     #[export]
     clip: i32,
+    //子弹抖动系数
+    #[export]
+    jitter: real,
     //是否每次都从所有子弹点射出子弹
     #[export]
     explode: bool,
@@ -88,6 +93,7 @@ impl INode2D for RustWeapon {
             weight: 1.0,
             distance: BULLET_DISTANCE,
             clip: MAX_AMMO,
+            jitter: 0.0,
             explode: false,
             pull_after_reload: false,
             repel: BULLET_REPEL,
@@ -185,6 +191,8 @@ impl RustWeapon {
         {
             return;
         }
+        // todo 如果隔一段时间再开火，恢复精确度 jitter乘上连续开火时间
+        let mut rng = rand::thread_rng();
         let vec: Vec<Gd<PackedScene>> = self.bullet_scenes.iter_shared().collect();
         for bullet_scene in vec {
             let r = if self.explode {
@@ -193,12 +201,6 @@ impl RustWeapon {
                     "Failed to instantiate bullet or grenade",
                 ));
                 for bullet_point in self.bullet_points.get_children().iter_shared() {
-                    //增加子弹散射
-                    let direction = self
-                        .base()
-                        .get_global_position()
-                        .direction_to(self.get_mouse_position() + random_direction() * 30.0)
-                        .normalized();
                     r = self.do_fire(
                         player_damage,
                         player_distance,
@@ -206,7 +208,7 @@ impl RustWeapon {
                         player_repel,
                         &bullet_scene,
                         bullet_point.cast::<Node2D>().get_global_position(),
-                        direction,
+                        self.get_random_direction(&mut rng, self.jitter),
                     );
                     if r.is_err() {
                         break;
@@ -214,11 +216,6 @@ impl RustWeapon {
                 }
                 r
             } else {
-                let direction = self
-                    .base()
-                    .get_global_position()
-                    .direction_to(self.get_mouse_position())
-                    .normalized();
                 //加特林开火时多枪管轮询选点射击
                 let bullet_point = self
                     .bullet_points
@@ -234,7 +231,7 @@ impl RustWeapon {
                     player_repel,
                     &bullet_scene,
                     bullet_point,
-                    direction,
+                    self.get_random_direction(&mut rng, self.jitter),
                 )
             };
             if r.is_err() {
@@ -268,6 +265,20 @@ impl RustWeapon {
                 NOISE_POSITION.store(NO_NOISE);
             }
         }
+    }
+
+    fn get_random_direction(&self, rng: &mut ThreadRng, jitter: real) -> Vector2 {
+        //增加子弹散射
+        self.base()
+            .get_global_position()
+            .direction_to(
+                self.get_mouse_position()
+                    + Vector2::new(
+                        rng.gen_range(-jitter..=jitter),
+                        rng.gen_range(-jitter..=jitter),
+                    ),
+            )
+            .normalized()
     }
 
     #[allow(clippy::too_many_arguments)]

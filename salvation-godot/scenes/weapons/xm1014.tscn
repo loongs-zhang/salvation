@@ -44,6 +44,7 @@ damage = 30
 weight = 0.92
 distance = 400.0
 clip = 7
+jitter = 30.0
 explode = true
 repel = 25.0
 penetrate = 1.0

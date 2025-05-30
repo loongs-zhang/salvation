@@ -161,6 +161,14 @@ impl INode2D for RustLevel {
         self.update_progress_hud();
         if 0.0 == self.left_rampage_time && zombie_killed < zombie_current {
             RAMPAGE.store(true, Ordering::Release);
+            if !self.hell {
+                self.boomer_generator
+                    .bind_mut()
+                    .refresh_timer(self.boomer_refresh_time / 2.0);
+                self.boss_generator
+                    .bind_mut()
+                    .refresh_timer(self.boss_refresh_time / 6.0);
+            }
             self.play_rampage_bgm();
         } else if boss_killed < boss_current {
             self.play_boss_bgm();
@@ -289,6 +297,19 @@ impl RustLevel {
 
     #[func]
     pub fn level_up(&mut self, jump: bool) {
+        // clean extra zombies
+        for mut node in self
+            .base()
+            .get_tree()
+            .unwrap()
+            .get_nodes_in_group("zombie")
+            .iter_shared()
+        {
+            if !node.has_method("before_load") {
+                continue;
+            }
+            node.call("before_load", &[]);
+        }
         if self.level > 1 {
             RustSaveLoader::get().call_deferred("save_game", &[]);
         }
