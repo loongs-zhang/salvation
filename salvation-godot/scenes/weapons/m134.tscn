@@ -1,8 +1,9 @@
-[gd_scene load_steps=13 format=3 uid="uid://yk15efq3cmxx"]
+[gd_scene load_steps=14 format=3 uid="uid://yk15efq3cmxx"]
 
 [ext_resource type="Texture2D" uid="uid://c04iu4r52fycy" path="res://asserts/player/weapons/m134/m134.png" id="1_8kmfu"]
 [ext_resource type="AudioStream" uid="uid://cyrkidnq6k7e5" path="res://asserts/player/weapons/m134/m134-1.wav" id="2_6lky8"]
 [ext_resource type="AudioStream" uid="uid://gt52hn3y0cuy" path="res://asserts/player/weapons/m134/m134_clipoff.wav" id="3_ui38b"]
+[ext_resource type="AudioStream" uid="uid://bebw57ilmpkrh" path="res://asserts/player/weapons/w_roundin.wav" id="4_6lky8"]
 [ext_resource type="AudioStream" uid="uid://btychq5p1llr2" path="res://asserts/player/weapons/m134/m134_clipon.wav" id="4_l50ha"]
 [ext_resource type="AudioStream" uid="uid://d8y2vigi0fe7" path="res://asserts/player/weapons/m134/m134_pinpull.wav" id="5_i4k35"]
 
@@ -44,7 +45,7 @@ damage = 30
 weight = 0.6
 distance = 666.0
 clip = 300
-jitter = 17.0
+jitter = 18.0
 pull_after_reload = true
 repel = 16.0
 penetrate = 2.5
@@ -156,6 +157,7 @@ stream = ExtResource("2_6lky8")
 stream = ExtResource("3_ui38b")
 
 [node name="ClipPartInAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("4_6lky8")
 
 [node name="ClipInAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("4_l50ha")

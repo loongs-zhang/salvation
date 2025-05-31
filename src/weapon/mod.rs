@@ -74,6 +74,8 @@ pub struct RustWeapon {
     ammo: i32,
     current_fire_cooldown: real,
     current_flash_cooldown: f64,
+    current_jitter: real,
+    current_jitter_cooldown: real,
     bullet_points: OnReady<Gd<Control>>,
     fire_flash: OnReady<Gd<GpuParticles2D>>,
     fire_audio: OnReady<Gd<AudioStreamPlayer2D>>,
@@ -106,6 +108,8 @@ impl INode2D for RustWeapon {
             ammo: MAX_AMMO,
             current_fire_cooldown: WEAPON_FIRE_COOLDOWN,
             current_flash_cooldown: 0.0,
+            current_jitter: 0.0,
+            current_jitter_cooldown: WEAPON_FIRE_COOLDOWN,
             bullet_scenes: Array::new(),
             bullet_points: OnReady::from_node("BulletPoints"),
             fire_flash: OnReady::from_node("GpuParticles2D"),
@@ -121,6 +125,13 @@ impl INode2D for RustWeapon {
     fn process(&mut self, delta: f64) {
         self.current_fire_cooldown -= delta as real;
         self.current_flash_cooldown -= delta;
+        if self.jitter > 0.0 && WeaponState::Firing != self.state {
+            self.current_jitter_cooldown -= delta as real;
+            if self.current_jitter_cooldown <= 0.0 {
+                self.current_jitter = (self.current_jitter - self.jitter / 5.0).max(0.0);
+                self.current_jitter_cooldown = self.fire_cooldown * 5.0;
+            }
+        }
         if self.ammo < self.clip && self.reloading > 0.0 {
             self.reloading -= delta as real;
         } else if self.reloading < 0.0 && !self.clip_in_audio.is_playing() {
@@ -191,7 +202,6 @@ impl RustWeapon {
         {
             return;
         }
-        // todo 如果隔一段时间再开火，恢复精确度 jitter乘上连续开火时间
         let mut rng = rand::thread_rng();
         let vec: Vec<Gd<PackedScene>> = self.bullet_scenes.iter_shared().collect();
         for bullet_scene in vec {
@@ -208,7 +218,7 @@ impl RustWeapon {
                         player_repel,
                         &bullet_scene,
                         bullet_point.cast::<Node2D>().get_global_position(),
-                        self.get_random_direction(&mut rng, self.jitter),
+                        self.get_random_direction(&mut rng, self.current_jitter),
                     );
                     if r.is_err() {
                         break;
@@ -231,7 +241,7 @@ impl RustWeapon {
                     player_repel,
                     &bullet_scene,
                     bullet_point,
-                    self.get_random_direction(&mut rng, self.jitter),
+                    self.get_random_direction(&mut rng, self.current_jitter),
                 )
             };
             if r.is_err() {
@@ -304,6 +314,11 @@ impl RustWeapon {
             drop(gd_mut);
             if let Some(mut parent) = RustPlayer::get().get_parent() {
                 parent.add_child(&bullet);
+                if self.jitter > 0.0 {
+                    self.current_jitter =
+                        (self.current_jitter + self.jitter / 5.0).min(self.jitter);
+                    self.current_jitter_cooldown = self.fire_cooldown * 5.0;
+                }
                 return Ok(());
             }
         } else if let Some(mut grenade) = bullet_scene.try_instantiate_as::<RustGrenade>() {

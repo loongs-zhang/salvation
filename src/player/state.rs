@@ -17,6 +17,7 @@ impl RustPlayer {
         self.state = PlayerState::Born;
         self.current_health = self.health;
         STATE.store(self.state);
+        self.get_current_weapon().bind_mut().weapon_ready();
         self.hud
             .bind_mut()
             .update_lives_hud(self.current_lives, self.lives);
@@ -41,6 +42,7 @@ impl RustPlayer {
         self.current_speed = self.speed * self.get_current_weapon().bind().get_weight();
         self.state = PlayerState::Guard;
         STATE.store(self.state);
+        self.get_current_weapon().bind_mut().weapon_ready();
         self.hud.bind_mut().update_speed_hud(self.current_speed);
     }
 
@@ -56,6 +58,7 @@ impl RustPlayer {
         self.current_speed = self.speed * 1.5 * self.get_current_weapon().bind().get_weight();
         self.state = PlayerState::Run;
         STATE.store(self.state);
+        self.get_current_weapon().bind_mut().weapon_ready();
         self.hud.bind_mut().update_speed_hud(self.current_speed);
         //打断换弹
         self.get_current_weapon().bind_mut().stop_reload();
@@ -107,6 +110,7 @@ impl RustPlayer {
         self.current_speed = self.speed * 0.75;
         self.state = PlayerState::Chop;
         STATE.store(self.state);
+        self.get_current_weapon().bind_mut().weapon_ready();
         self.hud.bind_mut().update_speed_hud(self.current_speed);
         //打断换弹
         self.get_current_weapon().bind_mut().stop_reload();
@@ -178,6 +182,7 @@ impl RustPlayer {
         self.blood_flash.look_at(hit_position);
         self.blood_flash.restart();
         STATE.store(self.state);
+        self.get_current_weapon().bind_mut().weapon_ready();
         self.hud.bind_mut().update_speed_hud(self.current_speed);
         if random_bool() {
             self.body_hurt.play();
@@ -210,6 +215,7 @@ impl RustPlayer {
         self.blood_flash.set_emitting(true);
         self.blood_flash.restart();
         STATE.store(self.state);
+        self.get_current_weapon().bind_mut().weapon_ready();
         self.hud.bind_mut().update_speed_hud(self.current_speed);
         //打断正在持续的换弹
         self.get_current_weapon().bind_mut().stop_reload();
