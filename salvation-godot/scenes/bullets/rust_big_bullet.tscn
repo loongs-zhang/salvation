@@ -1,0 +1,43 @@
+[gd_scene load_steps=4 format=3 uid="uid://4rqy3vce21j4"]
+
+[ext_resource type="AudioStream" uid="uid://crncwty554tu1" path="res://asserts/player/weapons/bullet_hit.mp3" id="1_3do4l"]
+[ext_resource type="Texture2D" uid="uid://bx8b65xkjiwpr" path="res://asserts/player/weapons/pammo.png" id="2_d5sfh"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_h1aey"]
+size = Vector2(24, 3.5)
+
+[node name="RustBigBullet" type="RustBullet"]
+light_mask = 0
+visibility_layer = 4
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -0.25)
+rotation = 0.785398
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_d5sfh")
+region_enabled = true
+region_rect = Rect2(97, 20, 38, 36)
+
+[node name="BulletDamageArea" type="BulletDamageArea" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BulletDamageArea"]
+position = Vector2(0, -0.25)
+shape = SubResource("RectangleShape2D_h1aey")
+
+[node name="HeadshotRay1" type="RayCast2D" parent="BulletDamageArea"]
+light_mask = 0
+visibility_layer = 4096
+position = Vector2(0, -0.8)
+target_position = Vector2(12.5, 0)
+
+[node name="HeadshotRay2" type="RayCast2D" parent="BulletDamageArea"]
+light_mask = 0
+visibility_layer = 4096
+position = Vector2(0, 0.8)
+target_position = Vector2(12.5, 0)
+
+[node name="HitAudio" type="AudioStreamPlayer2D" parent="BulletDamageArea"]
+stream = ExtResource("1_3do4l")
+volume_db = 12.0
+max_distance = 4096.0
+attenuation = 1e-05

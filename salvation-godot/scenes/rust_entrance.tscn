@@ -63,10 +63,19 @@ text = "Weapons
 5: M79
 6: M4A1
 7: AK47
-8: AK47-60R
-9: M249
-0: MG3
-P: M134"
+8: M249"
+vertical_alignment = 1
+
+[node name="MoreWeapons" type="Label" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
+text = "
+MG3
+AK47-60R
+M134
+M95"
 vertical_alignment = 1
 
 [node name="Fight" type="Label" parent="HBoxContainer"]
@@ -75,6 +84,8 @@ size_flags_horizontal = 0
 size_flags_vertical = 0
 theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
 text = "Fight
+NextWeapon: 9
+PreviousWeapon: 0
 Shoot: mouseLeft
 Grenade: Q or mouseMiddle
 Melee: E

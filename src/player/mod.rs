@@ -306,11 +306,19 @@ impl ICharacterBody2D for RustPlayer {
         } else if event.is_action_pressed("8") {
             self.change_weapon(7);
         } else if event.is_action_pressed("9") {
-            self.change_weapon(8);
+            let mut new_weapon_index = self.current_weapon_index;
+            new_weapon_index += 1;
+            if new_weapon_index >= self.weapons.get_child_count() {
+                new_weapon_index = 0;
+            }
+            self.change_weapon(new_weapon_index);
         } else if event.is_action_pressed("0") {
-            self.change_weapon(9);
-        } else if event.is_action_pressed("p") {
-            self.change_weapon(10);
+            let mut new_weapon_index = self.current_weapon_index;
+            new_weapon_index -= 1;
+            if new_weapon_index < 0 {
+                new_weapon_index = self.weapons.get_child_count() - 1;
+            }
+            self.change_weapon(new_weapon_index);
         }
     }
 }

@@ -1,11 +1,11 @@
-[gd_scene load_steps=14 format=3 uid="uid://b0c5a38wvdtx"]
+[gd_scene load_steps=14 format=3 uid="uid://vs6icyoxdaft"]
 
-[ext_resource type="AudioStream" uid="uid://betb4j3xkidb0" path="res://asserts/player/weapons/ak47/ak_long-1.wav" id="2_y0gyc"]
-[ext_resource type="AudioStream" uid="uid://cgkki21wkrgmi" path="res://asserts/player/weapons/ak47/ak47_clipout.wav" id="3_oo337"]
-[ext_resource type="Texture2D" uid="uid://ch1mf5y5qoxne" path="res://asserts/player/weapons/ak47/sg552.bmp" id="4_4dtln"]
-[ext_resource type="AudioStream" uid="uid://cdgs588ra2q1n" path="res://asserts/player/weapons/ak47/ak47_clipin.wav" id="4_5813e"]
-[ext_resource type="AudioStream" uid="uid://bga4kitoyynfg" path="res://asserts/player/weapons/ak47/ak47_boltpull.wav" id="5_1qt6k"]
-[ext_resource type="Texture2D" uid="uid://cm3tl1oocqth0" path="res://asserts/player/weapons/ak47/ak47.bmp" id="6_oo337"]
+[ext_resource type="Texture2D" uid="uid://dx0l0qy7fctiy" path="res://asserts/player/weapons/m95/m95_m.png" id="1_aqqy4"]
+[ext_resource type="PackedScene" uid="uid://4rqy3vce21j4" path="res://scenes/bullets/rust_big_bullet.tscn" id="1_gsu4r"]
+[ext_resource type="AudioStream" uid="uid://dmigoq3mg1wh8" path="res://asserts/player/weapons/m95/m95_boltpull.wav" id="2_ok1ig"]
+[ext_resource type="AudioStream" uid="uid://18qprjwj1lt8" path="res://asserts/player/weapons/m95/m95-1.wav" id="3_wrdq7"]
+[ext_resource type="AudioStream" uid="uid://jte5qwtlo30n" path="res://asserts/player/weapons/m95/m95_clipout.wav" id="4_aqqy4"]
+[ext_resource type="AudioStream" uid="uid://cbcky5ryobxnu" path="res://asserts/player/weapons/m95/m95_clipin.wav" id="5_gsu4r"]
 
 [sub_resource type="Curve" id="Curve_ait51"]
 _data = [Vector2(0, 0.747967), 0.0, 0.0, 0, 0, Vector2(0.49635, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.5), 0.0, 0.0, 0, 0]
@@ -40,44 +40,65 @@ scale_curve = SubResource("CurveTexture_nrs26")
 color_ramp = SubResource("GradientTexture1D_88lgy")
 alpha_curve = SubResource("CurveTexture_ad62i")
 
-[node name="AK47-60R" type="RustWeapon" groups=["preservable"]]
-damage = 40
-weight = 0.9
-distance = 750.0
-clip = 60
-jitter = 10.0
-repel = 30.0
-penetrate = 3.9
-fire_cooldown = 0.08
-reload_time = 2.0
+[node name="M95" type="RustWeapon" groups=["preservable"]]
+damage = 500
+weight = 0.7
+distance = 1800.0
+clip = 5
+bullet_scenes = Array[PackedScene]([ExtResource("1_gsu4r")])
+pull_after_reload = true
+pull_after_fire = true
+repel = 75.0
+penetrate = 7.5
+fire_cooldown = 1.25
+reload_time = 4.2
 
 [node name="BulletPoints" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 23.5
-offset_right = 23.5
+offset_left = 37.25
+offset_right = 37.25
+metadata/_edit_use_anchors_ = true
 
 [node name="BulletPoint" type="Node2D" parent="BulletPoints"]
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(16, 0)
-rotation = 1.5708
-scale = Vector2(0.5, 0.5)
-texture = ExtResource("6_oo337")
+z_index = 1
+position = Vector2(20, -0.999998)
+scale = Vector2(0.2, 0.4)
+texture = ExtResource("1_aqqy4")
+region_enabled = true
+region_rect = Rect2(48, 33.25, 172, 5.75)
 
 [node name="Sprite2D2" type="Sprite2D" parent="."]
 z_index = 1
-position = Vector2(12.5, 0)
-rotation = 1.5708
-scale = Vector2(0.45, 0.45)
-texture = ExtResource("4_4dtln")
+position = Vector2(20, 1)
+scale = Vector2(0.2, 0.4)
+texture = ExtResource("1_aqqy4")
+flip_v = true
 region_enabled = true
-region_rect = Rect2(27, 37, 10, 11.8)
+region_rect = Rect2(48, 33.25, 172, 5.75)
+
+[node name="Sprite2D3" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(8.5, -0.35)
+scale = Vector2(0.15, 0.2)
+texture = ExtResource("1_aqqy4")
+region_enabled = true
+region_rect = Rect2(48, 18, 62, 13)
+
+[node name="Sprite2D4" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(16.15, -0.1)
+scale = Vector2(0.15, 0.2)
+texture = ExtResource("1_aqqy4")
+region_enabled = true
+region_rect = Rect2(110, 18, 40, 15)
 
 [node name="GpuParticles2D" type="GPUParticles2D" parent="."]
-position = Vector2(23.5, 0)
+position = Vector2(37.25, 0)
 emitting = false
-amount = 16
+amount = 32
 lifetime = 0.2
 one_shot = true
 explosiveness = 1.0
@@ -85,21 +106,21 @@ local_coords = true
 process_material = SubResource("ParticleProcessMaterial_ait51")
 
 [node name="DeployAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("5_1qt6k")
+stream = ExtResource("2_ok1ig")
 
 [node name="FireAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("2_y0gyc")
+stream = ExtResource("3_wrdq7")
 
 [node name="FireBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("5_1qt6k")
+stream = ExtResource("2_ok1ig")
 
 [node name="ClipOutAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("3_oo337")
+stream = ExtResource("4_aqqy4")
 
 [node name="ClipPartInAudio" type="AudioStreamPlayer2D" parent="."]
 
 [node name="ClipInAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("4_5813e")
+stream = ExtResource("5_gsu4r")
 
 [node name="ReloadBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("5_1qt6k")
+stream = ExtResource("2_ok1ig")

@@ -42,6 +42,7 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 [node name="AK47" type="RustWeapon" groups=["preservable"]]
 damage = 36
 weight = 0.86
+distance = 500.0
 jitter = 16.0
 repel = 24.0
 penetrate = 2.5
@@ -72,8 +73,14 @@ explosiveness = 1.0
 local_coords = true
 process_material = SubResource("ParticleProcessMaterial_ait51")
 
+[node name="DeployAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("5_hybat")
+
 [node name="FireAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("2_hybat")
+
+[node name="FireBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("5_hybat")
 
 [node name="ClipOutAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_r88qr")
@@ -83,5 +90,5 @@ stream = ExtResource("3_r88qr")
 [node name="ClipInAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("4_0jdrn")
 
-[node name="BoltPullAudio" type="AudioStreamPlayer2D" parent="."]
+[node name="ReloadBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("5_hybat")

@@ -61,8 +61,18 @@ impl RustPlayer {
                         hud.update_weapon_sprite_hud(Gd::null_arg());
                         godot_warn!("Weapon texture not found for: {}", weapon_name);
                     }
-                    hud.update_ammo_hud(weapon.bind().get_ammo(), weapon.bind().get_clip());
+                    self.camera.set_zoom(Vector2::new(1.0, 1.0));
+                    if weapon_index != self.current_weapon_index {
+                        weapon.bind_mut().deploy();
+                    }
                     weapon.bind_mut().weapon_ready();
+                    // 更新HUD
+                    weapon.bind_mut().update_ammo_hud();
+                    hud.update_speed_hud(self.current_speed);
+                    hud.update_damage_hud(self.damage.saturating_add(weapon.bind().get_damage()));
+                    hud.update_distance_hud(self.distance + weapon.bind().get_distance());
+                    hud.update_repel_hud(self.repel + weapon.bind().get_repel());
+                    hud.update_penetrate_hud(self.penetrate + weapon.bind().get_penetrate());
                 } else {
                     weapon.set_visible(false);
                     // 打断其他武器的换弹
@@ -79,22 +89,22 @@ impl RustPlayer {
         self.animated_sprite2d.play_ex().name("guard").done();
         self.current_speed = self.speed * 0.75;
         self.current_weapon_index = weapon_index;
-        if self.get_current_weapon().get_name() == "AWP".into() {
-            self.zoom_audio.play();
-            self.camera.set_zoom(Vector2::new(0.5, 0.5));
-        } else {
-            self.camera.set_zoom(Vector2::new(1.0, 1.0));
-        }
         self.change_success_audio.play();
-        // 更新HUD
-        let mut rust_weapon = self.get_current_weapon();
-        rust_weapon.bind_mut().update_ammo_hud();
-        let mut hud = self.hud.bind_mut();
-        hud.update_speed_hud(self.current_speed);
-        hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
-        hud.update_distance_hud(self.distance + rust_weapon.bind().get_distance());
-        hud.update_repel_hud(self.repel + rust_weapon.bind().get_repel());
-        hud.update_penetrate_hud(self.penetrate + rust_weapon.bind().get_penetrate());
+    }
+
+    #[func]
+    pub fn zoom(&mut self) {
+        let weapon_name = self.get_current_weapon().get_name().to_string();
+        if weapon_name == "M95" {
+            self.zoom_audio.play();
+            self.camera.set_zoom(Vector2::new(0.45, 0.45));
+        } else if weapon_name == "AWP" {
+            self.zoom_audio.play();
+            self.camera.set_zoom(Vector2::new(0.65, 0.65));
+        } else if weapon_name == "AK47-60R" {
+            self.zoom_audio.play();
+            self.camera.set_zoom(Vector2::new(0.8, 0.8));
+        }
     }
 
     pub fn get_current_weapon(&self) -> Gd<RustWeapon> {
@@ -114,6 +124,7 @@ impl RustPlayer {
         self.unlock_weapon("deagle", 1, "2");
     }
 
+    // todo 先解锁单喷
     #[func]
     pub fn unlock_xm1014(&mut self) {
         self.unlock_weapon("xm1014", 2, "3");
@@ -139,26 +150,34 @@ impl RustPlayer {
         self.unlock_weapon("ak47", 6, "7");
     }
 
-    #[func]
-    pub fn unlock_ak47_60r(&mut self) {
-        self.unlock_weapon("ak47-60r", 7, "8");
-    }
-
+    // todo 解锁xm1014
     #[func]
     pub fn unlock_m249(&mut self) {
-        self.unlock_weapon("m249", 8, "9");
+        self.unlock_weapon("m249", 7, "8");
+    }
+
+    // todo 解锁连狙
+    #[func]
+    pub fn unlock_mg3(&mut self) {
+        self.unlock_weapon("mg3", 8, "9(MAYBE MANY TIMES)");
     }
 
     #[func]
-    pub fn unlock_mg3(&mut self) {
-        self.unlock_weapon("mg3", 9, "0");
+    pub fn unlock_ak47_60r(&mut self) {
+        self.unlock_weapon("ak47-60r", 9, "9(MAYBE MANY TIMES)");
     }
 
     #[func]
     pub fn unlock_m134(&mut self) {
-        self.unlock_weapon("m134", 10, "P");
+        self.unlock_weapon("m134", 10, "9(MAYBE MANY TIMES)");
     }
 
+    #[func]
+    pub fn unlock_m95(&mut self) {
+        self.unlock_weapon("m95", 11, "9(MAYBE MANY TIMES)");
+    }
+
+    // todo 解锁大弹夹喷子，用M134EX作图
     pub fn unlock_weapon(&mut self, weapon_name: &str, index: i32, key: &str) {
         if self.weapons.get_child_count() > index {
             return;

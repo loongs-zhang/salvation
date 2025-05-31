@@ -1,7 +1,8 @@
-[gd_scene load_steps=14 format=3 uid="uid://bts1qj27g6gue"]
+[gd_scene load_steps=15 format=3 uid="uid://bts1qj27g6gue"]
 
 [ext_resource type="Texture2D" uid="uid://chl2irkr141su" path="res://asserts/player/weapons/m4a1/m4a1.bmp" id="1_dd6rc"]
 [ext_resource type="Texture2D" uid="uid://csll18c6kywh1" path="res://asserts/player/weapons/m4a1/m4a1_silenced.bmp" id="2_q7vt1"]
+[ext_resource type="AudioStream" uid="uid://b35v2sdta4n2q" path="res://asserts/player/weapons/m4a1/m4a1_deploy.wav" id="3_er4ku"]
 [ext_resource type="AudioStream" uid="uid://b3rehc0q6h8pn" path="res://asserts/player/weapons/m4a1/m4a1-1.wav" id="3_h3rn4"]
 [ext_resource type="AudioStream" uid="uid://clm3xgjtcgsge" path="res://asserts/player/weapons/m4a1/m4a1_clipout.wav" id="4_er4ku"]
 [ext_resource type="AudioStream" uid="uid://tp1858i5h8rv" path="res://asserts/player/weapons/m4a1/m4a1_clipin.wav" id="5_4sdc6"]
@@ -44,8 +45,9 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 silenced = true
 damage = 33
 weight = 0.88
-distance = 1000.0
+distance = 600.0
 jitter = 12.0
+pull_after_deploy = true
 pull_after_reload = true
 repel = 12.0
 penetrate = 1.9
@@ -84,8 +86,14 @@ explosiveness = 1.0
 local_coords = true
 process_material = SubResource("ParticleProcessMaterial_ait51")
 
+[node name="DeployAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("3_er4ku")
+
 [node name="FireAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_h3rn4")
+
+[node name="FireBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("6_q7vt1")
 
 [node name="ClipOutAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("4_er4ku")
@@ -95,5 +103,5 @@ stream = ExtResource("4_er4ku")
 [node name="ClipInAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("5_4sdc6")
 
-[node name="BoltPullAudio" type="AudioStreamPlayer2D" parent="."]
+[node name="ReloadBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("6_q7vt1")

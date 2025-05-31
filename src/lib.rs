@@ -11,6 +11,8 @@ use rand::Rng;
 use std::collections::HashSet;
 use std::sync::LazyLock;
 
+// todo 增加死亡骑士连狙
+// todo 增加投弹僵尸，僵尸出生音效
 // todo 增加双持刀、双持武器，双持武器时，鼠标左键开一边，鼠标右键开另一边
 // todo 增加僵尸死亡掉落金币，需要过去拾取
 // todo 增加局外可升级的技能树

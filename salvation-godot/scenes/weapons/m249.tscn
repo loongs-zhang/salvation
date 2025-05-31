@@ -42,6 +42,7 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 [node name="M249" type="RustWeapon" groups=["preservable"]]
 damage = 32
 weight = 0.8
+distance = 600.0
 clip = 100
 jitter = 14.0
 pull_after_reload = true
@@ -74,8 +75,14 @@ explosiveness = 1.0
 local_coords = true
 process_material = SubResource("ParticleProcessMaterial_ait51")
 
+[node name="DeployAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("5_hgjf6")
+
 [node name="FireAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("2_4ea5e")
+
+[node name="FireBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("5_hgjf6")
 
 [node name="ClipOutAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_iofny")
@@ -85,5 +92,5 @@ stream = ExtResource("3_iofny")
 [node name="ClipInAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("4_q3r0a")
 
-[node name="BoltPullAudio" type="AudioStreamPlayer2D" parent="."]
+[node name="ReloadBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("5_hgjf6")

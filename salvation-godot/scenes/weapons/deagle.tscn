@@ -1,7 +1,8 @@
-[gd_scene load_steps=13 format=3 uid="uid://bq5lki2s1pxuu"]
+[gd_scene load_steps=14 format=3 uid="uid://bq5lki2s1pxuu"]
 
 [ext_resource type="Texture2D" uid="uid://cdgbcw4mrrijp" path="res://asserts/player/weapons/deagle/deagle.bmp" id="1_opbco"]
 [ext_resource type="AudioStream" uid="uid://dhhminiyujdul" path="res://asserts/player/weapons/deagle/deagle-2.wav" id="2_opbco"]
+[ext_resource type="AudioStream" uid="uid://b5kgjj51jea38" path="res://asserts/player/weapons/deagle/dde_twirl.wav" id="2_wooow"]
 [ext_resource type="AudioStream" uid="uid://dstjhvvitwylp" path="res://asserts/player/weapons/deagle/dde_clipout.wav" id="3_6p0dp"]
 [ext_resource type="AudioStream" uid="uid://bmctk3f5sidey" path="res://asserts/player/weapons/deagle/dde_clipin.wav" id="4_3d5af"]
 [ext_resource type="AudioStream" uid="uid://cqr3j54kro43i" path="res://asserts/player/weapons/deagle/dde_clipoff.wav" id="5_xlb1r"]
@@ -75,8 +76,14 @@ explosiveness = 1.0
 local_coords = true
 process_material = SubResource("ParticleProcessMaterial_ait51")
 
+[node name="DeployAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("2_wooow")
+
 [node name="FireAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("2_opbco")
+
+[node name="FireBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("5_xlb1r")
 
 [node name="ClipOutAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_6p0dp")
@@ -86,5 +93,5 @@ stream = ExtResource("3_6p0dp")
 [node name="ClipInAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("4_3d5af")
 
-[node name="BoltPullAudio" type="AudioStreamPlayer2D" parent="."]
+[node name="ReloadBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("5_xlb1r")

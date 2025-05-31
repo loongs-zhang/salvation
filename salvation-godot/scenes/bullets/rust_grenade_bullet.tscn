@@ -1,7 +1,7 @@
 [gd_scene load_steps=24 format=3 uid="uid://dgavaa1gfepoa"]
 
 [ext_resource type="Texture2D" uid="uid://ccr3duhwkt7a8" path="res://asserts/player/vfx_explosion.png" id="1_2cv0s"]
-[ext_resource type="Texture2D" uid="uid://djfd0sjlks3uy" path="res://asserts/player/weapons/sammo.tga" id="1_04lso"]
+[ext_resource type="Texture2D" uid="uid://cqhf6nvnylxec" path="res://asserts/player/weapons/sammo.png" id="1_58l2o"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_04lso"]
 radius = 4.0
@@ -162,7 +162,7 @@ offset_bottom = -29.0
 grow_horizontal = 2
 grow_vertical = 2
 rotation = 0.788889
-texture = ExtResource("1_04lso")
+texture = ExtResource("1_58l2o")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 rotation = -1.5708

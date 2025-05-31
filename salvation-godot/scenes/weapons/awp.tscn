@@ -1,7 +1,7 @@
 [gd_scene load_steps=13 format=3 uid="uid://dmvaupviw4lk8"]
 
 [ext_resource type="Texture2D" uid="uid://bjkiehpdgbhg" path="res://asserts/player/weapons/awp/awp.bmp" id="1_yo5vo"]
-[ext_resource type="AudioStream" uid="uid://bpvaoalyb6h5s" path="res://asserts/player/weapons/awp/awp1.wav" id="2_ni56q"]
+[ext_resource type="AudioStream" uid="uid://catvrnw7jrmnb" path="res://asserts/player/weapons/awp/awpbuff-1.wav" id="3_qu1fi"]
 [ext_resource type="AudioStream" uid="uid://sbrg0urtqwx5" path="res://asserts/player/weapons/awp/awp_clipout.wav" id="3_rwgbk"]
 [ext_resource type="AudioStream" uid="uid://cogeu373yfns" path="res://asserts/player/weapons/awp/awp_clipin.wav" id="4_yo5vo"]
 [ext_resource type="AudioStream" uid="uid://dy2qqohgcph5t" path="res://asserts/player/weapons/awp/awp_deploy.wav" id="5_yo5vo"]
@@ -42,12 +42,11 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 [node name="AWP" type="RustWeapon" groups=["preservable"]]
 damage = 115
 weight = 0.8
-distance = 2000.0
 clip = 10
 pull_after_reload = true
-penetrate = 5.5
+penetrate = 4.5
 fire_cooldown = 1.0
-reload_time = 3.6
+reload_time = 3.5
 
 [node name="BulletPoints" type="Control" parent="."]
 layout_mode = 3
@@ -74,8 +73,13 @@ explosiveness = 1.0
 local_coords = true
 process_material = SubResource("ParticleProcessMaterial_ait51")
 
+[node name="DeployAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("5_yo5vo")
+
 [node name="FireAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("2_ni56q")
+stream = ExtResource("3_qu1fi")
+
+[node name="FireBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
 
 [node name="ClipOutAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_rwgbk")
@@ -85,5 +89,5 @@ stream = ExtResource("3_rwgbk")
 [node name="ClipInAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("4_yo5vo")
 
-[node name="BoltPullAudio" type="AudioStreamPlayer2D" parent="."]
+[node name="ReloadBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("5_yo5vo")

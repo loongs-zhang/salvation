@@ -1,6 +1,7 @@
-[gd_scene load_steps=13 format=3 uid="uid://cjqspps1mdrvr"]
+[gd_scene load_steps=14 format=3 uid="uid://cjqspps1mdrvr"]
 
 [ext_resource type="Texture2D" uid="uid://dbo40ln3p3sxf" path="res://asserts/player/weapons/xm1014/xm1014.bmp" id="1_378si"]
+[ext_resource type="AudioStream" uid="uid://cbrt0cdswy5g0" path="res://asserts/player/weapons/xm1014/m3_pump.wav" id="2_flfq1"]
 [ext_resource type="AudioStream" uid="uid://c7u17ehoba5gb" path="res://asserts/player/weapons/xm1014/xm1014-1.wav" id="2_ljf7y"]
 [ext_resource type="AudioStream" uid="uid://bebw57ilmpkrh" path="res://asserts/player/weapons/w_roundin.wav" id="3_378si"]
 [ext_resource type="AudioStream" uid="uid://c63kkqatpl88f" path="res://asserts/player/weapons/wpn_reload_start.mp3" id="3_flfq1"]
@@ -96,8 +97,13 @@ explosiveness = 1.0
 local_coords = true
 process_material = SubResource("ParticleProcessMaterial_ait51")
 
+[node name="DeployAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("2_flfq1")
+
 [node name="FireAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("2_ljf7y")
+
+[node name="FireBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
 
 [node name="ClipOutAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_flfq1")
@@ -108,4 +114,4 @@ stream = ExtResource("3_378si")
 [node name="ClipInAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("4_378si")
 
-[node name="BoltPullAudio" type="AudioStreamPlayer2D" parent="."]
+[node name="ReloadBoltPullAudio" type="AudioStreamPlayer2D" parent="."]

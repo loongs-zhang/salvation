@@ -56,7 +56,11 @@ pub struct RustWeapon {
     #[export]
     bullet_scenes: Array<Gd<PackedScene>>,
     #[export]
+    pull_after_deploy: bool,
+    #[export]
     pull_after_reload: bool,
+    #[export]
+    pull_after_fire: bool,
     //武器击退
     #[export]
     repel: real,
@@ -77,12 +81,14 @@ pub struct RustWeapon {
     current_jitter: real,
     current_jitter_cooldown: real,
     bullet_points: OnReady<Gd<Control>>,
+    deploy_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     fire_flash: OnReady<Gd<GpuParticles2D>>,
     fire_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    fire_bolt_pull_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     clip_out_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     clip_part_in_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     clip_in_audio: OnReady<Gd<AudioStreamPlayer2D>>,
-    bolt_pull_audio: OnReady<Gd<AudioStreamPlayer2D>>,
+    reload_bolt_pull_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     base: Base<Node2D>,
 }
 
@@ -97,7 +103,9 @@ impl INode2D for RustWeapon {
             clip: MAX_AMMO,
             jitter: 0.0,
             explode: false,
+            pull_after_deploy: false,
             pull_after_reload: false,
+            pull_after_fire: false,
             repel: BULLET_REPEL,
             penetrate: BULLET_PENETRATE,
             fire_cooldown: WEAPON_FIRE_COOLDOWN,
@@ -112,12 +120,14 @@ impl INode2D for RustWeapon {
             current_jitter_cooldown: WEAPON_FIRE_COOLDOWN,
             bullet_scenes: Array::new(),
             bullet_points: OnReady::from_node("BulletPoints"),
+            deploy_audio: OnReady::from_node("DeployAudio"),
             fire_flash: OnReady::from_node("GpuParticles2D"),
             fire_audio: OnReady::from_node("FireAudio"),
+            fire_bolt_pull_audio: OnReady::from_node("FireBoltPullAudio"),
             clip_out_audio: OnReady::from_node("ClipOutAudio"),
             clip_part_in_audio: OnReady::from_node("ClipPartInAudio"),
             clip_in_audio: OnReady::from_node("ClipInAudio"),
-            bolt_pull_audio: OnReady::from_node("BoltPullAudio"),
+            reload_bolt_pull_audio: OnReady::from_node("ReloadBoltPullAudio"),
             base,
         }
     }
@@ -160,8 +170,12 @@ impl INode2D for RustWeapon {
             .signals()
             .finished()
             .connect_obj(&gd, Self::on_clip_in_finished);
+        self.deploy_audio
+            .signals()
+            .finished()
+            .connect_obj(&gd, Self::on_deploy_finished);
         if self.pull_after_reload {
-            self.bolt_pull_audio
+            self.reload_bolt_pull_audio
                 .signals()
                 .finished()
                 .connect_obj(&gd, Self::on_bolt_pull_finished);
@@ -177,6 +191,10 @@ impl INode2D for RustWeapon {
 impl RustWeapon {
     #[signal]
     pub fn sig();
+
+    pub fn deploy(&mut self) {
+        self.deploy_audio.play();
+    }
 
     pub fn weapon_ready(&mut self) {
         self.state = WeaponState::Ready;
@@ -199,6 +217,8 @@ impl RustWeapon {
         if 0 == self.ammo
             || self.current_fire_cooldown > 0.0
             || WeaponState::Reloading == self.state && !self.reload_part
+            || self.deploy_audio.is_playing()
+            || self.fire_bolt_pull_audio.is_playing()
         {
             return;
         }
@@ -251,6 +271,13 @@ impl RustWeapon {
             if self.current_flash_cooldown <= 0.0 {
                 self.fire_flash.restart();
                 self.current_flash_cooldown = self.fire_flash.get_lifetime() * 0.25;
+            }
+            if self.pull_after_fire && self.ammo > 1 {
+                if let Some(mut tree) = self.base().get_tree() {
+                    if let Some(mut timer) = tree.create_timer(0.5) {
+                        timer.connect("timeout", &self.to_gd().callable("on_fire_finished"));
+                    }
+                }
             }
             self.fire_audio.play();
             self.current_fire_cooldown = self.fire_cooldown;
@@ -340,6 +367,19 @@ impl RustWeapon {
         ))
     }
 
+    #[func]
+    pub fn on_deploy_finished(&mut self) {
+        if self.pull_after_deploy {
+            self.fire_bolt_pull_audio.play();
+        }
+        RustPlayer::get().call_deferred("zoom", &[]);
+    }
+
+    #[func]
+    pub fn on_fire_finished(&mut self) {
+        self.fire_bolt_pull_audio.play();
+    }
+
     pub fn reload(&mut self) -> bool {
         if self.clip == self.ammo
             || WeaponState::Reloading == self.state
@@ -347,7 +387,7 @@ impl RustWeapon {
             || self.clip_out_audio.is_playing()
             || self.reload_part && self.clip_part_in_audio.is_playing()
             || self.clip_in_audio.is_playing()
-            || self.pull_after_reload && self.bolt_pull_audio.is_playing()
+            || self.pull_after_reload && self.reload_bolt_pull_audio.is_playing()
         {
             return false;
         }
@@ -407,7 +447,7 @@ impl RustWeapon {
             return;
         }
         if self.pull_after_reload {
-            self.bolt_pull_audio.play();
+            self.reload_bolt_pull_audio.play();
             return;
         }
         // 无需拉栓
@@ -423,10 +463,12 @@ impl RustWeapon {
     }
 
     pub fn stop_reload(&mut self) {
+        self.deploy_audio.stop();
+        self.fire_bolt_pull_audio.stop();
         self.clip_out_audio.stop();
         self.clip_part_in_audio.stop();
         self.clip_in_audio.stop();
-        self.bolt_pull_audio.stop();
+        self.reload_bolt_pull_audio.stop();
         self.weapon_ready();
     }
 

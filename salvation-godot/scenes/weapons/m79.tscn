@@ -1,7 +1,8 @@
-[gd_scene load_steps=14 format=3 uid="uid://ckikdyjginfce"]
+[gd_scene load_steps=15 format=3 uid="uid://ckikdyjginfce"]
 
 [ext_resource type="PackedScene" uid="uid://dgavaa1gfepoa" path="res://scenes/bullets/rust_grenade_bullet.tscn" id="1_peu4v"]
 [ext_resource type="AudioStream" uid="uid://5kde4ei5ikjl" path="res://asserts/player/weapons/m79/m79-1.wav" id="2_y5g1i"]
+[ext_resource type="AudioStream" uid="uid://cyj3pffpl324p" path="res://asserts/player/weapons/m79/m79_draw.wav" id="3_lb87w"]
 [ext_resource type="AudioStream" uid="uid://wxs2hvjjf31w" path="res://asserts/player/weapons/m79/m79_clipout.wav" id="3_peu4v"]
 [ext_resource type="AudioStream" uid="uid://0dnqbyebg1m4" path="res://asserts/player/weapons/m79/m79_clipin.wav" id="4_lb87w"]
 [ext_resource type="AudioStream" uid="uid://da51xwl2fl08u" path="res://asserts/player/weapons/m79/m79_clipon.wav" id="5_b5r84"]
@@ -49,7 +50,7 @@ pull_after_reload = true
 repel = 100.0
 penetrate = -9999.0
 fire_cooldown = 0.0
-reload_time = 3.25
+reload_time = 3.0
 
 [node name="BulletPoints" type="Control" parent="."]
 layout_mode = 3
@@ -77,8 +78,14 @@ explosiveness = 1.0
 local_coords = true
 process_material = SubResource("ParticleProcessMaterial_ait51")
 
+[node name="DeployAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("3_lb87w")
+
 [node name="FireAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("2_y5g1i")
+
+[node name="FireBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("5_b5r84")
 
 [node name="ClipOutAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_peu4v")
@@ -88,5 +95,5 @@ stream = ExtResource("3_peu4v")
 [node name="ClipInAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("4_lb87w")
 
-[node name="BoltPullAudio" type="AudioStreamPlayer2D" parent="."]
+[node name="ReloadBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("5_b5r84")
