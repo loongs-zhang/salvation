@@ -10,8 +10,6 @@
 [node name="RustPlayer" parent="." instance=ExtResource("1_rkfxa")]
 
 [node name="RustPitcher" parent="." instance=ExtResource("2_rkfxa")]
-moveable = false
-alarm_time = 0.0
 position = Vector2(300, 0)
 rotation = 3.14159
 

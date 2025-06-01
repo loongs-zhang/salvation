@@ -78,7 +78,7 @@ impl RustPitcher {
         }
         self.animated_sprite2d.play_ex().name("guard").done();
         self.base_mut().call_deferred("throw_grenade", &[]);
-        self.current_speed = self.speed * 0.5;
+        self.current_speed = 0.0;
         self.state = ZombieState::Attack;
         let direction = NEXT_ATTACK_DIRECTION.load()
             + self

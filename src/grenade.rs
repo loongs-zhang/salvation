@@ -4,8 +4,7 @@ use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Callable, Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
-    AnimatedSprite2D, Area2D, AudioStreamPlayer2D, IRigidBody2D, Node2D, Object, RigidBody2D,
-    TextureRect,
+    AnimatedSprite2D, Area2D, AudioStreamPlayer2D, INode2D, Node2D, Object, TextureRect,
 };
 use godot::global::godot_error;
 use godot::meta::ToGodot;
@@ -17,7 +16,7 @@ static NOISE_POSITION: AtomicCell<Vector2> = AtomicCell::new(NO_NOISE);
 static ZOMBIE_NOISE_POSITION: AtomicCell<Vector2> = AtomicCell::new(NO_NOISE);
 
 #[derive(GodotClass)]
-#[class(base=RigidBody2D)]
+#[class(base=Node2D)]
 pub struct RustGrenade {
     #[export]
     speed: real,
@@ -31,19 +30,20 @@ pub struct RustGrenade {
     final_distance: real,
     final_repel: real,
     final_damage: i64,
+    direction: Vector2,
     hit_area: OnReady<Gd<Area2D>>,
     damage_area: OnReady<Gd<Area2D>>,
     explode_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     explode_flash: OnReady<Gd<AnimatedSprite2D>>,
     texture_rect: OnReady<Gd<TextureRect>>,
-    base: Base<RigidBody2D>,
+    base: Base<Node2D>,
 }
 
 #[godot_api]
-impl IRigidBody2D for RustGrenade {
-    fn init(base: Base<RigidBody2D>) -> Self {
+impl INode2D for RustGrenade {
+    fn init(base: Base<Node2D>) -> Self {
         Self {
-            speed: 50.0,
+            speed: 500.0,
             countdown: 2.0,
             timed: true,
             from_zombie: false,
@@ -51,6 +51,7 @@ impl IRigidBody2D for RustGrenade {
             final_distance: 0.0,
             final_repel: 0.0,
             final_damage: 0,
+            direction: Vector2::ZERO,
             hit_area: OnReady::from_node("HitArea"),
             damage_area: OnReady::from_node("DamageArea"),
             explode_audio: OnReady::from_node("ExplodeAudio"),
@@ -60,26 +61,26 @@ impl IRigidBody2D for RustGrenade {
         }
     }
 
-    fn process(&mut self, _delta: f64) {
-        if self.base().is_freeze_enabled() {
-            if !self.explode_audio.is_playing() || !self.explode_flash.is_playing() {
-                self.base_mut().queue_free();
-            }
+    fn physics_process(&mut self, delta: f64) {
+        if self.is_cleaned() {
             return;
         }
+        let direction = self.direction;
+        let speed = self.speed;
         let bullet_point = self.bullet_point;
         let distance = self.final_distance;
         let current = self.base().get_global_position();
-        if current.distance_to(bullet_point) >= distance {
+        let new_position = current
+            + Vector2::new(
+                direction.x * delta as f32 * speed,
+                direction.y * delta as f32 * speed,
+            );
+        if new_position.distance_to(bullet_point) >= distance {
             //到达最大距离
             self.explode();
+            return;
         }
-    }
-
-    fn exit_tree(&mut self) {
-        self.explode_audio.set_stream(Gd::null_arg());
-        self.explode_audio.queue_free();
-        self.explode_flash.queue_free();
+        self.base_mut().set_global_position(new_position);
     }
 
     fn ready(&mut self) {
@@ -100,10 +101,14 @@ impl IRigidBody2D for RustGrenade {
             .signals()
             .body_entered()
             .connect_obj(&gd, Self::explode_ext);
-        self.base_mut()
+        self.explode_audio
             .signals()
-            .sleeping_state_changed()
-            .connect_obj(&gd, Self::explode);
+            .finished()
+            .connect_obj(&gd, Self::clean_body);
+        self.explode_flash
+            .signals()
+            .animation_finished()
+            .connect_obj(&gd, Self::clean_body);
     }
 }
 
@@ -128,9 +133,8 @@ impl RustGrenade {
         self.final_repel = final_repel;
     }
 
-    pub fn throw(&mut self, direction: Vector2) {
-        let speed = self.speed;
-        self.base_mut().apply_impulse(direction * speed);
+    pub fn set_direction(&mut self, direction: Vector2) {
+        self.direction = direction;
     }
 
     #[func]
@@ -148,12 +152,9 @@ impl RustGrenade {
 
     #[func]
     pub fn explode(&mut self) {
-        if self.base().is_freeze_enabled() {
+        if self.is_cleaned() {
             return;
         }
-        self.base_mut()
-            .call_deferred("set_freeze_enabled", &[true.to_variant()]);
-        self.base_mut().set_linear_velocity(Vector2::ZERO);
         //播放音效
         if self.explode_audio.get_stream().is_none() {
             #[allow(clippy::borrow_interior_mutable_const)]
@@ -200,6 +201,7 @@ impl RustGrenade {
                 );
             }
         }
+        self.damage_area.queue_free();
         if self.from_zombie {
             ZOMBIE_NOISE_POSITION.store(position);
             if let Some(mut tree) = self.base().get_tree() {
@@ -227,6 +229,31 @@ impl RustGrenade {
                 }
             }
         }
+    }
+
+    #[func]
+    pub fn clean_body(&mut self) {
+        if !self.explode_flash.is_playing() {
+            self.explode_flash.set_visible(false);
+        }
+        if self.is_cleaned() {
+            return;
+        }
+        self.explode_audio.set_stream(Gd::null_arg());
+        self.explode_audio.queue_free();
+        self.explode_flash.queue_free();
+        self.base_mut().set_physics_process(false);
+        self.base_mut().queue_free();
+    }
+
+    fn is_cleaned(&self) -> bool {
+        !self.base().is_instance_valid()
+            || !self.hit_area.is_instance_valid()
+            || !self.damage_area.is_instance_valid()
+            || !self.explode_audio.is_instance_valid()
+            || !self.explode_flash.is_instance_valid()
+            || self.explode_audio.is_playing()
+            || self.explode_flash.is_playing()
     }
 
     pub fn get_mouse_position(&self) -> Vector2 {

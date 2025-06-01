@@ -307,7 +307,7 @@ scale_curve = SubResource("CurveTexture_ulhoy")
 color_ramp = SubResource("GradientTexture1D_fuakc")
 
 [node name="RustPlayer" type="RustPlayer"]
-grenade_cooldown = 1.0
+grenade_cooldown = 0.1
 z_index = 2
 
 [node name="RemoteTransform2D" type="RemoteTransform2D" parent="."]

@@ -1,11 +1,8 @@
-[gd_scene load_steps=13 format=3 uid="uid://bgo480qlgd7is"]
+[gd_scene load_steps=12 format=3 uid="uid://bgo480qlgd7is"]
 
 [ext_resource type="Texture2D" uid="uid://bimwohugl643i" path="res://asserts/zombie/zombie_bomb.png" id="1_0axja"]
 [ext_resource type="AudioStream" uid="uid://dfabf0r7oqajy" path="res://asserts/zombie/zombie_bomb_exp.wav" id="2_qdsrw"]
 [ext_resource type="Texture2D" uid="uid://hdlte5scc2gh" path="res://asserts/zombie/zombie_bomb.tga" id="3_0axja"]
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_0axja"]
-radius = 9.0
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_qdsrw"]
 atlas = ExtResource("3_0axja")
@@ -63,7 +60,7 @@ animations = [{
 }]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_qdsrw"]
-radius = 12.0
+radius = 20.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_04lso"]
 radius = 60.0
@@ -72,10 +69,6 @@ radius = 60.0
 from_zombie = true
 light_mask = 0
 visibility_layer = 2
-collision_mask = 44
-mass = 0.1
-gravity_scale = 0.0
-lock_rotation = true
 
 [node name="TextureRect" type="TextureRect" parent="."]
 offset_left = -10.0
@@ -85,11 +78,6 @@ offset_bottom = 593.0
 scale = Vector2(0.03, 0.03)
 texture = ExtResource("1_0axja")
 flip_h = true
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-light_mask = 4
-visibility_layer = 4
-shape = SubResource("CircleShape2D_0axja")
 
 [node name="ExplodeAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("2_qdsrw")

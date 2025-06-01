@@ -356,7 +356,7 @@ impl RustWeapon {
             gd_mut.set_final_distance(player_distance + self.distance);
             gd_mut.set_final_damage(player_damage.saturating_add(self.damage));
             gd_mut.set_final_repel(player_repel + self.repel);
-            gd_mut.throw(direction);
+            gd_mut.set_direction(direction);
             drop(gd_mut);
             if let Some(mut parent) = RustPlayer::get().get_parent() {
                 parent.add_child(&grenade);

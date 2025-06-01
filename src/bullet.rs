@@ -55,6 +55,7 @@ impl INode2D for RustBullet {
             );
         if new_position.distance_to(bullet_point) >= distance {
             //到达最大距离
+            base_mut.set_physics_process(false);
             base_mut.queue_free();
             return;
         }
@@ -108,7 +109,8 @@ impl RustBullet {
         self.hit_count += cost;
         if self.hit_count >= self.final_penetrate as i16 {
             //达到最大穿透上限
-            self.base_mut().queue_free()
+            self.base_mut().set_physics_process(false);
+            self.base_mut().queue_free();
         }
     }
 }

@@ -66,9 +66,11 @@ impl RustLevel {
                 self.boss_killed = save_data.boss_killed;
             }
             // 生成召唤尸
-            self.zombie_generator.bind().generate_zombie();
-            self.boomer_generator.bind().generate_zombie();
-            self.boss_generator.bind().generate_zombie();
+            for mut child in self.base().get_children().iter_shared() {
+                if child.is_class("ZombieGenerator") {
+                    child.call("generate_zombie", &[]);
+                }
+            }
             if let Some(mut tree) = self.base().get_tree() {
                 if let Some(mut timer) = tree.create_timer(0.2) {
                     timer.connect("timeout", &self.base().callable("on_summon"));

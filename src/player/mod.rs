@@ -383,7 +383,7 @@ impl RustPlayer {
                 gd_mut.set_final_distance(GRENADE_DISTANCE + self.distance);
                 gd_mut.set_final_damage(GRENADE_DAMAGE + self.damage);
                 gd_mut.set_final_repel(GRENADE_REPEL + self.repel);
-                gd_mut.throw(direction);
+                gd_mut.set_direction(direction);
                 drop(gd_mut);
                 if let Some(mut parent) = self.base().get_parent() {
                     parent.add_child(&grenade);

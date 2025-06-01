@@ -207,6 +207,24 @@ impl RustHUD {
         label.show();
     }
 
+    pub fn update_refresh_pitcher_hud(
+        &mut self,
+        is_stopped: bool,
+        pitcher_refresh_count: u32,
+        pitcher_wait_time: f64,
+    ) {
+        let mut label = self
+            .get_right_top_container()
+            .get_node_as::<Label>("RefreshPitcher");
+        label.set_text(&format!(
+            "PITCHER {} {}/{:.1}s",
+            if is_stopped { "COMING" } else { "INCOMING" },
+            pitcher_refresh_count,
+            pitcher_wait_time,
+        ));
+        label.show();
+    }
+
     pub fn update_refresh_boomer_hud(
         &mut self,
         is_stopped: bool,

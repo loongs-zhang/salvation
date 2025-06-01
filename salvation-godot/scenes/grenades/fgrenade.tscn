@@ -1,11 +1,7 @@
-[gd_scene load_steps=24 format=3 uid="uid://e5puv53w1dua"]
+[gd_scene load_steps=23 format=3 uid="uid://e5puv53w1dua"]
 
 [ext_resource type="Texture2D" uid="uid://bkhf0qpaderu6" path="res://asserts/player/grenades/explosives/fgrenade2_m.png" id="1_lmxp6"]
 [ext_resource type="Texture2D" uid="uid://ccr3duhwkt7a8" path="res://asserts/player/vfx_explosion.png" id="2_h121v"]
-
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_04lso"]
-radius = 6.0
-height = 14.0
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_gds4w"]
 atlas = ExtResource("2_h121v")
@@ -144,9 +140,6 @@ radius = 120.0
 [node name="RustGrenade" type="RustGrenade"]
 light_mask = 0
 visibility_layer = 6
-mass = 0.1
-gravity_scale = 0.0
-lock_rotation = true
 
 [node name="TextureRect" type="TextureRect" parent="."]
 offset_left = -6.0
@@ -155,9 +148,6 @@ offset_right = 44.0
 offset_bottom = 71.0
 scale = Vector2(0.25, 0.25)
 texture = ExtResource("1_lmxp6")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("CapsuleShape2D_04lso")
 
 [node name="ExplodeAudio" type="AudioStreamPlayer2D" parent="."]
 volume_db = 12.0

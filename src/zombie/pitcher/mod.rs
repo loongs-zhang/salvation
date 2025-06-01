@@ -31,6 +31,8 @@ use std::time::{Duration, Instant};
 
 pub mod state;
 
+pub mod save;
+
 static NEXT_ATTACK_DIRECTION: AtomicCell<Vector2> = AtomicCell::new(Vector2::ZERO);
 
 #[allow(clippy::declare_interior_mutable_const)]
@@ -155,22 +157,19 @@ impl ICharacterBody2D for RustPitcher {
             self.move_back();
             return;
         }
+        let zombie_position = self.base().get_global_position();
+        let player_position = RustPlayer::get_position();
+        let distance = zombie_position.distance_to(player_position);
         self.current_grenade_cooldown -= delta as real;
-        if ZombieState::Attack == self.state && self.attacking {
+        if self.attacking || self.is_face_to_user() && distance <= PITCHER_ATTACK_DISTANCE {
             self.throw_grenade();
             return;
         }
         self.current_flash_cooldown -= delta;
         self.rampage_time = (self.rampage_time - delta as real).max(0.0);
-        let zombie_position = self.base().get_global_position();
-        let player_position = RustPlayer::get_position();
-        let distance = zombie_position.distance_to(player_position);
         if distance >= ZOMBIE_MAX_DISTANCE {
             //解决刷新僵尸导致的体积碰撞问题
             self.flash();
-            return;
-        } else if distance <= PITCHER_ATTACK_DISTANCE {
-            self.attack();
             return;
         }
         self.update_alarm_progress_hud(delta);
@@ -350,11 +349,11 @@ impl RustPitcher {
 
     #[func]
     pub fn throw_grenade(&mut self) {
+        let player_position = RustPlayer::get_position();
+        self.base_mut().look_at(player_position);
         if self.current_grenade_cooldown > 0.0 {
             return;
         }
-        let player_position = RustPlayer::get_position();
-        self.base_mut().look_at(player_position);
         let direction = self
             .base()
             .get_global_position()
@@ -369,9 +368,9 @@ impl RustPitcher {
                 gd_mut.set_final_distance(ZOMBIE_GRENADE_DISTANCE);
                 gd_mut.set_final_damage(PITCHER_DAMAGE);
                 gd_mut.set_final_repel(PITCHER_REPEL);
-                gd_mut.throw(direction);
+                gd_mut.set_direction(direction);
                 drop(gd_mut);
-                if let Some(mut parent) = self.base().get_parent() {
+                if let Some(mut parent) = RustPlayer::get().get_parent() {
                     parent.add_child(&grenade);
                     self.current_grenade_cooldown = self.grenade_cooldown;
                 }

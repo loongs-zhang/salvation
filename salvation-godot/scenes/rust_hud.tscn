@@ -142,6 +142,12 @@ theme_override_colors/font_color = Color(0.133333, 0.2, 0.133333, 1)
 text = "RefreshBoomer"
 horizontal_alignment = 2
 
+[node name="RefreshPitcher" type="Label" parent="Control/VBoxTopRight"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.133333, 0.2, 0.133333, 1)
+text = "RefreshPitcher"
+horizontal_alignment = 2
+
 [node name="RefreshBoss" type="Label" parent="Control/VBoxTopRight"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.133333, 0.2, 0.133333, 1)
