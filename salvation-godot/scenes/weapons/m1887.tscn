@@ -1,0 +1,208 @@
+[gd_scene load_steps=15 format=3 uid="uid://cuv6785cg4xoy"]
+
+[ext_resource type="Texture2D" uid="uid://c6c3yslup7q80" path="res://asserts/player/weapons/m1887/galil.bmp" id="1_2tgs5"]
+[ext_resource type="AudioStream" uid="uid://b8tn31vch6uxj" path="res://asserts/player/weapons/m1887/m1887_draw.wav" id="3_2tgs5"]
+[ext_resource type="AudioStream" uid="uid://cn6yy8juwn8xx" path="res://asserts/player/weapons/m1887/m1887-1.wav" id="4_adk1f"]
+[ext_resource type="AudioStream" uid="uid://cbuqxp7e8k2tt" path="res://asserts/player/weapons/m1887/m1887_restart.wav" id="5_72nqf"]
+[ext_resource type="AudioStream" uid="uid://bohkf2sn8migr" path="res://asserts/player/weapons/m1887/m1887_insert.wav" id="6_5cxwj"]
+[ext_resource type="Texture2D" uid="uid://b6dqa40dv44vj" path="res://asserts/player/weapons/m1887/m3.bmp" id="7_adk1f"]
+[ext_resource type="AudioStream" uid="uid://cfl3hjvejafo" path="res://asserts/player/weapons/m1887/m1887_reafter.wav" id="7_hypt4"]
+
+[sub_resource type="Curve" id="Curve_ait51"]
+_data = [Vector2(0, 0.747967), 0.0, 0.0, 0, 0, Vector2(0.49635, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.5), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_ad62i"]
+curve = SubResource("Curve_ait51")
+
+[sub_resource type="Gradient" id="Gradient_bmmep"]
+offsets = PackedFloat32Array(0, 0.513072, 1)
+colors = PackedColorArray(1, 1, 0.588235, 1, 1, 0.705882, 0.196078, 1, 0.313726, 0.117647, 0, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_88lgy"]
+gradient = SubResource("Gradient_bmmep")
+
+[sub_resource type="Curve" id="Curve_fc1k3"]
+_data = [Vector2(0, 0.747967), 0.0, 0.0, 0, 0, Vector2(0.492701, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.495935), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_nrs26"]
+curve = SubResource("Curve_fc1k3")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ait51"]
+particle_flag_disable_z = true
+spread = 30.0
+initial_velocity_min = 100.0
+initial_velocity_max = 200.0
+gravity = Vector3(100, 0, 0)
+scale_min = 2.0
+scale_max = 3.0
+scale_curve = SubResource("CurveTexture_nrs26")
+color_ramp = SubResource("GradientTexture1D_88lgy")
+alpha_curve = SubResource("CurveTexture_ad62i")
+
+[node name="M1887" type="RustWeapon" groups=["preservable"]]
+damage = 50
+weight = 0.92
+distance = 400.0
+clip = 8
+jitter = 25.0
+explode = true
+repel = 35.0
+penetrate = 1.0
+fire_cooldown = 0.8
+reload_time = 0.4
+reload_part = true
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(6, -1.75)
+rotation = 1.5708
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("1_2tgs5")
+offset = Vector2(2, 0)
+region_enabled = true
+region_rect = Rect2(28, 41, 3.75, 23)
+
+[node name="Sprite2D2" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(6, -0.25)
+rotation = 1.5708
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("1_2tgs5")
+offset = Vector2(2, 0)
+flip_h = true
+region_enabled = true
+region_rect = Rect2(28, 41, 3.75, 23)
+
+[node name="Sprite2D3" type="Sprite2D" parent="."]
+position = Vector2(14.1, -1.45)
+rotation = 1.5708
+scale = Vector2(0.7, 0.5)
+texture = ExtResource("7_adk1f")
+offset = Vector2(2, 0)
+region_enabled = true
+region_rect = Rect2(27.5, 18, 4.8, 9.7)
+
+[node name="Sprite2D4" type="Sprite2D" parent="."]
+z_index = 2
+position = Vector2(9.5, -1)
+rotation = 1.5708
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("1_2tgs5")
+offset = Vector2(2, 0)
+region_enabled = true
+region_rect = Rect2(28, 44, 7, 2)
+
+[node name="Sprite2D5" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(9.6, -0.1)
+rotation = 1.5708
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("1_2tgs5")
+offset = Vector2(2, 0)
+flip_h = true
+region_enabled = true
+region_rect = Rect2(28, 41, 3, 3)
+
+[node name="Sprite2D6" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(9.6, -1.9)
+rotation = 1.5708
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("1_2tgs5")
+offset = Vector2(2, 0)
+region_enabled = true
+region_rect = Rect2(28, 41, 3, 3)
+
+[node name="Sprite2D7" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(8.2, -0.1)
+rotation = 1.5708
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("1_2tgs5")
+offset = Vector2(2, 0)
+flip_h = true
+region_enabled = true
+region_rect = Rect2(28, 41, 3, 3)
+
+[node name="Sprite2D8" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(8.2, -1.9)
+rotation = 1.5708
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("1_2tgs5")
+offset = Vector2(2, 0)
+region_enabled = true
+region_rect = Rect2(28, 41, 3, 3)
+
+[node name="Sprite2D9" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(18.5, -1)
+rotation = 1.5708
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("1_2tgs5")
+offset = Vector2(2, 0)
+region_enabled = true
+region_rect = Rect2(29, 15, 5, 18)
+
+[node name="BulletPoints" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 22.5
+offset_right = 22.5
+
+[node name="BulletPoint1" type="Node2D" parent="BulletPoints"]
+position = Vector2(0, -3)
+
+[node name="BulletPoint2" type="Node2D" parent="BulletPoints"]
+position = Vector2(0, -2)
+
+[node name="BulletPoint3" type="Node2D" parent="BulletPoints"]
+position = Vector2(0, -1)
+
+[node name="BulletPoint4" type="Node2D" parent="BulletPoints"]
+
+[node name="BulletPoint5" type="Node2D" parent="BulletPoints"]
+position = Vector2(0, 1)
+
+[node name="BulletPoint6" type="Node2D" parent="BulletPoints"]
+position = Vector2(0, 2)
+
+[node name="BulletPoint7" type="Node2D" parent="BulletPoints"]
+position = Vector2(0, 3)
+
+[node name="BulletPoint8" type="Node2D" parent="BulletPoints"]
+position = Vector2(0, 4)
+
+[node name="BulletPoint9" type="Node2D" parent="BulletPoints"]
+position = Vector2(0, -4)
+
+[node name="GpuParticles2D" type="GPUParticles2D" parent="."]
+position = Vector2(22.5, 0)
+emitting = false
+amount = 24
+lifetime = 0.2
+one_shot = true
+explosiveness = 1.0
+local_coords = true
+process_material = SubResource("ParticleProcessMaterial_ait51")
+
+[node name="DeployAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("3_2tgs5")
+
+[node name="FireAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("4_adk1f")
+
+[node name="FireBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
+
+[node name="ClipOutAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("5_72nqf")
+
+[node name="ClipPartInAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("6_5cxwj")
+
+[node name="ClipInAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("7_hypt4")
+
+[node name="ReloadBoltPullAudio" type="AudioStreamPlayer2D" parent="."]

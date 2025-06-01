@@ -219,6 +219,7 @@ impl RustWeapon {
             || WeaponState::Reloading == self.state && !self.reload_part
             || self.deploy_audio.is_playing()
             || self.fire_bolt_pull_audio.is_playing()
+            || self.clip_part_in_audio.is_playing()
         {
             return;
         }

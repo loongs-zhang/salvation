@@ -1,5 +1,5 @@
 use crate::player::RustPlayer;
-use crate::{BOSS_DAMAGE, ZombieState};
+use crate::{BOSS_DAMAGE, ZombieState, is_survivor};
 use godot::classes::{Area2D, IArea2D, Node2D, Object};
 use godot::obj::{Base, Gd, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
@@ -50,7 +50,7 @@ impl BossBumpArea {
     pub fn on_area_2d_body_entered(&mut self, body: Gd<Node2D>) {
         let now = Instant::now();
         if (ZombieState::Run == self.boss_state || ZombieState::Attack == self.boss_state)
-            && body.is_class("RustPlayer")
+            && is_survivor(&***body)
             && now.duration_since(self.last_bump_time) >= self.bump_cooldown
         {
             // 撞击玩家，如果无冷却就会一直撞击，不攻击

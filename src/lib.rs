@@ -1,7 +1,7 @@
 use dashmap::DashMap;
 use godot::builtin::{Array, GString, Vector2, real};
 use godot::classes::{
-    AudioStream, DisplayServer, Input, InputEvent, InputEventAction, PackedScene,
+    AudioStream, DisplayServer, Input, InputEvent, InputEventAction, Object, PackedScene,
 };
 use godot::init::{ExtensionLibrary, gdextension};
 use godot::obj::{Gd, NewGd};
@@ -9,6 +9,7 @@ use godot::register::GodotConvert;
 use godot::tools::load;
 use rand::Rng;
 use std::collections::HashSet;
+use std::ops::Deref;
 use std::sync::LazyLock;
 
 // todo 增加死亡骑士连狙
@@ -145,9 +146,30 @@ const BOOMER_REPEL: real = 100.0;
 
 const BOOMER_REFRESH_BARRIER: u32 = 3;
 
-const BOOMER_MAX_SCREEN_COUNT: u32 = 10;
+const BOOMER_MAX_SCREEN_COUNT: u32 = 5;
 
 const BOOMER_ALARM_DISTANCE: real = 600.0;
+
+// pitcher
+const ZOMBIE_GRENADE_DISTANCE: real = 250.0;
+
+const PITCHER_MOVE_SPEED: real = 1.5;
+
+const PITCHER_GRENADE_COUNTDOWN: real = 3.0;
+
+const PITCHER_ATTACK_DISTANCE: real = 225.0;
+
+const PITCHER_PURSUIT_DISTANCE: real = 325.0;
+
+const PITCHER_DAMAGE: i64 = 10;
+
+const PITCHER_REPEL: real = 30.0;
+
+const PITCHER_REFRESH_BARRIER: u32 = 3;
+
+const PITCHER_MAX_SCREEN_COUNT: u32 = 5;
+
+const PITCHER_ALARM_DISTANCE: real = 500.0;
 
 // boss
 const BOSS_MAX_HEALTH: u32 = 7200;
@@ -259,4 +281,28 @@ pub fn kill_all_zombies() {
     event.set_action("k");
     event.set_pressed(true);
     Input::singleton().parse_input_event(&event.upcast::<InputEvent>());
+}
+
+pub fn is_survivor<T: Deref<Target = Object>>(gd: &T) -> bool {
+    gd.is_class("RustPlayer")
+}
+
+pub fn is_elite<T: Deref<Target = Object>>(gd: &T) -> bool {
+    gd.is_class("RustBoomer") || gd.is_class("RustPitcher")
+}
+
+pub fn is_boss<T: Deref<Target = Object>>(gd: &T) -> bool {
+    gd.is_class("RustBoss")
+}
+
+pub fn not_boss<T: Deref<Target = Object>>(gd: &T) -> bool {
+    gd.is_class("RustZombie") || is_elite(gd)
+}
+
+pub fn is_zombie<T: Deref<Target = Object>>(gd: &T) -> bool {
+    not_boss(gd) || is_boss(gd)
+}
+
+pub fn not_normal_zombie<T: Deref<Target = Object>>(gd: &T) -> bool {
+    is_elite(gd) || is_boss(gd)
 }

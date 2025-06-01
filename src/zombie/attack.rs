@@ -1,3 +1,4 @@
+use crate::is_survivor;
 use crate::zombie::RustZombie;
 use crate::zombie::animation::ZombieAnimation;
 use crate::zombie::boss::RustBoss;
@@ -35,7 +36,7 @@ impl ZombieAttackArea {
 
     #[func]
     pub fn on_area_2d_body_entered(&mut self, body: Gd<Node2D>) {
-        if body.is_class("RustPlayer") {
+        if is_survivor(&***body) {
             self.get_zombie_animation()
                 .signals()
                 .player_in_area()
@@ -46,7 +47,7 @@ impl ZombieAttackArea {
 
     #[func]
     pub fn on_area_2d_body_exited(&mut self, body: Gd<Node2D>) {
-        if body.is_class("RustPlayer") {
+        if is_survivor(&***body) {
             self.attack();
             if let Some(mut tree) = self.base().get_tree() {
                 if let Some(mut timer) = tree.create_timer(0.5) {
@@ -113,7 +114,7 @@ impl ZombieDamageArea {
 
     #[func]
     pub fn on_area_2d_body_exited(&mut self, body: Gd<Node2D>) {
-        if body.is_class("RustPlayer") {
+        if is_survivor(&***body) {
             self.get_zombie_animation()
                 .signals()
                 .player_in_area()

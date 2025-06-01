@@ -1,5 +1,5 @@
 use crate::player::RustPlayer;
-use crate::{EXPLODE_AUDIOS, NO_NOISE};
+use crate::{EXPLODE_AUDIOS, NO_NOISE, is_survivor, is_zombie};
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Callable, Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
@@ -14,13 +14,19 @@ use godot::register::{GodotClass, godot_api};
 
 static NOISE_POSITION: AtomicCell<Vector2> = AtomicCell::new(NO_NOISE);
 
+static ZOMBIE_NOISE_POSITION: AtomicCell<Vector2> = AtomicCell::new(NO_NOISE);
+
 #[derive(GodotClass)]
 #[class(base=RigidBody2D)]
 pub struct RustGrenade {
     #[export]
     speed: real,
     #[export]
+    countdown: f64,
+    #[export]
     timed: bool,
+    #[export]
+    from_zombie: bool,
     bullet_point: Vector2,
     final_distance: real,
     final_repel: real,
@@ -38,7 +44,9 @@ impl IRigidBody2D for RustGrenade {
     fn init(base: Base<RigidBody2D>) -> Self {
         Self {
             speed: 50.0,
+            countdown: 2.0,
             timed: true,
+            from_zombie: false,
             bullet_point: Vector2::ZERO,
             final_distance: 0.0,
             final_repel: 0.0,
@@ -82,7 +90,7 @@ impl IRigidBody2D for RustGrenade {
         self.base_mut().look_at(mouse_position);
         if self.timed {
             if let Some(mut tree) = self.base().get_tree() {
-                if let Some(mut timer) = tree.create_timer(2.0) {
+                if let Some(mut timer) = tree.create_timer(self.countdown) {
                     timer.connect("timeout", &self.base().callable("explode"));
                 }
             }
@@ -127,7 +135,13 @@ impl RustGrenade {
 
     #[func]
     pub fn explode_ext(&mut self, body: Gd<Node2D>) {
-        if body.is_class("RustZombie") || body.is_class("RustBoss") || body.is_class("RustBoomer") {
+        if self.from_zombie {
+            if is_survivor(&***body) {
+                self.explode();
+            }
+            return;
+        }
+        if is_zombie(&***body) {
             self.explode();
         }
     }
@@ -141,29 +155,28 @@ impl RustGrenade {
             .call_deferred("set_freeze_enabled", &[true.to_variant()]);
         self.base_mut().set_linear_velocity(Vector2::ZERO);
         //播放音效
-        #[allow(clippy::borrow_interior_mutable_const)]
-        if let Some(audio) = EXPLODE_AUDIOS.pick_random() {
-            self.explode_audio.set_stream(&audio);
-            self.explode_audio.play();
-            self.explode_flash.set_visible(true);
-            self.explode_flash.set_global_rotation_degrees(0.0);
-            self.explode_flash.play_ex().name("default").done();
-            self.hit_area.queue_free();
-            self.texture_rect.queue_free();
+        if self.explode_audio.get_stream().is_none() {
+            #[allow(clippy::borrow_interior_mutable_const)]
+            if let Some(audio) = EXPLODE_AUDIOS.pick_random() {
+                self.explode_audio.set_stream(&audio);
+            }
         }
+        self.explode_audio.play();
+        self.explode_flash.set_visible(true);
+        self.explode_flash.set_global_rotation_degrees(0.0);
+        self.explode_flash.play_ex().name("default").done();
+        self.hit_area.queue_free();
+        self.texture_rect.queue_free();
         let position = self.base().get_global_position();
         for mut body in self.damage_area.get_overlapping_bodies().iter_shared() {
             if !body.is_instance_valid() {
                 continue;
             }
-            if body.is_class("RustPlayer") {
+            if is_survivor(&***body) {
                 body.cast::<RustPlayer>()
                     .bind_mut()
                     .on_hit(self.final_damage, position);
-            } else if body.is_class("RustZombie")
-                || body.is_class("RustBoss")
-                || body.is_class("RustBoomer")
-            {
+            } else if !self.from_zombie && is_zombie(&***body) {
                 let direction = position.direction_to(body.get_global_position());
                 body.call_deferred(
                     "on_hit",
@@ -177,22 +190,41 @@ impl RustGrenade {
                 if self.final_damage > 0 {
                     RustPlayer::get().call_deferred("add_score", &[self.final_damage.to_variant()]);
                 }
-            } else if body.is_class("RustGrenade") {
+            } else if body.is_class("RustGrenade") || is_zombie(&***body) {
                 // ok
             } else {
-                godot_error!("Grenade hit an unexpected body: {}", body.get_class());
+                godot_error!(
+                    "{} hit an unexpected body: {}",
+                    self.base().get_name(),
+                    body.get_class()
+                );
             }
         }
-        NOISE_POSITION.store(position);
-        if let Some(mut tree) = self.base().get_tree() {
-            if let Some(mut timer) = tree.create_timer(8.0) {
-                timer.connect(
-                    "timeout",
-                    &Callable::from_sync_fn("clean_grenade_noise", |_| {
-                        NOISE_POSITION.store(NO_NOISE);
-                        Ok(().to_variant())
-                    }),
-                );
+        if self.from_zombie {
+            ZOMBIE_NOISE_POSITION.store(position);
+            if let Some(mut tree) = self.base().get_tree() {
+                if let Some(mut timer) = tree.create_timer(2.0) {
+                    timer.connect(
+                        "timeout",
+                        &Callable::from_sync_fn("clean_zombie_grenade_noise", |_| {
+                            ZOMBIE_NOISE_POSITION.store(NO_NOISE);
+                            Ok(().to_variant())
+                        }),
+                    );
+                }
+            }
+        } else {
+            NOISE_POSITION.store(position);
+            if let Some(mut tree) = self.base().get_tree() {
+                if let Some(mut timer) = tree.create_timer(8.0) {
+                    timer.connect(
+                        "timeout",
+                        &Callable::from_sync_fn("clean_grenade_noise", |_| {
+                            NOISE_POSITION.store(NO_NOISE);
+                            Ok(().to_variant())
+                        }),
+                    );
+                }
             }
         }
     }
@@ -208,6 +240,11 @@ impl RustGrenade {
 
     pub fn get_noise_position() -> Option<Vector2> {
         let r = NOISE_POSITION.load();
+        if NO_NOISE == r { None } else { Some(r) }
+    }
+
+    pub fn get_zombie_noise_position() -> Option<Vector2> {
+        let r = ZOMBIE_NOISE_POSITION.load();
         if NO_NOISE == r { None } else { Some(r) }
     }
 }

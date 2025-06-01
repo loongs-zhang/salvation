@@ -1,5 +1,6 @@
 use crate::player::RustPlayer;
 use crate::zombie::boss::RustBoss;
+use crate::{is_boss, not_boss};
 use godot::builtin::{Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
@@ -162,7 +163,7 @@ impl BulletDamageArea {
             .expect("RustBullet not found")
             .cast::<RustBullet>();
         let mut damage = 0;
-        if body.is_class("RustZombie") || body.is_class("RustBoomer") {
+        if not_boss(&***body) {
             damage = rust_bullet.bind().final_damage;
             self.hit_audio.play();
             rust_bullet.bind_mut().on_hit(1);
@@ -182,7 +183,7 @@ impl BulletDamageArea {
                     rust_bullet.get_global_position().to_variant(),
                 ],
             );
-        } else if body.is_class("RustBoss") {
+        } else if is_boss(&***body) {
             damage = rust_bullet.bind().final_damage;
             self.hit_audio.play();
             // BOSS身体大，消耗更多穿透

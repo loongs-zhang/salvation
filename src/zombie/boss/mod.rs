@@ -7,7 +7,7 @@ use crate::zombie::attack::{ZombieAttackArea, ZombieDamageArea};
 use crate::zombie::bump::BossBumpArea;
 use crate::{
     BOSS_BUMP_DISTANCE, BOSS_DAMAGE, BOSS_MAX_BODY_COUNT, BOSS_MAX_HEALTH, BOSS_MOVE_SPEED,
-    MESSAGE, PlayerState, ZOMBIE_MAX_DISTANCE, ZombieState, random_position,
+    MESSAGE, PlayerState, ZOMBIE_MAX_DISTANCE, ZombieState, not_boss, random_position,
 };
 use godot::builtin::{GString, Vector2, real};
 use godot::classes::{
@@ -54,6 +54,7 @@ pub struct RustBoss {
     zombie_attack_area: OnReady<Gd<ZombieAttackArea>>,
     zombie_damage_area: OnReady<Gd<ZombieDamageArea>>,
     bump_damage_area: OnReady<Gd<BossBumpArea>>,
+    born_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     hit_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     blood_flash: OnReady<Gd<GpuParticles2D>>,
     scream_audio: OnReady<Gd<AudioStreamPlayer2D>>,
@@ -89,6 +90,7 @@ impl ICharacterBody2D for RustBoss {
             zombie_attack_area: OnReady::from_node("ZombieAttackArea"),
             zombie_damage_area: OnReady::from_node("ZombieDamageArea"),
             bump_damage_area: OnReady::from_node("BossBumpArea"),
+            born_audio: OnReady::from_node("BornAudio"),
             hit_audio: OnReady::from_node("HitAudio"),
             blood_flash: OnReady::from_node("GpuParticles2D"),
             guard_audio: OnReady::from_node("GuardAudio"),
@@ -170,6 +172,7 @@ impl ICharacterBody2D for RustBoss {
             .signals()
             .finished()
             .connect_obj(&gd, Self::clean_audio);
+        self.born_audio.play();
         self.guard();
         let mut animated_sprite2d = self.animated_sprite2d.bind_mut();
         animated_sprite2d.set_hurt_frames(self.hurt_frames.clone());
@@ -196,7 +199,7 @@ impl RustBoss {
             return;
         }
         if let Some(object) = collision.get_collider() {
-            if object.is_class("RustZombie") || object.is_class("RustBoomer") {
+            if not_boss(&object) {
                 let mut to_zombie = object.cast::<PhysicsBody2D>();
                 let position = to_zombie.get_global_position();
                 to_zombie.set_global_position(position + velocity);

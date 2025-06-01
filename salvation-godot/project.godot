@@ -180,6 +180,12 @@ p={
 2d_render/layer_3="zombie"
 2d_render/layer_4="bullet"
 2d_render/layer_13="zombie head"
+2d_physics/layer_1="玩家投射物"
+2d_physics/layer_2="敌人"
+2d_physics/layer_3="玩家"
+2d_physics/layer_4="环境碰撞"
+2d_physics/layer_5="拾取物"
+2d_physics/layer_6="特效区域"
 
 [physics]
 

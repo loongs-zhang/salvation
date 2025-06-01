@@ -1,0 +1,26 @@
+[gd_scene load_steps=5 format=3 uid="uid://b244u4p2pj0m6"]
+
+[ext_resource type="PackedScene" uid="uid://d1fywhnf12yb8" path="res://scenes/rust_player_unlock.tscn" id="1_rkfxa"]
+[ext_resource type="PackedScene" uid="uid://bvtoo68byrg0h" path="res://scenes/zombies/rust_pitcher.tscn" id="2_rkfxa"]
+[ext_resource type="PackedScene" uid="uid://5koe2fd6n3fc" path="res://scenes/zombies/rust_zombie.tscn" id="3_lh3c8"]
+[ext_resource type="PackedScene" uid="uid://b8ou2gd7qcb4n" path="res://scenes/zombies/rust_boss.tscn" id="4_67qee"]
+
+[node name="RustWorld" type="Node2D"]
+
+[node name="RustPlayer" parent="." instance=ExtResource("1_rkfxa")]
+
+[node name="RustPitcher" parent="." instance=ExtResource("2_rkfxa")]
+moveable = false
+alarm_time = 0.0
+position = Vector2(300, 0)
+rotation = 3.14159
+
+[node name="RustZombie" parent="." instance=ExtResource("3_lh3c8")]
+moveable = false
+position = Vector2(300, 75)
+rotation = 3.14159
+
+[node name="RustBoss" parent="." instance=ExtResource("4_67qee")]
+moveable = false
+position = Vector2(375, 0)
+rotation = 3.14159

@@ -1,4 +1,4 @@
-[gd_scene load_steps=58 format=3 uid="uid://d1fywhnf12yb8"]
+[gd_scene load_steps=59 format=3 uid="uid://d1fywhnf12yb8"]
 
 [ext_resource type="Texture2D" uid="uid://b4ohe06jqwoww" path="res://asserts/player/player_walk.png" id="1_7f4hr"]
 [ext_resource type="Texture2D" uid="uid://dl2e2alxr88ti" path="res://asserts/zombie/zombie.png" id="2_rp40j"]
@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" uid="uid://cjqspps1mdrvr" path="res://scenes/weapons/xm1014.tscn" id="8_f4o6j"]
 [ext_resource type="AudioStream" uid="uid://dxkj5niiqothq" path="res://asserts/player/player_run.mp3" id="9_7gtun"]
 [ext_resource type="PackedScene" uid="uid://dmvaupviw4lk8" path="res://scenes/weapons/awp.tscn" id="9_7k46e"]
+[ext_resource type="PackedScene" uid="uid://cuv6785cg4xoy" path="res://scenes/weapons/m1887.tscn" id="9_hfem5"]
 [ext_resource type="AudioStream" uid="uid://rxfjna7uyc3n" path="res://asserts/player/player_hurt1.mp3" id="10_f4o6j"]
 [ext_resource type="PackedScene" uid="uid://ckikdyjginfce" path="res://scenes/weapons/m79.tscn" id="10_h5yny"]
 [ext_resource type="AudioStream" uid="uid://b0y6ev0meuplf" path="res://asserts/player/player_hurt2.mp3" id="11_7k46e"]
@@ -306,6 +307,7 @@ scale_curve = SubResource("CurveTexture_ulhoy")
 color_ramp = SubResource("GradientTexture1D_fuakc")
 
 [node name="RustPlayer" type="RustPlayer"]
+grenade_cooldown = 1.0
 z_index = 2
 
 [node name="RemoteTransform2D" type="RemoteTransform2D" parent="."]
@@ -354,7 +356,7 @@ position = Vector2(10, 2)
 
 [node name="DEAGLE" parent="Weapon" instance=ExtResource("7_cyyng")]
 
-[node name="XM1014" parent="Weapon" instance=ExtResource("8_f4o6j")]
+[node name="M1887" parent="Weapon" instance=ExtResource("9_hfem5")]
 
 [node name="AWP" parent="Weapon" instance=ExtResource("9_7k46e")]
 
@@ -363,6 +365,8 @@ position = Vector2(10, 2)
 [node name="M4A1" parent="Weapon" instance=ExtResource("11_g2cjv")]
 
 [node name="AK47" parent="Weapon" instance=ExtResource("12_8dpft")]
+
+[node name="XM1014" parent="Weapon" instance=ExtResource("8_f4o6j")]
 
 [node name="AK47-60R" parent="Weapon" instance=ExtResource("13_qo1w2")]
 

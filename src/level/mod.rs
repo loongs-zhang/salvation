@@ -318,7 +318,9 @@ impl RustLevel {
         self.level += 1;
         self.zombie_killed.store(0, Ordering::Release);
         self.boss_killed.store(0, Ordering::Release);
-        self.left_rampage_time = self.rampage_time / rate;
+        // 加强M4A1，不然后续的消音没什么意义
+        // self.left_rampage_time = self.rampage_time / rate;
+        self.left_rampage_time = self.rampage_time;
         self.zombie_generator.bind_mut().level_up(
             jump,
             false,
@@ -358,19 +360,27 @@ impl RustLevel {
     }
 
     fn unlock_weapons(&mut self) {
-        // 这里的判断不加else，为了后续恢复存档准备
+        // 这里的判断不加else，恢复存档时方便解锁武器
         let mut player = RustPlayer::get();
-        if self.level >= 30 {
-            player.call_deferred("unlock_m134", &[]);
+        if self.level >= 28 {
+            // 相对强力的武器
+            player.call_deferred("unlock_m95", &[]);
         }
         if self.level >= 27 {
+            player.call_deferred("unlock_m134", &[]);
+        }
+        if self.level >= 26 {
             player.call_deferred("unlock_mg3", &[]);
         }
-        if self.level >= 24 {
+        if self.level >= 25 {
             player.call_deferred("unlock_m249", &[]);
         }
-        if self.level >= 21 {
+        if self.level >= 24 {
+            // 相对强力的武器
             player.call_deferred("unlock_ak47_60r", &[]);
+        }
+        if self.level >= 21 {
+            player.call_deferred("unlock_xm1014", &[]);
         }
         if self.level >= 18 {
             player.call_deferred("unlock_ak47", &[]);
@@ -379,13 +389,14 @@ impl RustLevel {
             player.call_deferred("unlock_m4a1", &[]);
         }
         if self.level >= 12 {
+            // 相对强力的武器
             player.call_deferred("unlock_m79", &[]);
         }
         if self.level >= 9 {
             player.call_deferred("unlock_awp", &[]);
         }
         if self.level >= 6 {
-            player.call_deferred("unlock_xm1014", &[]);
+            player.call_deferred("unlock_m1887", &[]);
         }
         if self.level >= 3 {
             player.call_deferred("unlock_deagle", &[]);

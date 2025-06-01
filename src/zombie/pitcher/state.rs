@@ -1,9 +1,8 @@
 use super::*;
-use crate::ZOMBIE_REFRESH_BARRIER;
 use crate::world::ground::RustGround;
 
 #[godot_api(secondary)]
-impl RustZombie {
+impl RustPitcher {
     fn notify_animation(&mut self) {
         self.animated_sprite2d
             .signals()
@@ -20,11 +19,6 @@ impl RustZombie {
         self.current_speed = self.speed * 0.2;
         self.state = ZombieState::Guard;
         if !self.guard_audio.is_playing() && self.guard_audio.is_inside_tree() {
-            if RustLevel::get_live_count() >= ZOMBIE_REFRESH_BARRIER {
-                self.guard_audio.set_volume_db(-30.0);
-            } else {
-                self.guard_audio.set_volume_db(-20.0);
-            }
             self.guard_audio.play();
         }
         self.notify_animation();
@@ -73,14 +67,6 @@ impl RustZombie {
         self.current_speed = self.speed * 1.6;
         self.state = ZombieState::Rampage;
         if !self.rampage_audio.is_playing() && self.rampage_audio.is_inside_tree() {
-            let live_count = RustLevel::get_live_count();
-            if live_count >= ZOMBIE_REFRESH_BARRIER {
-                self.rampage_audio.set_volume_db(-40.0);
-            } else if live_count >= ZOMBIE_REFRESH_BARRIER / 2 {
-                self.rampage_audio.set_volume_db(-25.0);
-            } else {
-                self.rampage_audio.set_volume_db(-12.0);
-            }
             self.rampage_audio.play();
         }
         self.notify_animation();
@@ -90,8 +76,8 @@ impl RustZombie {
         if ZombieState::Dead == self.state || !self.attackable {
             return;
         }
-        self.base_mut().look_at(RustPlayer::get_position());
-        self.animated_sprite2d.play_ex().name("attack").done();
+        self.animated_sprite2d.play_ex().name("guard").done();
+        self.base_mut().call_deferred("throw_grenade", &[]);
         self.current_speed = self.speed * 0.5;
         self.state = ZombieState::Attack;
         let direction = NEXT_ATTACK_DIRECTION.load()
@@ -124,8 +110,8 @@ impl RustZombie {
         self.hud.queue_free();
         self.head_shape2d.queue_free();
         self.collision_shape2d.queue_free();
-        self.zombie_attack_area.queue_free();
-        self.zombie_damage_area.queue_free();
+        self.zombie_pitch_area.queue_free();
+        self.born_audio.queue_free();
         self.hit_audio.queue_free();
         self.blood_flash.queue_free();
         self.scream_audio.queue_free();

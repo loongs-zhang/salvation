@@ -78,14 +78,13 @@ impl RustBoss {
             self.die_audio.play();
         }
         // 释放资源
-        self.base_mut()
-            .set_z_index(RustGround::get_objects_z_index());
         self.hud.queue_free();
         self.head_shape2d.queue_free();
         self.collision_shape2d.queue_free();
         self.bump_damage_area.queue_free();
         self.zombie_attack_area.queue_free();
         self.zombie_damage_area.queue_free();
+        self.born_audio.queue_free();
         self.hit_audio.queue_free();
         self.blood_flash.queue_free();
         self.scream_audio.queue_free();
@@ -96,6 +95,8 @@ impl RustBoss {
         self.notify_animation();
         // 45S后自动清理尸体
         BODY_COUNT.fetch_add(1, Ordering::Release);
+        self.base_mut()
+            .set_z_index(RustGround::get_objects_z_index());
         if let Some(mut tree) = self.base().get_tree() {
             if let Some(mut timer) = tree.create_timer(45.0) {
                 timer.connect("timeout", &self.base().callable("clean_body"));

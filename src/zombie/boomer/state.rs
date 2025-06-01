@@ -1,5 +1,5 @@
 use super::*;
-use crate::{BOOMER_DAMAGE, BOOMER_REPEL, EXPLODE_AUDIOS};
+use crate::{BOOMER_DAMAGE, BOOMER_REPEL, EXPLODE_AUDIOS, is_survivor, is_zombie};
 use godot::builtin::Callable;
 use godot::global::godot_error;
 
@@ -80,15 +80,17 @@ impl RustBoomer {
         self.state = ZombieState::Dead;
         if self.die_audio.is_inside_tree() && self.detonable {
             //播放爆炸音效
-            #[allow(clippy::borrow_interior_mutable_const)]
-            if let Some(audio) = EXPLODE_AUDIOS.pick_random() {
-                self.die_audio.set_stream(&audio);
-                self.die_audio.play();
-                self.die_flash.set_visible(true);
-                self.die_flash.set_global_rotation_degrees(0.0);
-                self.die_flash.play_ex().name("default").done();
-                self.animated_sprite2d.queue_free();
+            if self.die_audio.get_stream().is_none() {
+                #[allow(clippy::borrow_interior_mutable_const)]
+                if let Some(audio) = EXPLODE_AUDIOS.pick_random() {
+                    self.die_audio.set_stream(&audio);
+                }
             }
+            self.die_audio.play();
+            self.die_flash.set_visible(true);
+            self.die_flash.set_global_rotation_degrees(0.0);
+            self.die_flash.play_ex().name("default").done();
+            self.animated_sprite2d.queue_free();
             let position = self.base().get_global_position();
             for mut body in self
                 .zombie_damage_area
@@ -98,14 +100,11 @@ impl RustBoomer {
                 if !body.is_instance_valid() {
                     continue;
                 }
-                if body.is_class("RustPlayer") {
+                if is_survivor(&***body) {
                     body.cast::<RustPlayer>()
                         .bind_mut()
                         .on_hit(BOOMER_DAMAGE, position);
-                } else if body.is_class("RustZombie")
-                    || body.is_class("RustBoss")
-                    || body.is_class("RustBoomer")
-                {
+                } else if is_zombie(&***body) {
                     if position != body.get_global_position() {
                         let direction = position.direction_to(body.get_global_position());
                         body.call_deferred(
@@ -144,6 +143,7 @@ impl RustBoomer {
         self.collision_shape2d.queue_free();
         self.zombie_explode_area.queue_free();
         self.zombie_damage_area.queue_free();
+        self.born_audio.queue_free();
         self.hit_audio.queue_free();
         self.blood_flash.queue_free();
         self.scream_audio.queue_free();

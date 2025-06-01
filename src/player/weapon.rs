@@ -4,6 +4,7 @@ use godot::classes::{DirAccess, Texture2D};
 use godot::global::godot_warn;
 use std::collections::HashMap;
 
+// todo 当前武器抖动系数更新到HUD
 #[allow(clippy::declare_interior_mutable_const)]
 const WEAPON_TEXTURE: LazyLock<HashMap<GString, Gd<Texture2D>>> = LazyLock::new(|| {
     const WEAPONS_DIR: &str = "res://asserts/player/weapons";
@@ -97,7 +98,7 @@ impl RustPlayer {
         let weapon_name = self.get_current_weapon().get_name().to_string();
         if weapon_name == "M95" {
             self.zoom_audio.play();
-            self.camera.set_zoom(Vector2::new(0.45, 0.45));
+            self.camera.set_zoom(Vector2::new(0.5, 0.5));
         } else if weapon_name == "AWP" {
             self.zoom_audio.play();
             self.camera.set_zoom(Vector2::new(0.65, 0.65));
@@ -124,10 +125,9 @@ impl RustPlayer {
         self.unlock_weapon("deagle", 1, "2");
     }
 
-    // todo 先解锁单喷
     #[func]
-    pub fn unlock_xm1014(&mut self) {
-        self.unlock_weapon("xm1014", 2, "3");
+    pub fn unlock_m1887(&mut self) {
+        self.unlock_weapon("m1887", 2, "3");
     }
 
     #[func]
@@ -150,34 +150,39 @@ impl RustPlayer {
         self.unlock_weapon("ak47", 6, "7");
     }
 
-    // todo 解锁xm1014
     #[func]
-    pub fn unlock_m249(&mut self) {
-        self.unlock_weapon("m249", 7, "8");
-    }
-
-    // todo 解锁连狙
-    #[func]
-    pub fn unlock_mg3(&mut self) {
-        self.unlock_weapon("mg3", 8, "9(MAYBE MANY TIMES)");
+    pub fn unlock_xm1014(&mut self) {
+        self.unlock_weapon("xm1014", 7, "8");
     }
 
     #[func]
     pub fn unlock_ak47_60r(&mut self) {
-        self.unlock_weapon("ak47-60r", 9, "9(MAYBE MANY TIMES)");
+        self.unlock_weapon("ak47-60r", 8, "9(MAYBE MANY TIMES)");
+    }
+
+    #[func]
+    pub fn unlock_m249(&mut self) {
+        self.unlock_weapon("m249", 9, "9(MAYBE MANY TIMES)");
+    }
+
+    #[func]
+    pub fn unlock_mg3(&mut self) {
+        self.unlock_weapon("mg3", 10, "9(MAYBE MANY TIMES)");
     }
 
     #[func]
     pub fn unlock_m134(&mut self) {
-        self.unlock_weapon("m134", 10, "9(MAYBE MANY TIMES)");
+        self.unlock_weapon("m134", 11, "9(MAYBE MANY TIMES)");
     }
 
+    // todo 解锁连狙
     #[func]
     pub fn unlock_m95(&mut self) {
-        self.unlock_weapon("m95", 11, "9(MAYBE MANY TIMES)");
+        self.unlock_weapon("m95", 12, "9(MAYBE MANY TIMES)");
     }
 
     // todo 解锁大弹夹喷子，用M134EX作图
+    // todo RPG
     pub fn unlock_weapon(&mut self, weapon_name: &str, index: i32, key: &str) {
         if self.weapons.get_child_count() > index {
             return;

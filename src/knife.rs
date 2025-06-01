@@ -1,7 +1,7 @@
-use crate::MESSAGE;
 use crate::common::RustMessage;
 use crate::player::RustPlayer;
 use crate::zombie::boss::RustBoss;
+use crate::{MESSAGE, is_boss, is_survivor, not_boss};
 use godot::builtin::{Array, Vector2, real};
 use godot::classes::tween::{EaseType, TransitionType};
 use godot::classes::{Area2D, AudioStream, AudioStreamPlayer2D, IArea2D, Node2D};
@@ -109,7 +109,7 @@ impl RustKnife {
         }
         let position = self.base().get_global_position();
         let mut damage = 0;
-        if body.is_class("RustZombie") || body.is_class("RustBoomer") {
+        if not_boss(&***body) {
             damage = self.final_damage;
             #[allow(clippy::borrow_interior_mutable_const)]
             if let Some(audio) = HIT_AUDIOS.pick_random() {
@@ -144,7 +144,7 @@ impl RustKnife {
                     (zombie_position + direction).to_variant(),
                 ],
             );
-        } else if body.is_class("RustBoss") {
+        } else if is_boss(&***body) {
             damage = self.final_damage;
             #[allow(clippy::borrow_interior_mutable_const)]
             if let Some(audio) = HIT_AUDIOS.pick_random() {
@@ -160,7 +160,7 @@ impl RustKnife {
                 self.final_repel,
                 boss_position + direction,
             );
-        } else if body.is_class("RustPlayer") {
+        } else if is_survivor(&***body) {
             // ok
         } else {
             godot_error!("Knife hit an unexpected body: {}", body.get_class());

@@ -182,7 +182,6 @@ impl RustPlayer {
         self.blood_flash.look_at(hit_position);
         self.blood_flash.restart();
         STATE.store(self.state);
-        self.get_current_weapon().bind_mut().weapon_ready();
         self.hud.bind_mut().update_speed_hud(self.current_speed);
         if random_bool() {
             self.body_hurt.play();

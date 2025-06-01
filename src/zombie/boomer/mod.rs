@@ -9,9 +9,10 @@ use crate::zombie::animation::ZombieAnimation;
 use crate::zombie::explode::ZombieExplodeArea;
 use crate::{
     BOOMER_ALARM_DISTANCE, BOOMER_EXPLODE_COUNTDOWN, BOOMER_MOVE_SPEED, GRENADE_ALARM_DISTANCE,
-    GUN_ALARM_DISTANCE, MESSAGE, NO_NOISE, PlayerState, SAVE, ZOMBIE_ALARM_TIME,
-    ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH, ZOMBIE_PURSUIT_DISTANCE, ZOMBIE_RAMPAGE_TIME,
-    ZombieState, random_bool, random_direction, random_position,
+    GUN_ALARM_DISTANCE, MESSAGE, NO_NOISE, PITCHER_ALARM_DISTANCE, PlayerState, SAVE,
+    ZOMBIE_ALARM_TIME, ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH, ZOMBIE_PURSUIT_DISTANCE,
+    ZOMBIE_RAMPAGE_TIME, ZombieState, not_normal_zombie, random_bool, random_direction,
+    random_position,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{GString, Vector2, real};
@@ -67,6 +68,7 @@ pub struct RustBoomer {
     animated_sprite2d: OnReady<Gd<ZombieAnimation>>,
     zombie_explode_area: OnReady<Gd<ZombieExplodeArea>>,
     zombie_damage_area: OnReady<Gd<Area2D>>,
+    born_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     hit_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     blood_flash: OnReady<Gd<GpuParticles2D>>,
     scream_audio: OnReady<Gd<AudioStreamPlayer2D>>,
@@ -107,6 +109,7 @@ impl ICharacterBody2D for RustBoomer {
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             zombie_explode_area: OnReady::from_node("ZombieExplodeArea"),
             zombie_damage_area: OnReady::from_node("ZombieDamageArea"),
+            born_audio: OnReady::from_node("BornAudio"),
             hit_audio: OnReady::from_node("HitAudio"),
             blood_flash: OnReady::from_node("GpuParticles2D"),
             guard_audio: OnReady::from_node("GuardAudio"),
@@ -175,6 +178,8 @@ impl ICharacterBody2D for RustBoomer {
                 self.alarmed_by_sound(noise_position, GRENADE_ALARM_DISTANCE)
             } else if let Some(noise_position) = Self::get_noise_position() {
                 self.alarmed_by_sound(noise_position, BOOMER_ALARM_DISTANCE)
+            } else if let Some(noise_position) = RustGrenade::get_zombie_noise_position() {
+                self.alarmed_by_sound(noise_position, PITCHER_ALARM_DISTANCE)
             } else if let Some(noise_position) = RustWeapon::get_noise_position() {
                 self.alarmed_by_sound(noise_position, GUN_ALARM_DISTANCE)
             } else if self.rotatable
@@ -199,7 +204,7 @@ impl ICharacterBody2D for RustBoomer {
             // 发出排斥力的方向
             let from = collision.get_normal();
             if let Some(object) = collision.get_collider() {
-                if object.is_class("RustBoomer") || object.is_class("RustBoss") {
+                if not_normal_zombie(&object) {
                     let dir = NEXT_ATTACK_DIRECTION.load();
                     let move_angle = to_player_dir.angle_to(dir).to_degrees();
                     self.collision =
@@ -233,6 +238,7 @@ impl ICharacterBody2D for RustBoomer {
             .animation_finished()
             .connect_obj(&gd, Self::clean_body);
         self.last_rotate_time -= self.rotate_cooldown;
+        self.born_audio.play();
         self.guard();
         if !self.boomer_name.is_empty() {
             let name = self.boomer_name.clone();

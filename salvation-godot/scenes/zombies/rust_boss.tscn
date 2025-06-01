@@ -1,6 +1,7 @@
-[gd_scene load_steps=48 format=3 uid="uid://b8ou2gd7qcb4n"]
+[gd_scene load_steps=49 format=3 uid="uid://b8ou2gd7qcb4n"]
 
 [ext_resource type="Texture2D" uid="uid://dl2e2alxr88ti" path="res://asserts/zombie/zombie.png" id="1_4lcne"]
+[ext_resource type="AudioStream" uid="uid://nm766ar3s7ls" path="res://asserts/zombie/zombie_coming_2.wav" id="2_8te7g"]
 [ext_resource type="AudioStream" uid="uid://b2fcg5mkceji3" path="res://asserts/zombie/zombie_hit.mp3" id="2_xgxvb"]
 [ext_resource type="AudioStream" uid="uid://ddacchun7ngjm" path="res://asserts/zombie/zombie_scream.mp3" id="3_ojx4y"]
 [ext_resource type="AudioStream" uid="uid://cfil3c60xh0jr" path="res://asserts/zombie/zombie_guard.mp3" id="4_ollki"]
@@ -394,6 +395,12 @@ lifetime = 0.2
 one_shot = true
 explosiveness = 1.0
 process_material = SubResource("ParticleProcessMaterial_4y265")
+
+[node name="BornAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("2_8te7g")
+volume_db = 4.0
+max_distance = 4096.0
+attenuation = 1e-05
 
 [node name="HitAudio" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("2_xgxvb")
