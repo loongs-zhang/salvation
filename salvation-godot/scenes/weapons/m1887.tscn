@@ -42,11 +42,11 @@ color_ramp = SubResource("GradientTexture1D_88lgy")
 alpha_curve = SubResource("CurveTexture_ad62i")
 
 [node name="M1887" type="RustWeapon" groups=["preservable"]]
-damage = 50
+damage = 25
 weight = 0.92
 distance = 400.0
 clip = 8
-jitter = 25.0
+jitter = 20.0
 explode = true
 repel = 35.0
 penetrate = 1.0

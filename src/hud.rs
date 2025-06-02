@@ -110,36 +110,63 @@ impl RustHUD {
 
     pub fn update_speed_hud(&mut self, speed: real) {
         let mut hp_hud = self.get_left_top_container().get_node_as::<Label>("Speed");
-        hp_hud.set_text(&format!("SPEED {:.0}", speed));
+        hp_hud.set_text(&format!("SPEED {:.2}", speed));
         hp_hud.show();
     }
 
-    pub fn update_damage_hud(&mut self, damage: i64) {
+    pub fn update_damage_hud(&mut self, weapon_damage: i64, player_damage: i64) {
         let mut damage_hud = self.get_left_top_container().get_node_as::<Label>("Damage");
-        damage_hud.set_text(&format!("DAMAGE {}", damage));
+        damage_hud.set_text(&format!(
+            "DAMAGE {}={}+{}",
+            weapon_damage + player_damage,
+            weapon_damage,
+            player_damage
+        ));
         damage_hud.show();
     }
 
-    pub fn update_distance_hud(&mut self, distance: real) {
-        let mut damage_hud = self
+    pub fn update_distance_hud(&mut self, weapon_distance: real, player_distance: real) {
+        let mut distance_hud = self
             .get_left_top_container()
             .get_node_as::<Label>("Distance");
-        damage_hud.set_text(&format!("DISTANCE {:.0}", distance));
-        damage_hud.show();
+        distance_hud.set_text(&format!(
+            "DISTANCE {:.0}={:.0}+{:.0}",
+            weapon_distance + player_distance,
+            weapon_distance,
+            player_distance
+        ));
+        distance_hud.show();
     }
 
-    pub fn update_penetrate_hud(&mut self, penetrate: real) {
+    pub fn update_repel_hud(&mut self, weapon_repel: real, player_repel: real) {
+        let mut repel_hud = self.get_left_top_container().get_node_as::<Label>("Repel");
+        repel_hud.set_text(&format!(
+            "REPEL {}={}+{}",
+            weapon_repel + player_repel,
+            weapon_repel,
+            player_repel
+        ));
+        repel_hud.show();
+    }
+
+    pub fn update_penetrate_hud(&mut self, weapon_penetrate: real, player_penetrate: real) {
         let mut penetrate_hud = self
             .get_left_top_container()
             .get_node_as::<Label>("Penetrate");
-        penetrate_hud.set_text(&format!("PENETRATE {:.1}", penetrate));
+        penetrate_hud.set_text(&format!(
+            "PENETRATE {:.1}={:.1}+{:.1}",
+            weapon_penetrate + player_penetrate,
+            weapon_penetrate,
+            player_penetrate
+        ));
         penetrate_hud.show();
     }
 
-    pub fn update_repel_hud(&mut self, repel: real) {
-        let mut repel_hud = self.get_left_top_container().get_node_as::<Label>("Repel");
-        repel_hud.set_text(&format!("REPEL {}", repel));
-        repel_hud.show();
+    #[func]
+    pub fn update_jitter_hud(&mut self, jitter: real) {
+        let mut jitter_hud = self.get_left_top_container().get_node_as::<Label>("Jitter");
+        jitter_hud.set_text(&format!("JITTER {:.1}", jitter));
+        jitter_hud.show();
     }
 
     pub fn update_killed_hud(&mut self, kill_boss_count: u32, kill_count: u32) {

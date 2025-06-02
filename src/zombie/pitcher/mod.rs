@@ -13,8 +13,8 @@ use crate::{
     PITCHER_ALARM_DISTANCE, PITCHER_ATTACK_DISTANCE, PITCHER_DAMAGE, PITCHER_GRENADE_COUNTDOWN,
     PITCHER_MOVE_SPEED, PITCHER_PURSUIT_DISTANCE, PITCHER_REPEL, PlayerState, ZOMBIE_ALARM_TIME,
     ZOMBIE_GRENADE_DISTANCE, ZOMBIE_MAX_BODY_COUNT, ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH,
-    ZOMBIE_RAMPAGE_TIME, ZombieState, not_normal_zombie, random_bool, random_direction,
-    random_position,
+    ZOMBIE_MIN_TRACK_DISTANCE, ZOMBIE_RAMPAGE_TIME, ZombieState, not_normal_zombie, random_bool,
+    random_direction, random_position,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Array, GString, Vector2, real};
@@ -290,7 +290,7 @@ impl RustPitcher {
     ) -> Vector2 {
         let zombie_position = self.base().get_global_position();
         let distance_to_noise = zombie_position.distance_to(noise_position);
-        if PITCHER_ATTACK_DISTANCE < distance_to_noise && distance_to_noise < max_alarm_distance {
+        if ZOMBIE_MIN_TRACK_DISTANCE < distance_to_noise && distance_to_noise < max_alarm_distance {
             // 向噪音位置移动
             self.base_mut().look_at(noise_position);
             self.current_alarm_time = self.alarm_time;

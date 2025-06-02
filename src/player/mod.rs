@@ -254,10 +254,10 @@ impl ICharacterBody2D for RustPlayer {
         hud.update_lives_hud(self.current_lives, self.lives);
         hud.update_hp_hud(self.current_health, self.health);
         hud.update_speed_hud(self.current_speed);
-        hud.update_damage_hud(self.damage.saturating_add(rust_weapon.bind().get_damage()));
-        hud.update_distance_hud(self.distance + rust_weapon.bind().get_distance());
-        hud.update_repel_hud(self.repel + rust_weapon.bind().get_repel());
-        hud.update_penetrate_hud(self.penetrate + rust_weapon.bind().get_penetrate());
+        hud.update_damage_hud(rust_weapon.bind().get_damage(), self.damage);
+        hud.update_distance_hud(rust_weapon.bind().get_distance(), self.distance);
+        hud.update_repel_hud(rust_weapon.bind().get_repel(), self.repel);
+        hud.update_penetrate_hud(rust_weapon.bind().get_penetrate(), self.penetrate);
         hud.update_killed_hud(self.kill_boss_count, self.kill_count);
         hud.update_score_hud(self.score);
         hud.update_died_hud(self.died);

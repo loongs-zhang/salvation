@@ -42,12 +42,12 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 
 [node name="M134" type="RustWeapon" groups=["preservable"]]
 damage = 30
-weight = 0.6
+weight = 0.7
 clip = 300
 jitter = 18.0
 pull_after_reload = true
 repel = 16.0
-penetrate = 2.9
+penetrate = 2.5
 fire_cooldown = 0.02
 reload_time = 5.5
 

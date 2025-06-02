@@ -10,9 +10,9 @@ use crate::zombie::explode::ZombieExplodeArea;
 use crate::{
     BOOMER_ALARM_DISTANCE, BOOMER_EXPLODE_COUNTDOWN, BOOMER_MOVE_SPEED, GRENADE_ALARM_DISTANCE,
     GUN_ALARM_DISTANCE, MESSAGE, NO_NOISE, PITCHER_ALARM_DISTANCE, PlayerState, SAVE,
-    ZOMBIE_ALARM_TIME, ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH, ZOMBIE_PURSUIT_DISTANCE,
-    ZOMBIE_RAMPAGE_TIME, ZombieState, not_normal_zombie, random_bool, random_direction,
-    random_position,
+    ZOMBIE_ALARM_TIME, ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH, ZOMBIE_MIN_TRACK_DISTANCE,
+    ZOMBIE_PURSUIT_DISTANCE, ZOMBIE_RAMPAGE_TIME, ZombieState, not_normal_zombie, random_bool,
+    random_direction, random_position,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{GString, Vector2, real};
@@ -264,7 +264,7 @@ impl RustBoomer {
     ) -> Vector2 {
         let zombie_position = self.base().get_global_position();
         let distance_to_noise = zombie_position.distance_to(noise_position);
-        if ZOMBIE_PURSUIT_DISTANCE < distance_to_noise && distance_to_noise < max_alarm_distance {
+        if ZOMBIE_MIN_TRACK_DISTANCE < distance_to_noise && distance_to_noise < max_alarm_distance {
             // 向噪音位置移动
             self.base_mut().look_at(noise_position);
             self.current_alarm_time = self.alarm_time;

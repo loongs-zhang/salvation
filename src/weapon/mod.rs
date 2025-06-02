@@ -135,11 +135,12 @@ impl INode2D for RustWeapon {
     fn process(&mut self, delta: f64) {
         self.current_fire_cooldown -= delta as real;
         self.current_flash_cooldown -= delta;
-        if self.jitter > 0.0 && WeaponState::Firing != self.state {
+        if self.current_jitter > 0.0 && WeaponState::Firing != self.state {
             self.current_jitter_cooldown -= delta as real;
             if self.current_jitter_cooldown <= 0.0 {
-                self.current_jitter = (self.current_jitter - self.jitter / 5.0).max(0.0);
-                self.current_jitter_cooldown = self.fire_cooldown * 5.0;
+                self.current_jitter = (self.current_jitter - self.jitter / 25.0).max(0.0);
+                self.current_jitter_cooldown = self.fire_cooldown;
+                self.update_jitter_hud();
             }
         }
         if self.ammo < self.clip && self.reloading > 0.0 {
@@ -200,11 +201,15 @@ impl RustWeapon {
         self.state = WeaponState::Ready;
     }
 
-    pub fn update_ammo_hud(&mut self) {
+    pub fn update_ammo_hud(&self) {
         RustHUD::get().call_deferred(
             "update_ammo_hud",
             &[self.ammo.to_variant(), self.clip.to_variant()],
         );
+    }
+
+    pub fn update_jitter_hud(&self) {
+        RustHUD::get().call_deferred("update_jitter_hud", &[self.current_jitter.to_variant()]);
     }
 
     pub fn fire(
@@ -345,7 +350,8 @@ impl RustWeapon {
                 if self.jitter > 0.0 {
                     self.current_jitter =
                         (self.current_jitter + self.jitter / 5.0).min(self.jitter);
-                    self.current_jitter_cooldown = self.fire_cooldown * 5.0;
+                    self.current_jitter_cooldown = self.fire_cooldown;
+                    self.update_jitter_hud();
                 }
                 return Ok(());
             }
@@ -459,6 +465,8 @@ impl RustWeapon {
     pub fn on_bolt_pull_finished(&mut self) {
         self.weapon_ready();
         self.ammo = self.clip;
+        self.current_jitter = 0.0;
+        self.update_jitter_hud();
         self.update_ammo_hud();
         RustPlayer::get().call_deferred("reloaded", &[]);
     }

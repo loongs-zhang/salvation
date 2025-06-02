@@ -41,11 +41,10 @@ color_ramp = SubResource("GradientTexture1D_88lgy")
 alpha_curve = SubResource("CurveTexture_ad62i")
 
 [node name="XM1014" type="RustWeapon" groups=["preservable"]]
-damage = 30
 weight = 0.92
 distance = 400.0
-clip = 7
-jitter = 30.0
+clip = 9
+jitter = 25.0
 explode = true
 repel = 25.0
 penetrate = 1.0
@@ -86,6 +85,12 @@ position = Vector2(0, 2)
 
 [node name="BulletPoint7" type="Node2D" parent="BulletPoints"]
 position = Vector2(0, 3)
+
+[node name="BulletPoint8" type="Node2D" parent="BulletPoints"]
+position = Vector2(0, 4)
+
+[node name="BulletPoint9" type="Node2D" parent="BulletPoints"]
+position = Vector2(0, -4)
 
 [node name="GpuParticles2D" type="GPUParticles2D" parent="."]
 position = Vector2(22.5, 0)

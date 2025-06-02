@@ -4,7 +4,6 @@ use godot::classes::{DirAccess, Texture2D};
 use godot::global::godot_warn;
 use std::collections::HashMap;
 
-// todo 当前武器抖动系数更新到HUD
 #[allow(clippy::declare_interior_mutable_const)]
 const WEAPON_TEXTURE: LazyLock<HashMap<GString, Gd<Texture2D>>> = LazyLock::new(|| {
     const WEAPONS_DIR: &str = "res://asserts/player/weapons";
@@ -70,10 +69,11 @@ impl RustPlayer {
                     // 更新HUD
                     weapon.bind_mut().update_ammo_hud();
                     hud.update_speed_hud(self.current_speed);
-                    hud.update_damage_hud(self.damage.saturating_add(weapon.bind().get_damage()));
-                    hud.update_distance_hud(self.distance + weapon.bind().get_distance());
-                    hud.update_repel_hud(self.repel + weapon.bind().get_repel());
-                    hud.update_penetrate_hud(self.penetrate + weapon.bind().get_penetrate());
+                    hud.update_damage_hud(weapon.bind().get_damage(), self.damage);
+                    hud.update_distance_hud(weapon.bind().get_distance(), self.distance);
+                    hud.update_repel_hud(weapon.bind().get_repel(), self.repel);
+                    hud.update_penetrate_hud(weapon.bind().get_penetrate(), self.penetrate);
+                    weapon.bind().update_jitter_hud();
                 } else {
                     weapon.set_visible(false);
                     // 打断其他武器的换弹
@@ -115,6 +115,7 @@ impl RustPlayer {
             .cast::<RustWeapon>()
     }
 
+    // 消音武器
     #[func]
     pub fn unlock_usp(&mut self) {
         self.unlock_weapon("usp", 0, "1");
@@ -135,11 +136,13 @@ impl RustPlayer {
         self.unlock_weapon("awp", 3, "4");
     }
 
+    // 强力武器
     #[func]
     pub fn unlock_m79(&mut self) {
         self.unlock_weapon("m79", 4, "5");
     }
 
+    // 消音武器
     #[func]
     pub fn unlock_m4a1(&mut self) {
         self.unlock_weapon("m4a1", 5, "6");
@@ -155,6 +158,7 @@ impl RustPlayer {
         self.unlock_weapon("xm1014", 7, "8");
     }
 
+    // 强力武器
     #[func]
     pub fn unlock_ak47_60r(&mut self) {
         self.unlock_weapon("ak47-60r", 8, "9(MAYBE MANY TIMES)");
@@ -175,14 +179,16 @@ impl RustPlayer {
         self.unlock_weapon("m134", 11, "9(MAYBE MANY TIMES)");
     }
 
-    // todo 解锁连狙
+    // todo 强力武器 skull-6，120发子弹，换弹时间3.6s，伤害70，穿透3.9
+    // todo RPG，单发，换弹时间5s，伤害1200，射击和爆炸范围远胜m79
     #[func]
     pub fn unlock_m95(&mut self) {
         self.unlock_weapon("m95", 12, "9(MAYBE MANY TIMES)");
     }
 
-    // todo 解锁大弹夹喷子，用M134EX作图
-    // todo RPG
+    // todo m32，允许一发一发上弹的m79
+    // todo skull-5，24发子弹，换弹时间1.95s，伤害150，穿透6.0
+    // todo USAS-12，32发子弹的连喷
     pub fn unlock_weapon(&mut self, weapon_name: &str, index: i32, key: &str) {
         if self.weapons.get_child_count() > index {
             return;

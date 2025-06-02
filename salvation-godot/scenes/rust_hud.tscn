@@ -63,6 +63,11 @@ layout_mode = 2
 theme = SubResource("Theme_g8j1n")
 text = "PENETRATE"
 
+[node name="Jitter" type="Label" parent="Control/VBoxTopLeft"]
+layout_mode = 2
+theme = SubResource("Theme_g8j1n")
+text = "JITTER"
+
 [node name="VBoxTopCenter" type="VBoxContainer" parent="Control"]
 layout_mode = 1
 anchors_preset = 5

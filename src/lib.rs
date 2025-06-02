@@ -13,7 +13,6 @@ use std::ops::Deref;
 use std::sync::LazyLock;
 
 // todo 增加死亡骑士连狙
-// todo 增加投弹僵尸，僵尸出生音效
 // todo 增加双持刀、双持武器，双持武器时，鼠标左键开一边，鼠标右键开另一边
 // todo 增加僵尸死亡掉落金币，需要过去拾取
 // todo 增加局外可升级的技能树
@@ -80,7 +79,7 @@ const PLAYER_LEVEL_UP_BARRIER: u32 = 2000;
 const PLAYER_MOVE_SPEED: real = 225.0;
 
 // grenade
-const GRENADE_DAMAGE: i64 = 240;
+const GRENADE_DAMAGE: i64 = 300;
 
 const GRENADE_REPEL: real = 120.0;
 
@@ -125,6 +124,8 @@ const ZOMBIE_DAMAGE: i64 = 5;
 
 const ZOMBIE_PURSUIT_DISTANCE: real = 225.0;
 
+const ZOMBIE_MIN_TRACK_DISTANCE: real = 100.0;
+
 const ZOMBIE_MAX_DISTANCE: real = 1600.0;
 
 const ZOMBIE_MOVE_SPEED: real = 2.25;
@@ -157,9 +158,9 @@ const PITCHER_MOVE_SPEED: real = 1.5;
 
 const PITCHER_GRENADE_COUNTDOWN: real = 3.0;
 
-const PITCHER_ATTACK_DISTANCE: real = 225.0;
+const PITCHER_ATTACK_DISTANCE: real = 300.0;
 
-const PITCHER_PURSUIT_DISTANCE: real = 325.0;
+const PITCHER_PURSUIT_DISTANCE: real = 400.0;
 
 const PITCHER_DAMAGE: i64 = 10;
 

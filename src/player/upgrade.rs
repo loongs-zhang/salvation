@@ -22,8 +22,10 @@ impl RustPlayer {
     pub fn upgrade_penetrate(&mut self) {
         //穿透力升级
         self.penetrate += 0.1;
-        let new_penetrate = self.penetrate + self.get_current_weapon().bind().get_penetrate();
-        self.hud.bind_mut().update_penetrate_hud(new_penetrate);
+        let weapon_penetrate = self.get_current_weapon().bind().get_penetrate();
+        self.hud
+            .bind_mut()
+            .update_penetrate_hud(weapon_penetrate, self.penetrate);
         self.show_upgrade_label(PlayerUpgrade::Penetrate);
     }
 
@@ -31,10 +33,10 @@ impl RustPlayer {
     pub fn upgrade_damage(&mut self) {
         //伤害升级
         self.damage = self.damage.saturating_add(2);
-        let new_damage = self
-            .damage
-            .saturating_add(self.get_current_weapon().bind().get_damage());
-        self.hud.bind_mut().update_damage_hud(new_damage);
+        let weapon_damage = self.get_current_weapon().bind().get_damage();
+        self.hud
+            .bind_mut()
+            .update_damage_hud(weapon_damage, self.damage);
         self.show_upgrade_label(PlayerUpgrade::Damage);
     }
 
@@ -42,8 +44,10 @@ impl RustPlayer {
     pub fn upgrade_repel(&mut self) {
         //击退力升级
         self.repel += 1.0;
-        let new_repel = self.repel + self.get_current_weapon().bind().get_repel();
-        self.hud.bind_mut().update_repel_hud(new_repel);
+        let weapon_repel = self.get_current_weapon().bind().get_repel();
+        self.hud
+            .bind_mut()
+            .update_repel_hud(weapon_repel, self.repel);
         self.show_upgrade_label(PlayerUpgrade::Repel);
     }
 
@@ -62,8 +66,10 @@ impl RustPlayer {
     pub fn upgrade_distance(&mut self) {
         //射击距离升级
         self.distance += 20.0;
-        let new_distance = self.distance + self.get_current_weapon().bind().get_distance();
-        self.hud.bind_mut().update_distance_hud(new_distance);
+        let weapon_distance = self.get_current_weapon().bind().get_distance();
+        self.hud
+            .bind_mut()
+            .update_distance_hud(weapon_distance, self.distance);
         self.show_upgrade_label(PlayerUpgrade::Distance);
     }
 
