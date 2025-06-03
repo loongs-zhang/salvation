@@ -1,4 +1,4 @@
-[gd_scene load_steps=59 format=3 uid="uid://d1fywhnf12yb8"]
+[gd_scene load_steps=62 format=3 uid="uid://d1fywhnf12yb8"]
 
 [ext_resource type="Texture2D" uid="uid://b4ohe06jqwoww" path="res://asserts/player/player_walk.png" id="1_7f4hr"]
 [ext_resource type="Texture2D" uid="uid://dl2e2alxr88ti" path="res://asserts/zombie/zombie.png" id="2_rp40j"]
@@ -28,7 +28,10 @@
 [ext_resource type="AudioStream" uid="uid://dcmp03pf4jcqv" path="res://asserts/player/weapons/zoom.wav" id="16_d5okg"]
 [ext_resource type="AudioStream" uid="uid://bkwxfct2opix5" path="res://asserts/player/weapons/headshot.wav" id="17_kwi0f"]
 [ext_resource type="PackedScene" uid="uid://dmthcbsw8nxhs" path="res://scenes/rust_hud.tscn" id="17_m4ly0"]
+[ext_resource type="PackedScene" uid="uid://cgjel5wfrbtry" path="res://scenes/weapons/skull-6.tscn" id="18_8d0gk"]
 [ext_resource type="PackedScene" uid="uid://vs6icyoxdaft" path="res://scenes/weapons/m95.tscn" id="18_vxdur"]
+[ext_resource type="PackedScene" uid="uid://xgq0xu74bbso" path="res://scenes/weapons/xm1134.tscn" id="20_dhfw3"]
+[ext_resource type="PackedScene" uid="uid://bk57vqhna6ixb" path="res://scenes/weapons/skull-5.tscn" id="21_ou7m4"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_h4u8k"]
 radius = 18.0
@@ -307,6 +310,7 @@ scale_curve = SubResource("CurveTexture_ulhoy")
 color_ramp = SubResource("GradientTexture1D_fuakc")
 
 [node name="RustPlayer" type="RustPlayer"]
+level_up_barrier = 9999999
 grenade_cooldown = 0.1
 z_index = 2
 
@@ -374,9 +378,15 @@ position = Vector2(10, 2)
 
 [node name="MG3" parent="Weapon" instance=ExtResource("15_kwi0f")]
 
+[node name="SKULL-6" parent="Weapon" instance=ExtResource("18_8d0gk")]
+
 [node name="M134" parent="Weapon" instance=ExtResource("16_3x6y8")]
 
 [node name="M95" parent="Weapon" instance=ExtResource("18_vxdur")]
+
+[node name="XM1134" parent="Weapon" instance=ExtResource("20_dhfw3")]
+
+[node name="SKULL-5" parent="Weapon" instance=ExtResource("21_ou7m4")]
 
 [node name="GpuParticles2D" type="GPUParticles2D" parent="."]
 emitting = false

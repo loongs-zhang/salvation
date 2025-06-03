@@ -245,6 +245,7 @@ impl ICharacterBody2D for RustPlayer {
     }
 
     fn ready(&mut self) {
+        self.current_level_up_barrier = self.level_up_barrier;
         self.knife.set_visible(false);
         self.change_weapon(self.current_weapon_index);
         self.base_mut()
@@ -306,13 +307,15 @@ impl ICharacterBody2D for RustPlayer {
         } else if event.is_action_pressed("8") {
             self.change_weapon(7);
         } else if event.is_action_pressed("9") {
+            self.change_weapon(8);
+        } else if event.is_action_pressed("next_weapon") {
             let mut new_weapon_index = self.current_weapon_index;
             new_weapon_index += 1;
             if new_weapon_index >= self.weapons.get_child_count() {
                 new_weapon_index = 0;
             }
             self.change_weapon(new_weapon_index);
-        } else if event.is_action_pressed("0") {
+        } else if event.is_action_pressed("last_weapon") {
             let mut new_weapon_index = self.current_weapon_index;
             new_weapon_index -= 1;
             if new_weapon_index < 0 {

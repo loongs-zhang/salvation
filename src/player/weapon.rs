@@ -96,15 +96,18 @@ impl RustPlayer {
     #[func]
     pub fn zoom(&mut self) {
         let weapon_name = self.get_current_weapon().get_name().to_string();
-        if weapon_name == "M95" {
+        if weapon_name == "M95" || weapon_name == "SKULL-5" {
             self.zoom_audio.play();
             self.camera.set_zoom(Vector2::new(0.5, 0.5));
-        } else if weapon_name == "AWP" {
+        } else if weapon_name == "AWP" || weapon_name == "SKULL-6" {
             self.zoom_audio.play();
             self.camera.set_zoom(Vector2::new(0.65, 0.65));
         } else if weapon_name == "AK47-60R" {
             self.zoom_audio.play();
             self.camera.set_zoom(Vector2::new(0.8, 0.8));
+        } else if weapon_name == "RPG" {
+            self.zoom_audio.play();
+            self.camera.set_zoom(Vector2::new(0.85, 0.85));
         }
     }
 
@@ -164,31 +167,44 @@ impl RustPlayer {
         self.unlock_weapon("ak47-60r", 8, "9(MAYBE MANY TIMES)");
     }
 
+    // todo RPG，单发，换弹时间5s，伤害1200，射击和爆炸范围远胜m79
     #[func]
     pub fn unlock_m249(&mut self) {
-        self.unlock_weapon("m249", 9, "9(MAYBE MANY TIMES)");
+        self.unlock_weapon("m249", 10, "9(MAYBE MANY TIMES)");
     }
 
     #[func]
     pub fn unlock_mg3(&mut self) {
-        self.unlock_weapon("mg3", 10, "9(MAYBE MANY TIMES)");
+        self.unlock_weapon("mg3", 11, "9(MAYBE MANY TIMES)");
+    }
+
+    // 强力武器
+    #[func]
+    pub fn unlock_skull_6(&mut self) {
+        self.unlock_weapon("skull-6", 12, "9(MAYBE MANY TIMES)");
+    }
+
+    #[func]
+    pub fn unlock_m95(&mut self) {
+        self.unlock_weapon("m95", 13, "9(MAYBE MANY TIMES)");
     }
 
     #[func]
     pub fn unlock_m134(&mut self) {
-        self.unlock_weapon("m134", 11, "9(MAYBE MANY TIMES)");
-    }
-
-    // todo 强力武器 skull-6，120发子弹，换弹时间3.6s，伤害70，穿透3.9
-    // todo RPG，单发，换弹时间5s，伤害1200，射击和爆炸范围远胜m79
-    #[func]
-    pub fn unlock_m95(&mut self) {
-        self.unlock_weapon("m95", 12, "9(MAYBE MANY TIMES)");
+        self.unlock_weapon("m134", 14, "9(MAYBE MANY TIMES)");
     }
 
     // todo m32，允许一发一发上弹的m79
-    // todo skull-5，24发子弹，换弹时间1.95s，伤害150，穿透6.0
-    // todo USAS-12，32发子弹的连喷
+    #[func]
+    pub fn unlock_xm1134(&mut self) {
+        self.unlock_weapon("xm1134", 16, "9(MAYBE MANY TIMES)");
+    }
+
+    #[func]
+    pub fn unlock_skull_5(&mut self) {
+        self.unlock_weapon("skull-5", 17, "9(MAYBE MANY TIMES)");
+    }
+
     pub fn unlock_weapon(&mut self, weapon_name: &str, index: i32, key: &str) {
         if self.weapons.get_child_count() > index {
             return;

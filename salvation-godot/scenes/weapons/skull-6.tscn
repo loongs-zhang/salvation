@@ -1,10 +1,12 @@
-[gd_scene load_steps=13 format=3 uid="uid://dmvaupviw4lk8"]
+[gd_scene load_steps=15 format=3 uid="uid://cgjel5wfrbtry"]
 
-[ext_resource type="Texture2D" uid="uid://bjkiehpdgbhg" path="res://asserts/player/weapons/awp/awp.bmp" id="1_yo5vo"]
-[ext_resource type="AudioStream" uid="uid://catvrnw7jrmnb" path="res://asserts/player/weapons/awp/awpbuff-1.wav" id="3_qu1fi"]
-[ext_resource type="AudioStream" uid="uid://sbrg0urtqwx5" path="res://asserts/player/weapons/awp/awp_clipout.wav" id="3_rwgbk"]
-[ext_resource type="AudioStream" uid="uid://cogeu373yfns" path="res://asserts/player/weapons/awp/awp_clipin.wav" id="4_yo5vo"]
-[ext_resource type="AudioStream" uid="uid://dy2qqohgcph5t" path="res://asserts/player/weapons/awp/awp_deploy.wav" id="5_yo5vo"]
+[ext_resource type="Texture2D" uid="uid://ctpqrgxh3sxr0" path="res://asserts/player/weapons/skull-6/m249.bmp" id="1_xls2v"]
+[ext_resource type="Texture2D" uid="uid://chgq48ftunv4k" path="res://asserts/player/weapons/skull-6/skull-6_m.png" id="2_bsgrp"]
+[ext_resource type="AudioStream" uid="uid://ia27b128y2im" path="res://asserts/player/weapons/skull-6/skull6_clipout.wav" id="3_bsgrp"]
+[ext_resource type="AudioStream" uid="uid://bv8g27qmxddox" path="res://asserts/player/weapons/skull-6/skull7-1.wav" id="4_bsgrp"]
+[ext_resource type="AudioStream" uid="uid://ccd53rk7g1yl4" path="res://asserts/player/weapons/skull-6/skull6_chain.wav" id="5_08y24"]
+[ext_resource type="AudioStream" uid="uid://b76hdet3vy5u0" path="res://asserts/player/weapons/skull-6/skull6_boxout.wav" id="6_b3qq7"]
+[ext_resource type="AudioStream" uid="uid://doiqnxdm0jd3b" path="res://asserts/player/weapons/skull-6/skull6_boxin.wav" id="7_1oqus"]
 
 [sub_resource type="Curve" id="Curve_ait51"]
 _data = [Vector2(0, 0.747967), 0.0, 0.0, 0, 0, Vector2(0.49635, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.5), 0.0, 0.0, 0, 0]
@@ -29,7 +31,7 @@ curve = SubResource("Curve_fc1k3")
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ait51"]
 particle_flag_disable_z = true
-spread = 30.0
+spread = 15.0
 initial_velocity_min = 100.0
 initial_velocity_max = 200.0
 gravity = Vector3(100, 0, 0)
@@ -39,20 +41,23 @@ scale_curve = SubResource("CurveTexture_nrs26")
 color_ramp = SubResource("GradientTexture1D_88lgy")
 alpha_curve = SubResource("CurveTexture_ad62i")
 
-[node name="AWP" type="RustWeapon" groups=["preservable"]]
-damage = 115
+[node name="SKULL-5" type="RustWeapon" groups=["preservable"]]
+damage = 75
 weight = 0.8
-clip = 10
+clip = 120
+jitter = 12.0
+pull_after_deploy = true
 pull_after_reload = true
-penetrate = 4.5
-fire_cooldown = 1.0
-reload_time = 3.5
+repel = 20.0
+penetrate = 4.0
+fire_cooldown = 0.05
+reload_time = 3.6
 
 [node name="BulletPoints" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 32.0
-offset_right = 32.0
+offset_left = 27.5
+offset_right = 27.5
 
 [node name="BulletPoint" type="Node2D" parent="BulletPoints"]
 
@@ -61,12 +66,20 @@ z_index = 1
 position = Vector2(16, 0)
 rotation = 1.5708
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("1_yo5vo")
+texture = ExtResource("1_xls2v")
+
+[node name="Sprite2D2" type="Sprite2D" parent="."]
+z_index = 1
+position = Vector2(11, 0)
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("2_bsgrp")
+region_enabled = true
+region_rect = Rect2(55, 16, 43, 9)
 
 [node name="GpuParticles2D" type="GPUParticles2D" parent="."]
-position = Vector2(32, 0)
+position = Vector2(27.5, 0)
 emitting = false
-amount = 20
+amount = 21
 lifetime = 0.2
 one_shot = true
 explosiveness = 1.0
@@ -74,20 +87,21 @@ local_coords = true
 process_material = SubResource("ParticleProcessMaterial_ait51")
 
 [node name="DeployAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("5_yo5vo")
+stream = ExtResource("3_bsgrp")
 
 [node name="FireAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("3_qu1fi")
+stream = ExtResource("4_bsgrp")
 
 [node name="FireBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("5_08y24")
 
 [node name="ClipOutAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("3_rwgbk")
+stream = ExtResource("6_b3qq7")
 
 [node name="ClipPartInAudio" type="AudioStreamPlayer2D" parent="."]
 
 [node name="ClipInAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("4_yo5vo")
+stream = ExtResource("7_1oqus")
 
 [node name="ReloadBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("5_yo5vo")
+stream = ExtResource("5_08y24")

@@ -58,12 +58,13 @@ theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
 text = "Weapons
 1: USP
 2: DEAGLE
-3: XM1014
+3: M1887
 4: AWP
 5: M79
 6: M4A1
 7: AK47
-8: M249"
+8: XM1014
+9: AK47-60R"
 vertical_alignment = 1
 
 [node name="MoreWeapons" type="Label" parent="HBoxContainer"]
@@ -72,10 +73,15 @@ size_flags_horizontal = 0
 size_flags_vertical = 0
 theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
 text = "
+RPG
+M249
 MG3
-AK47-60R
+SKULL-6
+M95
 M134
-M95"
+M32
+XM1134
+SKULL-5"
 vertical_alignment = 1
 
 [node name="Fight" type="Label" parent="HBoxContainer"]
