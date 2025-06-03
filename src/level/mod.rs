@@ -413,18 +413,35 @@ impl RustLevel {
     fn unlock_weapons(&mut self) {
         // 这里的判断不加else，恢复存档时方便解锁武器
         let mut player = RustPlayer::get();
-        if self.level >= 28 {
+        if self.level >= 33 {
             // 相对强力的武器
-            player.call_deferred("unlock_m95", &[]);
+            player.call_deferred("unlock_skull_5", &[]);
         }
-        if self.level >= 27 {
+        if self.level >= 32 {
+            // 相对强力的武器
+            player.call_deferred("unlock_xm1134", &[]);
+        }
+        if self.level >= 31 {
+            player.call_deferred("unlock_m32", &[]);
+        }
+        if self.level >= 30 {
             player.call_deferred("unlock_m134", &[]);
         }
-        if self.level >= 26 {
+        if self.level >= 29 {
+            player.call_deferred("unlock_m95", &[]);
+        }
+        if self.level >= 28 {
+            // 相对强力的武器
+            player.call_deferred("unlock_skull_6", &[]);
+        }
+        if self.level >= 27 {
             player.call_deferred("unlock_mg3", &[]);
         }
-        if self.level >= 25 {
+        if self.level >= 26 {
             player.call_deferred("unlock_m249", &[]);
+        }
+        if self.level >= 25 {
+            player.call_deferred("unlock_rpg_7", &[]);
         }
         if self.level >= 24 {
             // 相对强力的武器

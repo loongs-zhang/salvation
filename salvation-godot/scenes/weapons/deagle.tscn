@@ -49,7 +49,7 @@ pull_after_reload = true
 repel = 36.0
 penetrate = 3.5
 fire_cooldown = 0.2
-reload_time = 1.8
+reload_time = 2.2
 
 [node name="BulletPoints" type="Control" parent="."]
 layout_mode = 3

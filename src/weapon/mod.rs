@@ -9,7 +9,7 @@ use crate::{
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Array, Callable, Vector2, real};
 use godot::classes::{
-    AudioStreamPlayer2D, Control, GpuParticles2D, INode2D, Node2D, Object, PackedScene,
+    AudioStreamPlayer2D, Control, GpuParticles2D, INode2D, Node2D, Object, PackedScene, Sprite2D,
 };
 use godot::global::godot_error;
 use godot::meta::ToGodot;
@@ -75,6 +75,7 @@ pub struct RustWeapon {
     reload_part: bool,
     state: WeaponState,
     reloading: real,
+    part_reload_time: real,
     ammo: i32,
     current_fire_cooldown: real,
     current_flash_cooldown: f64,
@@ -113,6 +114,7 @@ impl INode2D for RustWeapon {
             state: WeaponState::Ready,
             reload_part: false,
             reloading: 0.0,
+            part_reload_time: 0.0,
             ammo: MAX_AMMO,
             current_fire_cooldown: WEAPON_FIRE_COOLDOWN,
             current_flash_cooldown: 0.0,
@@ -143,11 +145,18 @@ impl INode2D for RustWeapon {
                 self.update_jitter_hud();
             }
         }
-        if self.ammo < self.clip && self.reloading > 0.0 {
+        if self.ammo >= self.clip || WeaponState::Reloading != self.state {
+            return;
+        }
+        if self.reloading > 0.0 {
             self.reloading -= delta as real;
-        } else if self.reloading < 0.0 && !self.clip_in_audio.is_playing() {
+        } else if self.reloading < 0.0 {
             self.reloading = 0.0;
-            self.clip_in_audio.play();
+            if self.reload_part {
+                self.on_clip_part_in_finished();
+            } else {
+                self.on_clip_out_finished();
+            }
         }
     }
 
@@ -163,10 +172,6 @@ impl INode2D for RustWeapon {
             .signals()
             .finished()
             .connect_obj(&gd, Self::on_clip_out_finished);
-        self.clip_part_in_audio
-            .signals()
-            .finished()
-            .connect_obj(&gd, Self::on_clip_part_in_finished);
         self.clip_in_audio
             .signals()
             .finished()
@@ -175,6 +180,12 @@ impl INode2D for RustWeapon {
             .signals()
             .finished()
             .connect_obj(&gd, Self::on_deploy_finished);
+        if self.reload_part {
+            self.clip_part_in_audio
+                .signals()
+                .finished()
+                .connect_obj(&gd, Self::on_clip_part_in_finished);
+        }
         if self.pull_after_reload {
             self.reload_bolt_pull_audio
                 .signals()
@@ -281,7 +292,7 @@ impl RustWeapon {
             if self.pull_after_fire && self.ammo > 1 {
                 if let Some(mut tree) = self.base().get_tree() {
                     if let Some(mut timer) = tree.create_timer(0.5) {
-                        timer.connect("timeout", &self.to_gd().callable("on_fire_finished"));
+                        timer.connect("timeout", &self.base().callable("on_fire_finished"));
                     }
                 }
             }
@@ -366,6 +377,9 @@ impl RustWeapon {
             drop(gd_mut);
             if let Some(mut parent) = RustPlayer::get().get_parent() {
                 parent.add_child(&grenade);
+                if let Some(mut rocket) = self.base().try_get_node_as::<Sprite2D>("Rocket") {
+                    rocket.set_visible(false);
+                }
                 return Ok(());
             }
         }
@@ -390,7 +404,6 @@ impl RustWeapon {
     pub fn reload(&mut self) -> bool {
         if self.clip == self.ammo
             || WeaponState::Reloading == self.state
-            || self.reloading > 0.0
             || self.clip_out_audio.is_playing()
             || self.reload_part && self.clip_part_in_audio.is_playing()
             || self.clip_in_audio.is_playing()
@@ -398,17 +411,22 @@ impl RustWeapon {
         {
             return false;
         }
-        self.reloading = self.reload_time
-            - self.clip_out_audio.get_stream().unwrap().get_length() as real
-            - self.clip_in_audio.get_stream().unwrap().get_length() as real;
-        if self.reload_part {
-            for _ in 0..self.clip {
-                self.reloading -=
-                    self.clip_part_in_audio.get_stream().unwrap().get_length() as real;
-            }
-        }
+        self.reloading =
+            self.reload_time - self.clip_in_audio.get_stream().unwrap().get_length() as real;
         if self.pull_after_reload {
-            self.reloading -= self.clip_in_audio.get_stream().unwrap().get_length() as real;
+            self.reloading -= self
+                .reload_bolt_pull_audio
+                .get_stream()
+                .unwrap()
+                .get_length() as real;
+        }
+        if self.reload_part {
+            self.part_reload_time = ((self.reloading
+                - self.clip_out_audio.get_stream().unwrap().get_length() as real)
+                / self.clip as real)
+                .max(self.clip_part_in_audio.get_stream().unwrap().get_length() as real);
+            self.reloading = self.clip_out_audio.get_stream().unwrap().get_length() as real
+                + self.part_reload_time;
         }
         self.reloading = self.reloading.max(0.0);
         self.clip_out_audio.play();
@@ -418,25 +436,30 @@ impl RustWeapon {
 
     #[func]
     pub fn on_clip_out_finished(&mut self) {
+        if self.reload_part {
+            if !self.clip_part_in_audio.is_playing() {
+                self.clip_part_in_audio.play();
+            }
+            return;
+        }
         if WeaponState::Reloading != self.state
             || self.reloading > 0.0
             || self.clip_in_audio.is_playing()
-            || self.clip_part_in_audio.is_playing()
         {
             return;
         }
-        if self.reload_part {
-            self.clip_part_in_audio.play();
-        } else {
-            self.clip_in_audio.play();
-        }
+        self.clip_in_audio.play();
     }
 
     #[func]
     pub fn on_clip_part_in_finished(&mut self) {
-        if WeaponState::Reloading != self.state {
+        if WeaponState::Reloading != self.state
+            || self.reloading > 0.0
+            || self.clip_part_in_audio.is_playing()
+        {
             return;
         }
+        self.reloading = self.part_reload_time;
         self.ammo += 1;
         self.ammo = self.ammo.min(self.clip);
         self.update_ammo_hud();
@@ -463,9 +486,15 @@ impl RustWeapon {
 
     #[func]
     pub fn on_bolt_pull_finished(&mut self) {
+        if let Some(mut rocket) = self.base().try_get_node_as::<Sprite2D>("Rocket") {
+            rocket.set_visible(true);
+        }
         self.weapon_ready();
-        self.ammo = self.clip;
+        self.reloading = 0.0;
+        self.current_fire_cooldown = 0.0;
         self.current_jitter = 0.0;
+        self.current_jitter_cooldown = 0.0;
+        self.ammo = self.clip;
         self.update_jitter_hud();
         self.update_ammo_hud();
         RustPlayer::get().call_deferred("reloaded", &[]);
@@ -492,10 +521,6 @@ impl RustWeapon {
 
     pub fn must_reload(&self) -> bool {
         0 == self.ammo
-    }
-
-    pub fn get_ammo(&self) -> i32 {
-        self.ammo
     }
 
     pub fn get_noise_position() -> Option<Vector2> {

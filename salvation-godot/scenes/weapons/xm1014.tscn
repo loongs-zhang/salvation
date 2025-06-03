@@ -50,7 +50,7 @@ explode = true
 repel = 25.0
 penetrate = 1.0
 fire_cooldown = 0.25
-reload_time = 0.3
+reload_time = 4.4
 reload_part = true
 
 [node name="Sprite2D" type="Sprite2D" parent="."]

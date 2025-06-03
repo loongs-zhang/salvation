@@ -41,11 +41,11 @@ scale_curve = SubResource("CurveTexture_nrs26")
 color_ramp = SubResource("GradientTexture1D_88lgy")
 alpha_curve = SubResource("CurveTexture_ad62i")
 
-[node name="SKULL-5" type="RustWeapon" groups=["preservable"]]
+[node name="SKULL-6" type="RustWeapon" groups=["preservable"]]
 damage = 75
 weight = 0.8
 clip = 120
-jitter = 12.0
+jitter = 11.0
 pull_after_deploy = true
 pull_after_reload = true
 repel = 20.0

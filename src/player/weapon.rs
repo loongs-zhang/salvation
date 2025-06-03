@@ -61,8 +61,8 @@ impl RustPlayer {
                         hud.update_weapon_sprite_hud(Gd::null_arg());
                         godot_warn!("Weapon texture not found for: {}", weapon_name);
                     }
-                    self.camera.set_zoom(Vector2::new(1.0, 1.0));
                     if weapon_index != self.current_weapon_index {
+                        self.camera.set_zoom(Vector2::new(1.0, 1.0));
                         weapon.bind_mut().deploy();
                     }
                     weapon.bind_mut().weapon_ready();
@@ -102,12 +102,12 @@ impl RustPlayer {
         } else if weapon_name == "AWP" || weapon_name == "SKULL-6" {
             self.zoom_audio.play();
             self.camera.set_zoom(Vector2::new(0.65, 0.65));
-        } else if weapon_name == "AK47-60R" {
+        } else if weapon_name == "AK47-60R" || weapon_name == "M32" {
             self.zoom_audio.play();
             self.camera.set_zoom(Vector2::new(0.8, 0.8));
-        } else if weapon_name == "RPG" {
+        } else if weapon_name == "RPG-7" {
             self.zoom_audio.play();
-            self.camera.set_zoom(Vector2::new(0.85, 0.85));
+            self.camera.set_zoom(Vector2::new(0.84, 0.84));
         }
     }
 
@@ -164,45 +164,55 @@ impl RustPlayer {
     // 强力武器
     #[func]
     pub fn unlock_ak47_60r(&mut self) {
-        self.unlock_weapon("ak47-60r", 8, "9(MAYBE MANY TIMES)");
+        self.unlock_weapon("ak47-60r", 8, "9");
     }
 
-    // todo RPG，单发，换弹时间5s，伤害1200，射击和爆炸范围远胜m79
+    #[func]
+    pub fn unlock_rpg_7(&mut self) {
+        self.unlock_weapon("rpg-7", 9, "[(MAYBE MANY TIMES)");
+    }
+
     #[func]
     pub fn unlock_m249(&mut self) {
-        self.unlock_weapon("m249", 10, "9(MAYBE MANY TIMES)");
+        self.unlock_weapon("m249", 10, "[(MAYBE MANY TIMES)");
     }
 
     #[func]
     pub fn unlock_mg3(&mut self) {
-        self.unlock_weapon("mg3", 11, "9(MAYBE MANY TIMES)");
+        self.unlock_weapon("mg3", 11, "[(MAYBE MANY TIMES)");
     }
 
     // 强力武器
     #[func]
     pub fn unlock_skull_6(&mut self) {
-        self.unlock_weapon("skull-6", 12, "9(MAYBE MANY TIMES)");
+        self.unlock_weapon("skull-6", 12, "[(MAYBE MANY TIMES)");
     }
 
     #[func]
     pub fn unlock_m95(&mut self) {
-        self.unlock_weapon("m95", 13, "9(MAYBE MANY TIMES)");
+        self.unlock_weapon("m95", 13, "[(MAYBE MANY TIMES)");
     }
 
     #[func]
     pub fn unlock_m134(&mut self) {
-        self.unlock_weapon("m134", 14, "9(MAYBE MANY TIMES)");
+        self.unlock_weapon("m134", 14, "[(MAYBE MANY TIMES)");
     }
 
-    // todo m32，允许一发一发上弹的m79
+    #[func]
+    pub fn unlock_m32(&mut self) {
+        self.unlock_weapon("m32", 15, "[(MAYBE MANY TIMES)");
+    }
+
+    // 强力武器
     #[func]
     pub fn unlock_xm1134(&mut self) {
-        self.unlock_weapon("xm1134", 16, "9(MAYBE MANY TIMES)");
+        self.unlock_weapon("xm1134", 16, "[(MAYBE MANY TIMES)");
     }
 
+    // 强力武器
     #[func]
     pub fn unlock_skull_5(&mut self) {
-        self.unlock_weapon("skull-5", 17, "9(MAYBE MANY TIMES)");
+        self.unlock_weapon("skull-5", 17, "[(MAYBE MANY TIMES)");
     }
 
     pub fn unlock_weapon(&mut self, weapon_name: &str, index: i32, key: &str) {

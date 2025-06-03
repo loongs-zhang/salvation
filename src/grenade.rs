@@ -4,7 +4,8 @@ use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Callable, Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
-    AnimatedSprite2D, Area2D, AudioStreamPlayer2D, INode2D, Node2D, Object, TextureRect,
+    AnimatedSprite2D, Area2D, AudioStreamPlayer2D, GpuParticles2D, INode2D, Node2D, Object,
+    Sprite2D, TextureRect,
 };
 use godot::global::godot_error;
 use godot::meta::ToGodot;
@@ -168,6 +169,16 @@ impl RustGrenade {
         self.explode_flash.play_ex().name("default").done();
         self.hit_area.queue_free();
         self.texture_rect.queue_free();
+        // 兼容火箭类型雷
+        if let Some(mut rocket) = self.base().try_get_node_as::<Sprite2D>("Sprite2D") {
+            rocket.queue_free();
+        }
+        if let Some(mut particles) = self
+            .base()
+            .try_get_node_as::<GpuParticles2D>("GpuParticles2D")
+        {
+            particles.queue_free();
+        }
         let position = self.base().get_global_position();
         for mut body in self.damage_area.get_overlapping_bodies().iter_shared() {
             if !body.is_instance_valid() {
