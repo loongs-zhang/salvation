@@ -308,14 +308,14 @@ impl ICharacterBody2D for RustPlayer {
             self.change_weapon(7);
         } else if event.is_action_pressed("9") {
             self.change_weapon(8);
-        } else if event.is_action_pressed("next_weapon") {
+        } else if event.is_action_pressed("next_weapon") || event.is_action_pressed("mouse_side2") {
             let mut new_weapon_index = self.current_weapon_index;
             new_weapon_index += 1;
             if new_weapon_index >= self.weapons.get_child_count() {
                 new_weapon_index = 0;
             }
             self.change_weapon(new_weapon_index);
-        } else if event.is_action_pressed("last_weapon") {
+        } else if event.is_action_pressed("last_weapon") || event.is_action_pressed("mouse_side1") {
             let mut new_weapon_index = self.current_weapon_index;
             new_weapon_index -= 1;
             if new_weapon_index < 0 {
@@ -355,11 +355,29 @@ impl RustPlayer {
     }
 
     pub fn reborn(&mut self) {
+        self.damage = 0;
+        self.distance = 0.0;
+        self.penetrate = 0.0;
+        self.repel = 0.0;
+        self.health = PLAYER_MAX_HEALTH;
+        self.current_health = self.health;
+        self.level_up_barrier = PLAYER_LEVEL_UP_BARRIER;
+        self.current_level_up_barrier = self.level_up_barrier;
+        self.score = 0;
+        self.died = 0;
+        self.kill_count = 0;
+        self.kill_boss_count = 0;
         self.current_lives = self.lives.saturating_add(1);
-        self.hud
-            .bind_mut()
-            .update_lives_hud(self.current_lives, self.lives);
         self.born();
+        let rust_weapon = self.get_current_weapon();
+        let mut hud = self.hud.bind_mut();
+        hud.update_damage_hud(rust_weapon.bind().get_damage(), self.damage);
+        hud.update_distance_hud(rust_weapon.bind().get_distance(), self.distance);
+        hud.update_repel_hud(rust_weapon.bind().get_repel(), self.repel);
+        hud.update_penetrate_hud(rust_weapon.bind().get_penetrate(), self.penetrate);
+        hud.update_killed_hud(self.kill_boss_count, self.kill_count);
+        hud.update_score_hud(self.score);
+        hud.update_died_hud(self.died);
     }
 
     pub fn throw_grenade(&mut self) {
