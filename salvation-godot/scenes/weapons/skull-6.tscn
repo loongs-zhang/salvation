@@ -49,7 +49,7 @@ jitter = 11.0
 pull_after_deploy = true
 pull_after_reload = true
 repel = 20.0
-penetrate = 4.0
+penetrate = 4.5
 fire_cooldown = 0.05
 reload_time = 3.6
 

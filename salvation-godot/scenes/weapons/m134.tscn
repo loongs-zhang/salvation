@@ -47,7 +47,7 @@ clip = 300
 jitter = 18.0
 pull_after_reload = true
 repel = 16.0
-penetrate = 2.5
+penetrate = 3.0
 fire_cooldown = 0.02
 reload_time = 5.5
 

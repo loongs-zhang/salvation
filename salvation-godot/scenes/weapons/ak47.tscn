@@ -45,7 +45,7 @@ weight = 0.86
 distance = 500.0
 jitter = 16.0
 repel = 24.0
-penetrate = 2.5
+penetrate = 3.0
 reload_time = 2.5
 
 [node name="BulletPoints" type="Control" parent="."]

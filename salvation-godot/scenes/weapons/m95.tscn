@@ -42,14 +42,14 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 
 [node name="M95" type="RustWeapon" groups=["preservable"]]
 damage = 500
-weight = 0.75
+weight = 0.77
 distance = 1800.0
 clip = 5
 bullet_scenes = Array[PackedScene]([ExtResource("1_gsu4r")])
 pull_after_reload = true
 pull_after_fire = true
 repel = 75.0
-penetrate = 7.5
+penetrate = 9.0
 fire_cooldown = 1.25
 reload_time = 4.2
 

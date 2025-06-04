@@ -51,7 +51,7 @@ explode = true
 bullet_scenes = Array[PackedScene]([ExtResource("1_6hutv")])
 pull_after_reload = true
 repel = 36.0
-penetrate = 6.0
+penetrate = 6.5
 fire_cooldown = 0.25
 reload_time = 1.95
 

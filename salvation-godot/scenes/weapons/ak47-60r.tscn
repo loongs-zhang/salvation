@@ -47,7 +47,7 @@ distance = 750.0
 clip = 60
 jitter = 10.0
 repel = 30.0
-penetrate = 3.9
+penetrate = 4.5
 fire_cooldown = 0.08
 reload_time = 2.0
 
