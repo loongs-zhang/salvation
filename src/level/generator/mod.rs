@@ -107,7 +107,8 @@ impl ZombieGenerator {
         self.current_refresh_barrier = refresh_barrier;
         self.max_screen_count = max_screen_count;
         self.current_total = (self.total as f32 * rate) as u32;
-        self.current_refresh_count = (self.refresh_count as f32 * rate) as u32;
+        self.current_refresh_count =
+            ((self.refresh_count as f32 * rate) as u32).min(refresh_barrier);
         self.timer.set_wait_time(refresh_time);
         if !RustWorld::is_paused() {
             self.timer.start();
@@ -128,11 +129,13 @@ impl ZombieGenerator {
         self.update_refresh_hud();
     }
 
+    #[func]
     pub fn start_timer(&mut self) {
         self.timer.start();
         self.update_refresh_hud();
     }
 
+    #[func]
     pub fn stop_timer(&mut self) {
         self.timer.stop();
         self.update_refresh_hud();
@@ -142,9 +145,7 @@ impl ZombieGenerator {
     pub fn generate(&mut self) {
         for _ in 0..self.current_refresh_count {
             let kill_count = self.get_kill_count();
-            if 0 < kill_count
-                && kill_count < self.current_refresh_barrier
-                && self.current_refresh_count > self.refresh_barrier
+            if 0 < kill_count && kill_count < self.current_refresh_barrier
                 || self.current.saturating_sub(kill_count) >= self.max_screen_count
             {
                 break;

@@ -249,10 +249,6 @@ impl ICharacterBody2D for RustPitcher {
         }
     }
 
-    fn exit_tree(&mut self) {
-        self.grenade_scenes.clear();
-    }
-
     fn ready(&mut self) {
         let gd = self.to_gd();
         self.die_audio
@@ -380,6 +376,7 @@ impl RustPitcher {
 
     #[func]
     pub fn clean_body(&mut self) {
+        self.grenade_scenes.clear();
         self.base_mut().queue_free();
         BODY_COUNT.fetch_sub(1, Ordering::Release);
     }

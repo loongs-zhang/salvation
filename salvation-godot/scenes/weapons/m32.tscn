@@ -43,7 +43,7 @@ alpha_curve = SubResource("CurveTexture_peu4v")
 
 [node name="M32" type="RustWeapon" groups=["preservable"]]
 damage = 300
-weight = 0.8
+weight = 0.84
 distance = 500.0
 clip = 6
 bullet_scenes = Array[PackedScene]([ExtResource("1_00a8y")])

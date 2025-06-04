@@ -33,8 +33,6 @@ pub struct RustWorld {
 #[godot_api]
 impl INode2D for RustWorld {
     fn init(base: Base<Node2D>) -> Self {
-        // We could also initialize those manually inside ready(), but OnReady automatically defers initialization.
-        // Alternatively to init(), you can use #[init(...)] on the struct fields.
         Self {
             hell: false,
             load: false,
@@ -137,8 +135,10 @@ impl RustWorld {
         self.game_over.set_visible(false);
         if PlayerState::Dead == RustPlayer::get_state() {
             self.rust_player.bind_mut().reborn();
+            self.rust_level.bind_mut().reset();
+        } else {
+            self.rust_level.bind_mut().start();
         }
-        self.rust_level.bind_mut().start();
         if Self::is_paused() {
             Self::resume();
         }

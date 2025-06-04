@@ -43,7 +43,7 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 
 [node name="M1887" type="RustWeapon" groups=["preservable"]]
 damage = 45
-weight = 0.92
+weight = 0.94
 distance = 400.0
 clip = 8
 jitter = 20.0

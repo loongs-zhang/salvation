@@ -26,7 +26,7 @@
 [ext_resource type="AudioStream" uid="uid://bswhxk7meyul0" path="res://asserts/player/weapons/wpn_hudoff.wav" id="15_qo1w2"]
 [ext_resource type="PackedScene" uid="uid://yk15efq3cmxx" path="res://scenes/weapons/m134.tscn" id="16_3x6y8"]
 [ext_resource type="AudioStream" uid="uid://dcmp03pf4jcqv" path="res://asserts/player/weapons/zoom.wav" id="16_d5okg"]
-[ext_resource type="PackedScene" uid="uid://cw6w2434ghu5n" path="res://scenes/weapons/rpg.tscn" id="16_kbnqt"]
+[ext_resource type="PackedScene" uid="uid://cw6w2434ghu5n" path="res://scenes/weapons/rpg-7.tscn" id="16_kbnqt"]
 [ext_resource type="AudioStream" uid="uid://bkwxfct2opix5" path="res://asserts/player/weapons/headshot.wav" id="17_kwi0f"]
 [ext_resource type="PackedScene" uid="uid://dmthcbsw8nxhs" path="res://scenes/rust_hud.tscn" id="17_m4ly0"]
 [ext_resource type="PackedScene" uid="uid://cgjel5wfrbtry" path="res://scenes/weapons/skull-6.tscn" id="18_8d0gk"]

@@ -222,10 +222,6 @@ impl ICharacterBody2D for RustBoomer {
         }
     }
 
-    fn exit_tree(&mut self) {
-        self.die_flash.queue_free();
-    }
-
     fn ready(&mut self) {
         self.die_flash.set_visible(false);
         let gd = self.to_gd();
@@ -324,6 +320,7 @@ impl RustBoomer {
 
     #[func]
     pub fn clean_body(&mut self) {
+        self.die_flash.queue_free();
         self.die_audio.set_stream(Gd::null_arg());
         self.die_audio.queue_free();
         // 自动清理尸体

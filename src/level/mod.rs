@@ -143,14 +143,13 @@ impl INode2D for RustLevel {
                 .saturating_sub(boss_killed)
                 .min(boss_refresh_count);
             for _ in 0..refresh_zombie_count {
-                match rand::thread_rng().gen_range(-1..=1) {
+                match rand::thread_rng().gen_range(-1..=2) {
                     // 生成投手僵尸
                     -1 => pitcher_generator.generate_zombie(),
                     // 生成爆炸僵尸
                     0 => boomer_generator.generate_zombie(),
                     // 生成普通僵尸
-                    1 => zombie_generator.generate_zombie(),
-                    _ => unreachable!(),
+                    _ => zombie_generator.generate_zombie(),
                 }
             }
             for _ in 0..refresh_boss_count {
@@ -498,20 +497,27 @@ impl RustLevel {
         self.boss_bgm.play();
     }
 
+    pub fn reset(&mut self) {
+        self.level = 0;
+        self.level_up(false);
+    }
+
     pub fn start(&mut self) {
         RustPlayer::reset_last_score_update();
-        self.zombie_generator.bind_mut().start_timer();
-        self.boomer_generator.bind_mut().start_timer();
-        self.pitcher_generator.bind_mut().start_timer();
-        self.boss_generator.bind_mut().start_timer();
+        for mut child in self.base().get_children().iter_shared() {
+            if child.is_class("ZombieGenerator") {
+                child.call("start_timer", &[]);
+            }
+        }
     }
 
     pub fn stop(&mut self) {
         RustPlayer::reset_last_score_update();
-        self.zombie_generator.bind_mut().stop_timer();
-        self.boomer_generator.bind_mut().stop_timer();
-        self.pitcher_generator.bind_mut().stop_timer();
-        self.boss_generator.bind_mut().stop_timer();
+        for mut child in self.base().get_children().iter_shared() {
+            if child.is_class("ZombieGenerator") {
+                child.call("stop_timer", &[]);
+            }
+        }
     }
 
     pub fn enable_hell(&mut self) {

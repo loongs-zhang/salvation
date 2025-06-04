@@ -1,10 +1,10 @@
 [gd_scene load_steps=13 format=3 uid="uid://cw6w2434ghu5n"]
 
-[ext_resource type="PackedScene" uid="uid://dw35pm3qw8qrk" path="res://scenes/bullets/rust_rocket_bullet.tscn" id="1_gc8p1"]
-[ext_resource type="Texture2D" uid="uid://codbw3o1et2jl" path="res://asserts/player/weapons/rpg-7/rpg-7_m.png" id="2_gc8p1"]
-[ext_resource type="AudioStream" uid="uid://b1hpr47tbry5e" path="res://asserts/player/weapons/rpg-7/rpg7_draw.wav" id="3_gc8p1"]
-[ext_resource type="AudioStream" uid="uid://clhuj3iamms31" path="res://asserts/player/weapons/rpg-7/rpg7-1.wav" id="4_362p8"]
-[ext_resource type="AudioStream" uid="uid://dx4fnvnskdhqi" path="res://asserts/player/weapons/rpg-7/rpg7_reload.wav" id="5_cuvca"]
+[ext_resource type="PackedScene" uid="uid://dw35pm3qw8qrk" path="res://scenes/bullets/rust_rocket_bullet.tscn" id="1_8ggwx"]
+[ext_resource type="Texture2D" uid="uid://codbw3o1et2jl" path="res://asserts/player/weapons/rpg-7/rpg-7_m.png" id="2_yu3ej"]
+[ext_resource type="AudioStream" uid="uid://b1hpr47tbry5e" path="res://asserts/player/weapons/rpg-7/rpg7_draw.wav" id="3_jo4xw"]
+[ext_resource type="AudioStream" uid="uid://clhuj3iamms31" path="res://asserts/player/weapons/rpg-7/rpg7-1.wav" id="4_u0maq"]
+[ext_resource type="AudioStream" uid="uid://dx4fnvnskdhqi" path="res://asserts/player/weapons/rpg-7/rpg7_reload.wav" id="5_lahx3"]
 
 [sub_resource type="Curve" id="Curve_cuvca"]
 _data = [Vector2(0, 0.747967), 0.0, 0.0, 0, 0, Vector2(0.49635, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.5), 0.0, 0.0, 0, 0]
@@ -41,9 +41,10 @@ alpha_curve = SubResource("CurveTexture_peu4v")
 
 [node name="RPG-7" type="RustWeapon" groups=["preservable"]]
 damage = 1800
+weight = 0.8
 distance = 600.0
 clip = 1
-bullet_scenes = Array[PackedScene]([ExtResource("1_gc8p1")])
+bullet_scenes = Array[PackedScene]([ExtResource("1_8ggwx")])
 repel = 200.0
 penetrate = -9999.0
 fire_cooldown = 0.0
@@ -61,14 +62,14 @@ offset_right = 19.5
 z_index = 1
 position = Vector2(11.5, 0)
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("2_gc8p1")
+texture = ExtResource("2_yu3ej")
 region_enabled = true
 region_rect = Rect2(122, 34, 32, 7)
 
 [node name="Rocket" type="Sprite2D" parent="."]
 position = Vector2(29.4, 0)
 scale = Vector2(0.32, 0.5)
-texture = ExtResource("2_gc8p1")
+texture = ExtResource("2_yu3ej")
 region_enabled = true
 region_rect = Rect2(154, 32, 62, 11)
 
@@ -83,18 +84,18 @@ local_coords = true
 process_material = SubResource("ParticleProcessMaterial_362p8")
 
 [node name="DeployAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("3_gc8p1")
+stream = ExtResource("3_jo4xw")
 volume_db = 24.0
 max_distance = 4096.0
 attenuation = 1e-05
 
 [node name="FireAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("4_362p8")
+stream = ExtResource("4_u0maq")
 
 [node name="FireBoltPullAudio" type="AudioStreamPlayer2D" parent="."]
 
 [node name="ClipOutAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("5_cuvca")
+stream = ExtResource("5_lahx3")
 volume_db = 24.0
 max_distance = 4096.0
 attenuation = 1e-05
@@ -102,7 +103,7 @@ attenuation = 1e-05
 [node name="ClipPartInAudio" type="AudioStreamPlayer2D" parent="."]
 
 [node name="ClipInAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("3_gc8p1")
+stream = ExtResource("3_jo4xw")
 volume_db = 24.0
 max_distance = 4096.0
 attenuation = 1e-05
