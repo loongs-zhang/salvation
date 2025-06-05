@@ -78,6 +78,8 @@ const PLAYER_LEVEL_UP_BARRIER: u32 = 2000;
 
 const PLAYER_MOVE_SPEED: real = 225.0;
 
+const PLAYER_ALARM_DISTANCE: real = 200.0;
+
 // grenade
 const GRENADE_DAMAGE: i64 = 300;
 

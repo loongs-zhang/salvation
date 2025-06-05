@@ -165,7 +165,7 @@ impl RustHUD {
     #[func]
     pub fn update_jitter_hud(&mut self, jitter: real) {
         let mut jitter_hud = self.get_left_top_container().get_node_as::<Label>("Jitter");
-        jitter_hud.set_text(&format!("JITTER {:.1}", jitter));
+        jitter_hud.set_text(&format!("JITTER {:.2}", jitter));
         jitter_hud.show();
     }
 
@@ -195,7 +195,7 @@ impl RustHUD {
 
     pub fn update_rampage_hud(&mut self, left_rampage_time: real) {
         let mut label = self.get_center_container().get_node_as::<Label>("Rampage");
-        label.set_text(&format!("ZOMBIE RAMPAGE {:.1} s", left_rampage_time));
+        label.set_text(&format!("ZOMBIE RAMPAGE {:.2} s", left_rampage_time));
         label.show();
     }
 

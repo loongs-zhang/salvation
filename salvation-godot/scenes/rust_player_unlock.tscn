@@ -313,7 +313,7 @@ color_ramp = SubResource("GradientTexture1D_fuakc")
 
 [node name="RustPlayer" type="RustPlayer"]
 level_up_barrier = 9999999
-grenade_cooldown = 0.1
+grenade_cooldown = 0.2
 chop_cooldown = 0.2
 z_index = 2
 

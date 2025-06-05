@@ -1,7 +1,11 @@
 use super::*;
-use crate::{PlayerState, random_bool};
+use crate::{NO_NOISE, PlayerState, random_bool};
+use godot::builtin::Callable;
+use godot::meta::ToGodot;
 
 static STATE: AtomicCell<PlayerState> = AtomicCell::new(PlayerState::Born);
+
+static NOISE_POSITION: AtomicCell<Vector2> = AtomicCell::new(NO_NOISE);
 
 #[godot_api(secondary)]
 impl RustPlayer {
@@ -64,6 +68,19 @@ impl RustPlayer {
         self.get_current_weapon().bind_mut().stop_reload();
         if !self.run_audio.is_playing() {
             self.run_audio.play();
+        }
+        //奔跑发出噪音
+        NOISE_POSITION.store(self.base().get_global_position());
+        if let Some(mut tree) = self.base().get_tree() {
+            if let Some(mut timer) = tree.create_timer(2.0) {
+                timer.connect(
+                    "timeout",
+                    &Callable::from_sync_fn("clean_run_noise", |_| {
+                        NOISE_POSITION.store(NO_NOISE);
+                        Ok(().to_variant())
+                    }),
+                );
+            }
         }
     }
 
@@ -285,5 +302,10 @@ impl RustPlayer {
 
     pub fn get_state() -> PlayerState {
         STATE.load()
+    }
+
+    pub fn get_noise_position() -> Option<Vector2> {
+        let r = NOISE_POSITION.load();
+        if NO_NOISE == r { None } else { Some(r) }
     }
 }

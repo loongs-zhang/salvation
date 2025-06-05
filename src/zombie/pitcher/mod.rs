@@ -11,10 +11,10 @@ use crate::zombie::pitch::ZombiePitchArea;
 use crate::{
     BOOMER_ALARM_DISTANCE, GRENADE_ALARM_DISTANCE, GUN_ALARM_DISTANCE, MESSAGE,
     PITCHER_ALARM_DISTANCE, PITCHER_ATTACK_DISTANCE, PITCHER_DAMAGE, PITCHER_GRENADE_COUNTDOWN,
-    PITCHER_MOVE_SPEED, PITCHER_PURSUIT_DISTANCE, PITCHER_REPEL, PlayerState, ZOMBIE_ALARM_TIME,
-    ZOMBIE_GRENADE_DISTANCE, ZOMBIE_MAX_BODY_COUNT, ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH,
-    ZOMBIE_MIN_TRACK_DISTANCE, ZOMBIE_RAMPAGE_TIME, ZombieState, not_normal_zombie, random_bool,
-    random_direction, random_position,
+    PITCHER_MOVE_SPEED, PITCHER_PURSUIT_DISTANCE, PITCHER_REPEL, PLAYER_ALARM_DISTANCE,
+    PlayerState, ZOMBIE_ALARM_TIME, ZOMBIE_GRENADE_DISTANCE, ZOMBIE_MAX_BODY_COUNT,
+    ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH, ZOMBIE_MIN_TRACK_DISTANCE, ZOMBIE_RAMPAGE_TIME,
+    ZombieState, not_normal_zombie, random_bool, random_direction, random_position,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Array, GString, Vector2, real};
@@ -209,6 +209,8 @@ impl ICharacterBody2D for RustPitcher {
                 self.alarmed_by_sound(noise_position, PITCHER_ALARM_DISTANCE)
             } else if let Some(noise_position) = RustWeapon::get_noise_position() {
                 self.alarmed_by_sound(noise_position, GUN_ALARM_DISTANCE)
+            } else if let Some(noise_position) = RustPlayer::get_noise_position() {
+                self.alarmed_by_sound(noise_position, PLAYER_ALARM_DISTANCE)
             } else if self.rotatable
                 && now.duration_since(self.last_rotate_time) >= self.rotate_cooldown
             {
