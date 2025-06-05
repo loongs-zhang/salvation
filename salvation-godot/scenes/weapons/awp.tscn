@@ -42,6 +42,7 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 [node name="AWP" type="RustWeapon" groups=["preservable"]]
 damage = 115
 weight = 0.85
+speed = 1350.0
 clip = 10
 pull_after_reload = true
 penetrate = 5.0

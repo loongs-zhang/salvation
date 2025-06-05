@@ -3,8 +3,8 @@ use crate::grenade::RustGrenade;
 use crate::hud::RustHUD;
 use crate::player::RustPlayer;
 use crate::{
-    BULLET_DAMAGE, BULLET_DISTANCE, BULLET_PENETRATE, BULLET_REPEL, MAX_AMMO, NO_NOISE,
-    RELOAD_TIME, WEAPON_FIRE_COOLDOWN, WeaponState,
+    BULLET_DAMAGE, BULLET_DISTANCE, BULLET_PENETRATE, BULLET_REPEL, BULLET_SPEED, MAX_AMMO,
+    NO_NOISE, RELOAD_TIME, WEAPON_FIRE_COOLDOWN, WeaponState,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Array, Callable, Vector2, real};
@@ -43,6 +43,8 @@ pub struct RustWeapon {
     //武器射程
     #[export]
     distance: real,
+    #[export]
+    speed: real,
     //武器弹夹容量
     #[export]
     clip: i32,
@@ -101,6 +103,7 @@ impl INode2D for RustWeapon {
             damage: BULLET_DAMAGE,
             weight: 1.0,
             distance: BULLET_DISTANCE,
+            speed: BULLET_SPEED,
             clip: MAX_AMMO,
             jitter: 0.0,
             explode: false,
@@ -349,6 +352,7 @@ impl RustWeapon {
         if let Some(mut bullet) = bullet_scene.try_instantiate_as::<RustBullet>() {
             bullet.set_global_position(bullet_point);
             let mut gd_mut = bullet.bind_mut();
+            gd_mut.set_speed(self.speed);
             gd_mut.set_bullet_point(bullet_point);
             gd_mut.set_final_distance(player_distance + self.distance);
             gd_mut.set_final_damage(player_damage.saturating_add(self.damage));
@@ -369,6 +373,7 @@ impl RustWeapon {
         } else if let Some(mut grenade) = bullet_scene.try_instantiate_as::<RustGrenade>() {
             grenade.set_global_position(bullet_point);
             let mut gd_mut = grenade.bind_mut();
+            gd_mut.set_speed(self.speed);
             gd_mut.set_bullet_point(bullet_point);
             gd_mut.set_final_distance(player_distance + self.distance);
             gd_mut.set_final_damage(player_damage.saturating_add(self.damage));

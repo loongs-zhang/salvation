@@ -43,6 +43,7 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 [node name="DEAGLE" type="RustWeapon" groups=["preservable"]]
 damage = 54
 distance = 400.0
+speed = 750.0
 clip = 7
 jitter = 8.0
 pull_after_reload = true

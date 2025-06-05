@@ -43,6 +43,7 @@ alpha_curve = SubResource("CurveTexture_peu4v")
 damage = 1800
 weight = 0.8
 distance = 600.0
+speed = 600.0
 clip = 1
 bullet_scenes = Array[PackedScene]([ExtResource("1_8ggwx")])
 repel = 200.0

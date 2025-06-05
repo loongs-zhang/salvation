@@ -45,6 +45,7 @@ alpha_curve = SubResource("CurveTexture_peu4v")
 damage = 300
 weight = 0.84
 distance = 500.0
+speed = 500.0
 clip = 6
 bullet_scenes = Array[PackedScene]([ExtResource("1_00a8y")])
 pull_after_fire = true

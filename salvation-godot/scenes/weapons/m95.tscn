@@ -44,6 +44,7 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 damage = 500
 weight = 0.77
 distance = 1800.0
+speed = 1800.0
 clip = 5
 bullet_scenes = Array[PackedScene]([ExtResource("1_gsu4r")])
 pull_after_reload = true

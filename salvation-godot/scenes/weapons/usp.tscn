@@ -45,6 +45,7 @@ alpha_curve = SubResource("CurveTexture_ad62i")
 silenced = true
 damage = 35
 distance = 400.0
+speed = 700.0
 clip = 12
 jitter = 5.0
 pull_after_reload = true

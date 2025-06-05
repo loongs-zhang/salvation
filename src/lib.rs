@@ -96,6 +96,8 @@ const BULLET_DAMAGE: i64 = 20;
 
 const BULLET_DISTANCE: real = 800.0;
 
+const BULLET_SPEED: real = 1000.0;
+
 const BULLET_REPEL: real = 15.0;
 
 const BULLET_PENETRATE: real = 2.0;
