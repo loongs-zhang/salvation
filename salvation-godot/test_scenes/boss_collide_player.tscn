@@ -6,16 +6,20 @@
 
 [node name="RustWorld" type="Node2D"]
 
-[node name="RustBoss" parent="." instance=ExtResource("2_uoi34")]
-position = Vector2(300, 0)
-rotation = 3.14159
+[node name="RustPlayer" parent="." instance=ExtResource("3_pi4w0")]
 
-[node name="RustZombie1" parent="." instance=ExtResource("3_rycuj")]
+[node name="RustZombie" parent="." instance=ExtResource("3_rycuj")]
 invincible = true
 moveable = false
 attackable = false
 rampage_time = 999.0
 alarm_time = 999.0
-position = Vector2(-300, -50)
+position = Vector2(0, -100)
 
-[node name="RustPlayer" parent="." instance=ExtResource("3_pi4w0")]
+[node name="RustBoss1" parent="." instance=ExtResource("2_uoi34")]
+attackable = false
+position = Vector2(300, 0)
+
+[node name="RustBoss2" parent="." instance=ExtResource("2_uoi34")]
+attackable = false
+position = Vector2(-150, 0)

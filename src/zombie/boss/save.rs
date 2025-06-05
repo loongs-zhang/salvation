@@ -27,6 +27,7 @@ impl Serialize for RustBoss {
         state.serialize_field("invincible", &self.invincible)?;
         state.serialize_field("moveable", &self.moveable)?;
         state.serialize_field("attackable", &self.attackable)?;
+        state.serialize_field("collidable", &self.collidable)?;
         state.serialize_field("health", &self.health)?;
         state.serialize_field("speed", &self.speed)?;
         state.end()
@@ -41,6 +42,7 @@ struct BossData {
     invincible: bool,
     moveable: bool,
     attackable: bool,
+    collidable: bool,
     health: u32,
     speed: real,
 }
@@ -84,6 +86,7 @@ impl RustBoss {
                             boss.bind_mut().invincible = save_data.invincible;
                             boss.bind_mut().moveable = save_data.moveable;
                             boss.bind_mut().attackable = save_data.attackable;
+                            boss.bind_mut().collidable = save_data.collidable;
                             boss.bind_mut().health = save_data.health;
                             boss.bind_mut().speed = save_data.speed;
                             parent.add_child(&boss);

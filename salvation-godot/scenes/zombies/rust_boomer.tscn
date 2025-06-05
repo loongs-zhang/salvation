@@ -1,14 +1,15 @@
-[gd_scene load_steps=51 format=3 uid="uid://r2dqujonhlji"]
+[gd_scene load_steps=52 format=3 uid="uid://r2dqujonhlji"]
 
 [ext_resource type="Texture2D" uid="uid://ccr3duhwkt7a8" path="res://asserts/player/vfx_explosion.png" id="1_2iwqr"]
 [ext_resource type="Texture2D" uid="uid://dl2e2alxr88ti" path="res://asserts/zombie/zombie.png" id="1_8o2tp"]
 [ext_resource type="AudioStream" uid="uid://b2fcg5mkceji3" path="res://asserts/zombie/zombie_hit.mp3" id="2_2iwqr"]
-[ext_resource type="AudioStream" uid="uid://y6d75nqvlgpg" path="res://asserts/zombie/zombie_coming_1.wav" id="2_8o2tp"]
+[ext_resource type="AudioStream" uid="uid://c571so52hselg" path="res://asserts/zombie/boomer/vdemsea_ready.wav" id="2_xhgmm"]
 [ext_resource type="AudioStream" uid="uid://cfil3c60xh0jr" path="res://asserts/zombie/zombie_guard.mp3" id="3_xhgmm"]
 [ext_resource type="AudioStream" uid="uid://ddacchun7ngjm" path="res://asserts/zombie/zombie_scream.mp3" id="4_ekl8t"]
 [ext_resource type="AudioStream" uid="uid://dld2fkg05e81r" path="res://asserts/zombie/zombie_run.mp3" id="5_melal"]
 [ext_resource type="AudioStream" uid="uid://coegfy2jkym2a" path="res://asserts/zombie/zombie_rampage.mp3" id="6_wqmnm"]
-[ext_resource type="AudioStream" uid="uid://dukpy5xk3txlv" path="res://asserts/zombie/zombie_attack_scream.mp3" id="8_3t7e0"]
+[ext_resource type="AudioStream" uid="uid://dwmu62n8hjqjj" path="res://asserts/zombie/boomer/vdemate_attack.mp3" id="8_2iwqr"]
+[ext_resource type="AudioStream" uid="uid://dxmt5prvbfgff" path="res://asserts/zombie/boomer/vdemdiea_explore.wav" id="9_ekl8t"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pgect"]
 bg_color = Color(0.545098, 0, 0, 1)
@@ -391,7 +392,7 @@ explosiveness = 1.0
 process_material = SubResource("ParticleProcessMaterial_4y265")
 
 [node name="BornAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("2_8o2tp")
+stream = ExtResource("2_xhgmm")
 volume_db = 4.0
 max_distance = 4096.0
 attenuation = 1e-05
@@ -425,10 +426,13 @@ max_distance = 4096.0
 attenuation = 1e-05
 
 [node name="AttackScreamAudio" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("8_3t7e0")
-max_distance = 300.0
+stream = ExtResource("8_2iwqr")
+volume_db = 12.0
+max_distance = 4096.0
+attenuation = 1e-05
 
 [node name="DieAudio" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("9_ekl8t")
 volume_db = 8.0
 max_distance = 4096.0
 attenuation = 1e-05

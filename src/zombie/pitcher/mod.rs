@@ -14,7 +14,8 @@ use crate::{
     PITCHER_MOVE_SPEED, PITCHER_PURSUIT_DISTANCE, PITCHER_REPEL, PLAYER_ALARM_DISTANCE,
     PlayerState, ZOMBIE_ALARM_TIME, ZOMBIE_GRENADE_DISTANCE, ZOMBIE_MAX_BODY_COUNT,
     ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH, ZOMBIE_MIN_TRACK_DISTANCE, ZOMBIE_RAMPAGE_TIME,
-    ZombieState, not_normal_zombie, random_bool, random_direction, random_position,
+    ZOMBIE_ROTATE_COOLDOWN, ZombieState, not_normal_zombie, random_bool, random_direction,
+    random_position,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{Array, GString, Vector2, real};
@@ -27,7 +28,6 @@ use godot::register::{GodotClass, godot_api};
 use godot::tools::load;
 use std::sync::LazyLock;
 use std::sync::atomic::Ordering;
-use std::time::{Duration, Instant};
 
 pub mod state;
 
@@ -51,6 +51,8 @@ pub struct RustPitcher {
     #[export]
     rotatable: bool,
     #[export]
+    rotate_cooldown: real,
+    #[export]
     attackable: bool,
     #[export]
     grenade_cooldown: real,
@@ -68,8 +70,7 @@ pub struct RustPitcher {
     attacking: bool,
     current_grenade_cooldown: real,
     current_alarm_time: real,
-    last_rotate_time: Instant,
-    rotate_cooldown: Duration,
+    current_rotate_cooldown: real,
     state: ZombieState,
     current_speed: real,
     collision: Vector2,
@@ -102,6 +103,7 @@ impl ICharacterBody2D for RustPitcher {
             invincible: false,
             moveable: true,
             rotatable: true,
+            rotate_cooldown: ZOMBIE_ROTATE_COOLDOWN,
             attackable: true,
             grenade_cooldown: PITCHER_GRENADE_COUNTDOWN,
             grenade_scenes: Array::new(),
@@ -112,8 +114,7 @@ impl ICharacterBody2D for RustPitcher {
             attacking: false,
             current_grenade_cooldown: 0.0,
             current_alarm_time: 0.0,
-            last_rotate_time: Instant::now(),
-            rotate_cooldown: Duration::from_secs(8),
+            current_rotate_cooldown: 0.0,
             state: ZombieState::Guard,
             current_speed: PITCHER_MOVE_SPEED * 0.2,
             collision: Vector2::ZERO,
@@ -165,6 +166,7 @@ impl ICharacterBody2D for RustPitcher {
             self.throw_grenade();
             return;
         }
+        self.current_rotate_cooldown -= delta as real;
         self.current_flash_cooldown -= delta;
         self.rampage_time = (self.rampage_time - delta as real).max(0.0);
         if distance >= ZOMBIE_MAX_DISTANCE {
@@ -193,7 +195,6 @@ impl ICharacterBody2D for RustPitcher {
             } else {
                 self.guard();
             }
-            let now = Instant::now();
             if distance <= PITCHER_PURSUIT_DISTANCE
                 && self.current_alarm_time > 0.0
                 && self.is_face_to_user()
@@ -211,13 +212,11 @@ impl ICharacterBody2D for RustPitcher {
                 self.alarmed_by_sound(noise_position, GUN_ALARM_DISTANCE)
             } else if let Some(noise_position) = RustPlayer::get_noise_position() {
                 self.alarmed_by_sound(noise_position, PLAYER_ALARM_DISTANCE)
-            } else if self.rotatable
-                && now.duration_since(self.last_rotate_time) >= self.rotate_cooldown
-            {
+            } else if self.rotatable && self.current_rotate_cooldown <= 0.0 {
                 // 无目的移动
                 let direction = random_direction();
                 character_body2d.look_at(zombie_position + direction);
-                self.last_rotate_time = now;
+                self.current_rotate_cooldown = self.rotate_cooldown;
                 direction * self.current_speed
             } else {
                 self.guard();
@@ -245,7 +244,7 @@ impl ICharacterBody2D for RustPitcher {
                             from.orthogonal()
                         } else {
                             -from.orthogonal()
-                        }
+                        };
                 }
             }
         }
@@ -257,7 +256,7 @@ impl ICharacterBody2D for RustPitcher {
             .signals()
             .finished()
             .connect_obj(&gd, Self::clean_audio);
-        self.last_rotate_time -= self.rotate_cooldown;
+        self.current_rotate_cooldown = self.rotate_cooldown;
         self.born_audio.play();
         self.guard();
         if self.grenade_scenes.is_empty() {

@@ -1,8 +1,8 @@
 [gd_scene load_steps=12 format=3 uid="uid://bgo480qlgd7is"]
 
-[ext_resource type="Texture2D" uid="uid://bimwohugl643i" path="res://asserts/zombie/zombie_bomb.png" id="1_0axja"]
-[ext_resource type="AudioStream" uid="uid://dfabf0r7oqajy" path="res://asserts/zombie/zombie_bomb_exp.wav" id="2_qdsrw"]
-[ext_resource type="Texture2D" uid="uid://hdlte5scc2gh" path="res://asserts/zombie/zombie_bomb.tga" id="3_0axja"]
+[ext_resource type="Texture2D" uid="uid://bimwohugl643i" path="res://asserts/zombie/pitcher/zombie_bomb.png" id="1_0axja"]
+[ext_resource type="AudioStream" uid="uid://dfabf0r7oqajy" path="res://asserts/zombie/pitcher/zombie_bomb_exp.wav" id="2_qdsrw"]
+[ext_resource type="Texture2D" uid="uid://hdlte5scc2gh" path="res://asserts/zombie/pitcher/zombie_bomb.tga" id="3_0axja"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_qdsrw"]
 atlas = ExtResource("3_0axja")

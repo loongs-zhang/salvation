@@ -199,8 +199,6 @@ impl ICharacterBody2D for RustPlayer {
         let input = Input::singleton();
         if input.is_action_pressed("mouse_left") {
             self.shoot();
-        } else if input.is_action_pressed("q") || input.is_action_pressed("mouse_middle") {
-            self.throw_grenade();
         } else if input.is_action_pressed("e") {
             self.chop();
         } else if (input.is_action_pressed("shift") || input.is_action_pressed("mouse_right"))
@@ -384,13 +382,11 @@ impl RustPlayer {
 
     pub fn throw_grenade(&mut self) {
         if self.current_grenade_cooldown > 0.0 {
-            if self.grenade_cooldown > 0.2 {
-                if let Some(mut grenade_cooldown_label) = self.create_message() {
-                    grenade_cooldown_label.bind_mut().show_message(&format!(
-                        "GRENADE READY IN {:.1}S",
-                        self.current_grenade_cooldown
-                    ));
-                }
+            if let Some(mut grenade_cooldown_label) = self.create_message() {
+                grenade_cooldown_label.bind_mut().show_message(&format!(
+                    "GRENADE READY IN {:.1}S",
+                    self.current_grenade_cooldown
+                ));
             }
             return;
         }

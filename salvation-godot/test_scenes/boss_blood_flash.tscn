@@ -6,6 +6,8 @@
 
 [node name="RustWorld" type="Node2D"]
 
+[node name="RustPlayer" parent="." instance=ExtResource("3_olc51")]
+
 [node name="RustBoss" parent="." instance=ExtResource("2_1wwry")]
 invincible = true
 moveable = false
@@ -29,5 +31,3 @@ attackable = false
 rampage_time = 999.0
 alarm_time = 999.0
 position = Vector2(-375, -50)
-
-[node name="RustPlayer" parent="." instance=ExtResource("3_olc51")]

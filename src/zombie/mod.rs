@@ -11,8 +11,8 @@ use crate::{
     BOOMER_ALARM_DISTANCE, GRENADE_ALARM_DISTANCE, GUN_ALARM_DISTANCE, MESSAGE,
     PITCHER_ALARM_DISTANCE, PLAYER_ALARM_DISTANCE, PlayerState, ZOMBIE_ALARM_TIME, ZOMBIE_DAMAGE,
     ZOMBIE_MAX_BODY_COUNT, ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH, ZOMBIE_MIN_TRACK_DISTANCE,
-    ZOMBIE_MOVE_SPEED, ZOMBIE_PURSUIT_DISTANCE, ZOMBIE_RAMPAGE_TIME, ZOMBIE_SKIP_FRAME,
-    ZombieState, is_zombie, random_bool, random_direction, random_position,
+    ZOMBIE_MOVE_SPEED, ZOMBIE_PURSUIT_DISTANCE, ZOMBIE_RAMPAGE_TIME, ZOMBIE_ROTATE_COOLDOWN,
+    ZOMBIE_SKIP_FRAME, ZombieState, is_zombie, random_bool, random_direction, random_position,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{GString, Vector2, real};
@@ -23,7 +23,6 @@ use godot::classes::{
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
 use std::sync::atomic::{AtomicU32, Ordering};
-use std::time::{Duration, Instant};
 
 pub mod state;
 
@@ -61,6 +60,8 @@ pub struct RustZombie {
     #[export]
     rotatable: bool,
     #[export]
+    rotate_cooldown: real,
+    #[export]
     attackable: bool,
     #[export]
     health: u32,
@@ -71,8 +72,7 @@ pub struct RustZombie {
     #[export]
     alarm_time: real,
     current_alarm_time: real,
-    last_rotate_time: Instant,
-    rotate_cooldown: Duration,
+    current_rotate_cooldown: real,
     state: ZombieState,
     current_speed: real,
     hurt_frames: Vec<i32>,
@@ -106,14 +106,14 @@ impl ICharacterBody2D for RustZombie {
             invincible: false,
             moveable: true,
             rotatable: true,
+            rotate_cooldown: ZOMBIE_ROTATE_COOLDOWN,
             attackable: true,
             speed: ZOMBIE_MOVE_SPEED,
             health: ZOMBIE_MAX_HEALTH,
             rampage_time: ZOMBIE_RAMPAGE_TIME,
             alarm_time: ZOMBIE_ALARM_TIME,
             current_alarm_time: 0.0,
-            last_rotate_time: Instant::now(),
-            rotate_cooldown: Duration::from_secs(8),
+            current_rotate_cooldown: 0.0,
             state: ZombieState::Guard,
             current_speed: ZOMBIE_MOVE_SPEED * 0.2,
             hurt_frames: vec![2, 3, 4, 5],
@@ -162,6 +162,7 @@ impl ICharacterBody2D for RustZombie {
         if ZombieState::Attack == self.state || PlayerState::Impact == player_state {
             return;
         }
+        self.current_rotate_cooldown -= delta as real;
         self.current_flash_cooldown -= delta;
         self.rampage_time = (self.rampage_time - delta as real).max(0.0);
         let zombie_position = self.base().get_global_position();
@@ -191,7 +192,6 @@ impl ICharacterBody2D for RustZombie {
             } else {
                 self.guard();
             }
-            let now = Instant::now();
             if distance <= ZOMBIE_PURSUIT_DISTANCE
                 && self.current_alarm_time > 0.0
                 && self.is_face_to_user()
@@ -209,13 +209,11 @@ impl ICharacterBody2D for RustZombie {
                 self.alarmed_by_sound(noise_position, GUN_ALARM_DISTANCE)
             } else if let Some(noise_position) = RustPlayer::get_noise_position() {
                 self.alarmed_by_sound(noise_position, PLAYER_ALARM_DISTANCE)
-            } else if self.rotatable
-                && now.duration_since(self.last_rotate_time) >= self.rotate_cooldown
-            {
+            } else if self.rotatable && self.current_rotate_cooldown <= 0.0 {
                 // 无目的移动
                 let direction = random_direction();
                 character_body2d.look_at(zombie_position + direction);
-                self.last_rotate_time = now;
+                self.current_rotate_cooldown = self.rotate_cooldown;
                 direction * self.current_speed
             } else {
                 self.guard();
@@ -243,7 +241,7 @@ impl ICharacterBody2D for RustZombie {
                             from.orthogonal()
                         } else {
                             -from.orthogonal()
-                        }
+                        };
                 }
             }
         }
@@ -255,7 +253,7 @@ impl ICharacterBody2D for RustZombie {
             .signals()
             .finished()
             .connect_obj(&gd, Self::clean_audio);
-        self.last_rotate_time -= self.rotate_cooldown;
+        self.current_rotate_cooldown = self.rotate_cooldown;
         let mut animated_sprite2d = self.animated_sprite2d.bind_mut();
         animated_sprite2d.set_hurt_frames(self.hurt_frames.clone());
         animated_sprite2d.set_damage(ZOMBIE_DAMAGE);

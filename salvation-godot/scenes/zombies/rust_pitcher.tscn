@@ -1,7 +1,7 @@
 [gd_scene load_steps=41 format=3 uid="uid://bvtoo68byrg0h"]
 
 [ext_resource type="Texture2D" uid="uid://dl2e2alxr88ti" path="res://asserts/zombie/zombie.png" id="1_yyjg1"]
-[ext_resource type="AudioStream" uid="uid://cf5ii545pqy73" path="res://asserts/zombie/zombie_bomb_deploy.wav" id="2_2eb2w"]
+[ext_resource type="AudioStream" uid="uid://cf5ii545pqy73" path="res://asserts/zombie/pitcher/zombie_bomb_deploy.wav" id="2_2eb2w"]
 [ext_resource type="AudioStream" uid="uid://b2fcg5mkceji3" path="res://asserts/zombie/zombie_hit.mp3" id="2_dxfw2"]
 [ext_resource type="AudioStream" uid="uid://cfil3c60xh0jr" path="res://asserts/zombie/zombie_guard.mp3" id="3_2eb2w"]
 [ext_resource type="AudioStream" uid="uid://ddacchun7ngjm" path="res://asserts/zombie/zombie_scream.mp3" id="4_ftl52"]

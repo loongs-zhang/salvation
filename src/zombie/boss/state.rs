@@ -57,6 +57,12 @@ impl RustBoss {
         self.animated_sprite2d.play_ex().name("attack").done();
         self.current_speed = self.speed * 0.75;
         self.state = ZombieState::Attack;
+        let direction = NEXT_ATTACK_DIRECTION.load()
+            + self
+                .base()
+                .get_global_position()
+                .direction_to(RustPlayer::get_position());
+        NEXT_ATTACK_DIRECTION.store(direction.normalized());
         if self.attack_audio.is_inside_tree() {
             self.attack_audio.play();
         }

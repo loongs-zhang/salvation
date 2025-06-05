@@ -6,72 +6,112 @@
 
 [node name="RustWorld" type="Node2D"]
 
+[node name="RustPlayer" parent="." instance=ExtResource("3_6qp56")]
+
 [node name="RustBoss" parent="." instance=ExtResource("2_rlv2f")]
 attackable = false
-position = Vector2(250, 0)
-rotation = 3.14159
+position = Vector2(300, 0)
 
 [node name="RustZombie1" parent="." instance=ExtResource("2_6qp56")]
 moveable = false
+rotatable = false
+attackable = false
+rampage_time = 999.0
+alarm_time = 999.0
+position = Vector2(250, 0)
+
+[node name="RustZombie2" parent="." instance=ExtResource("2_6qp56")]
+moveable = false
+rotatable = false
+attackable = false
+rampage_time = 999.0
+alarm_time = 999.0
+position = Vector2(250, -50)
+
+[node name="RustZombie3" parent="." instance=ExtResource("2_6qp56")]
+moveable = false
+rotatable = false
+attackable = false
+rampage_time = 999.0
+alarm_time = 999.0
+position = Vector2(250, 50)
+
+[node name="RustZombie4" parent="." instance=ExtResource("2_6qp56")]
+moveable = false
+rotatable = false
+attackable = false
+rampage_time = 999.0
+alarm_time = 999.0
+position = Vector2(300, -50)
+
+[node name="RustZombie5" parent="." instance=ExtResource("2_6qp56")]
+moveable = false
+rotatable = false
+attackable = false
+rampage_time = 999.0
+alarm_time = 999.0
+position = Vector2(300, 50)
+
+[node name="RustZombie6" parent="." instance=ExtResource("2_6qp56")]
+moveable = false
+rotatable = false
+attackable = false
+rampage_time = 999.0
+alarm_time = 999.0
+position = Vector2(350, -50)
+
+[node name="RustZombie7" parent="." instance=ExtResource("2_6qp56")]
+moveable = false
+rotatable = false
+attackable = false
+rampage_time = 999.0
+alarm_time = 999.0
+position = Vector2(350, 0)
+
+[node name="RustZombie8" parent="." instance=ExtResource("2_6qp56")]
+moveable = false
+rotatable = false
+attackable = false
+rampage_time = 999.0
+alarm_time = 999.0
+position = Vector2(350, 50)
+
+[node name="RustZombie9" parent="." instance=ExtResource("2_6qp56")]
+moveable = false
+rotatable = false
 attackable = false
 rampage_time = 999.0
 alarm_time = 999.0
 position = Vector2(200, 0)
-rotation = 3.14159
 
-[node name="RustZombie2" parent="." instance=ExtResource("2_6qp56")]
+[node name="RustZombie10" parent="." instance=ExtResource("2_6qp56")]
 moveable = false
+rotatable = false
 attackable = false
 rampage_time = 999.0
 alarm_time = 999.0
 position = Vector2(200, -50)
 
-[node name="RustZombie3" parent="." instance=ExtResource("2_6qp56")]
+[node name="RustZombie11" parent="." instance=ExtResource("2_6qp56")]
 moveable = false
+rotatable = false
 attackable = false
 rampage_time = 999.0
 alarm_time = 999.0
 position = Vector2(200, 50)
-rotation = 3.14159
 
-[node name="RustZombie4" parent="." instance=ExtResource("2_6qp56")]
+[node name="RustZombie12" parent="." instance=ExtResource("2_6qp56")]
 moveable = false
+rotatable = false
 attackable = false
 rampage_time = 999.0
 alarm_time = 999.0
-position = Vector2(250, -50)
-rotation = 3.14159
+position = Vector2(250, 100)
 
-[node name="RustZombie5" parent="." instance=ExtResource("2_6qp56")]
+[node name="RustZombie13" parent="." instance=ExtResource("2_6qp56")]
 moveable = false
+rotatable = false
 attackable = false
 rampage_time = 999.0
 alarm_time = 999.0
-position = Vector2(250, 50)
-rotation = 3.14159
-
-[node name="RustZombie6" parent="." instance=ExtResource("2_6qp56")]
-moveable = false
-attackable = false
-rampage_time = 999.0
-alarm_time = 999.0
-position = Vector2(300, -50)
-rotation = 3.14159
-
-[node name="RustZombie7" parent="." instance=ExtResource("2_6qp56")]
-moveable = false
-attackable = false
-rampage_time = 999.0
-alarm_time = 999.0
-position = Vector2(300, 0)
-rotation = 3.14159
-
-[node name="RustZombie8" parent="." instance=ExtResource("2_6qp56")]
-moveable = false
-attackable = false
-rampage_time = 999.0
-alarm_time = 999.0
-position = Vector2(300, 50)
-rotation = 3.14159
-
-[node name="RustPlayer" parent="." instance=ExtResource("3_6qp56")]
+position = Vector2(250, -100)

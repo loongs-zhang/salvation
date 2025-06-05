@@ -22,11 +22,14 @@ pub struct RustGrenade {
     #[export]
     speed: real,
     #[export]
+    contact_explode: bool,
+    #[export]
     countdown: f64,
     #[export]
     timed: bool,
     #[export]
     from_zombie: bool,
+    hit: bool,
     bullet_point: Vector2,
     final_distance: real,
     final_repel: real,
@@ -45,9 +48,11 @@ impl INode2D for RustGrenade {
     fn init(base: Base<Node2D>) -> Self {
         Self {
             speed: 500.0,
-            countdown: 2.0,
+            contact_explode: true,
+            countdown: 1.25,
             timed: true,
             from_zombie: false,
+            hit: false,
             bullet_point: Vector2::ZERO,
             final_distance: 0.0,
             final_repel: 0.0,
@@ -63,7 +68,7 @@ impl INode2D for RustGrenade {
     }
 
     fn physics_process(&mut self, delta: f64) {
-        if self.is_cleaned() {
+        if self.is_cleaned() || self.hit {
             return;
         }
         let direction = self.direction;
@@ -78,7 +83,9 @@ impl INode2D for RustGrenade {
             );
         if new_position.distance_to(bullet_point) >= distance {
             //到达最大距离
-            self.explode();
+            if !self.timed {
+                self.explode();
+            }
             return;
         }
         self.base_mut().set_global_position(new_position);
@@ -142,12 +149,18 @@ impl RustGrenade {
     pub fn explode_ext(&mut self, body: Gd<Node2D>) {
         if self.from_zombie {
             if is_survivor(&***body) {
-                self.explode();
+                self.hit = true;
+                if self.contact_explode {
+                    self.explode();
+                }
             }
             return;
         }
         if is_zombie(&***body) {
-            self.explode();
+            self.hit = true;
+            if self.contact_explode {
+                self.explode();
+            }
         }
     }
 

@@ -138,6 +138,8 @@ const ZOMBIE_ALARM_TIME: real = 1.5;
 
 const ZOMBIE_RAMPAGE_TIME: real = 30.0;
 
+const ZOMBIE_ROTATE_COOLDOWN: real = 8.0;
+
 // boomer
 const BOOMER_MOVE_SPEED: real = 2.0;
 

@@ -11,8 +11,9 @@ use crate::{
     BOOMER_ALARM_DISTANCE, BOOMER_EXPLODE_COUNTDOWN, BOOMER_MOVE_SPEED, GRENADE_ALARM_DISTANCE,
     GUN_ALARM_DISTANCE, MESSAGE, NO_NOISE, PITCHER_ALARM_DISTANCE, PLAYER_ALARM_DISTANCE,
     PlayerState, SAVE, ZOMBIE_ALARM_TIME, ZOMBIE_MAX_DISTANCE, ZOMBIE_MAX_HEALTH,
-    ZOMBIE_MIN_TRACK_DISTANCE, ZOMBIE_PURSUIT_DISTANCE, ZOMBIE_RAMPAGE_TIME, ZombieState,
-    not_normal_zombie, random_bool, random_direction, random_position,
+    ZOMBIE_MIN_TRACK_DISTANCE, ZOMBIE_PURSUIT_DISTANCE, ZOMBIE_RAMPAGE_TIME,
+    ZOMBIE_ROTATE_COOLDOWN, ZombieState, not_normal_zombie, random_bool, random_direction,
+    random_position,
 };
 use crossbeam_utils::atomic::AtomicCell;
 use godot::builtin::{GString, Vector2, real};
@@ -23,7 +24,6 @@ use godot::classes::{
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
-use std::time::{Duration, Instant};
 
 pub mod state;
 
@@ -43,6 +43,8 @@ pub struct RustBoomer {
     #[export]
     rotatable: bool,
     #[export]
+    rotate_cooldown: real,
+    #[export]
     detonable: bool,
     #[export]
     detonate_countdown: f64,
@@ -58,8 +60,7 @@ pub struct RustBoomer {
     current_speed: real,
     collision: Vector2,
     current_alarm_time: real,
-    last_rotate_time: Instant,
-    rotate_cooldown: Duration,
+    current_rotate_cooldown: real,
     pursuit_direction: bool,
     current_flash_cooldown: f64,
     hud: OnReady<Gd<RemoteTransform2D>>,
@@ -89,6 +90,7 @@ impl ICharacterBody2D for RustBoomer {
             invincible: false,
             moveable: true,
             rotatable: true,
+            rotate_cooldown: ZOMBIE_ROTATE_COOLDOWN,
             detonable: true,
             detonate_countdown: BOOMER_EXPLODE_COUNTDOWN,
             speed: BOOMER_MOVE_SPEED,
@@ -99,8 +101,7 @@ impl ICharacterBody2D for RustBoomer {
             current_speed: BOOMER_MOVE_SPEED * 0.75,
             collision: Vector2::ZERO,
             current_alarm_time: 0.0,
-            last_rotate_time: Instant::now(),
-            rotate_cooldown: Duration::from_secs(8),
+            current_rotate_cooldown: 0.0,
             pursuit_direction: random_bool(),
             current_flash_cooldown: 0.0,
             hud: OnReady::from_node("RemoteTransform2D"),
@@ -138,6 +139,7 @@ impl ICharacterBody2D for RustBoomer {
         if ZombieState::Attack == self.state || PlayerState::Impact == player_state {
             return;
         }
+        self.current_rotate_cooldown -= delta as real;
         self.rampage_time = (self.rampage_time - delta as real).max(0.0);
         let zombie_position = self.base().get_global_position();
         let player_position = RustPlayer::get_position();
@@ -166,7 +168,6 @@ impl ICharacterBody2D for RustBoomer {
             } else {
                 self.guard();
             }
-            let now = Instant::now();
             if distance <= ZOMBIE_PURSUIT_DISTANCE
                 && self.current_alarm_time > 0.0
                 && self.is_face_to_user()
@@ -184,13 +185,11 @@ impl ICharacterBody2D for RustBoomer {
                 self.alarmed_by_sound(noise_position, GUN_ALARM_DISTANCE)
             } else if let Some(noise_position) = RustPlayer::get_noise_position() {
                 self.alarmed_by_sound(noise_position, PLAYER_ALARM_DISTANCE)
-            } else if self.rotatable
-                && now.duration_since(self.last_rotate_time) >= self.rotate_cooldown
-            {
+            } else if self.rotatable && self.current_rotate_cooldown <= 0.0 {
                 // 无目的移动
                 let direction = random_direction();
                 character_body2d.look_at(zombie_position + direction);
-                self.last_rotate_time = now;
+                self.current_rotate_cooldown = self.rotate_cooldown;
                 direction * self.current_speed
             } else {
                 self.guard();
@@ -218,7 +217,7 @@ impl ICharacterBody2D for RustBoomer {
                             from.orthogonal()
                         } else {
                             -from.orthogonal()
-                        }
+                        };
                 }
             }
         }
@@ -235,7 +234,7 @@ impl ICharacterBody2D for RustBoomer {
             .signals()
             .animation_finished()
             .connect_obj(&gd, Self::clean_body);
-        self.last_rotate_time -= self.rotate_cooldown;
+        self.current_rotate_cooldown = self.rotate_cooldown;
         self.born_audio.play();
         self.guard();
         if !self.boomer_name.is_empty() {

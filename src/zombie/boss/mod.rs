@@ -2,12 +2,14 @@ use crate::common::RustMessage;
 use crate::level::RustLevel;
 use crate::player::RustPlayer;
 use crate::world::RustWorld;
+use crate::zombie::NEXT_ATTACK_DIRECTION;
 use crate::zombie::animation::ZombieAnimation;
 use crate::zombie::attack::{ZombieAttackArea, ZombieDamageArea};
 use crate::zombie::bump::BossBumpArea;
 use crate::{
     BOSS_BUMP_DISTANCE, BOSS_DAMAGE, BOSS_MAX_BODY_COUNT, BOSS_MAX_HEALTH, BOSS_MOVE_SPEED,
-    MESSAGE, PlayerState, ZOMBIE_MAX_DISTANCE, ZombieState, not_boss, random_position,
+    MESSAGE, PlayerState, ZOMBIE_MAX_DISTANCE, ZombieState, is_boss, not_boss, random_bool,
+    random_position,
 };
 use godot::builtin::{GString, Vector2, real};
 use godot::classes::{
@@ -38,12 +40,16 @@ pub struct RustBoss {
     #[export]
     attackable: bool,
     #[export]
+    collidable: bool,
+    #[export]
     health: u32,
     #[export]
     speed: real,
     state: ZombieState,
     current_speed: real,
     hurt_frames: Vec<i32>,
+    collision: Vector2,
+    pursuit_direction: bool,
     last_player_position: Vector2,
     last_record_time: Instant,
     record_cooldown: Duration,
@@ -74,12 +80,15 @@ impl ICharacterBody2D for RustBoss {
             invincible: false,
             moveable: true,
             attackable: true,
+            collidable: true,
             speed: BOSS_MOVE_SPEED,
             health: BOSS_MAX_HEALTH,
             state: ZombieState::Guard,
             current_speed: BOSS_MOVE_SPEED * 0.75,
             // hurt_frames: vec![26, 27, 28, 29, 30],
             hurt_frames: vec![2, 3, 4, 5],
+            collision: Vector2::ZERO,
+            pursuit_direction: random_bool(),
             last_player_position: Vector2::ZERO,
             last_record_time: Instant::now(),
             record_cooldown: Duration::from_secs(3),
@@ -146,7 +155,11 @@ impl ICharacterBody2D for RustBoss {
             to_player_dir * self.current_speed
         } else {
             // 冲撞玩家
-            let last_player_position = self.last_player_position;
+            let last_player_position = if Vector2::ZERO != self.collision {
+                zombie_position + self.collision
+            } else {
+                self.last_player_position
+            };
             let bump_dir = zombie_position
                 .direction_to(last_player_position)
                 .normalized();
@@ -158,11 +171,29 @@ impl ICharacterBody2D for RustBoss {
             return;
         }
         let speed = self.current_speed;
-        if let Some(collision) = self.base_mut().move_and_collide(velocity) {
+        self.collision = Vector2::ZERO;
+        if let Some(collision) = self.base.to_gd().move_and_collide(velocity) {
             // 发出排斥力的方向
             let from = collision.get_normal();
-            let dir = (from + from.orthogonal()).normalized();
-            Self::zombie_collide(collision, dir * speed, 10);
+            if let Some(object) = collision.get_collider() {
+                if is_boss(&object) {
+                    let dir = NEXT_ATTACK_DIRECTION.load();
+                    let move_angle = to_player_dir.angle_to(dir).to_degrees();
+                    self.collision =
+                        if (0.0..=120.0).contains(&move_angle) || dir.x.abs() >= dir.y.abs() {
+                            from.orthogonal()
+                        } else if (-120.0..0.0).contains(&move_angle) || dir.x.abs() < dir.y.abs() {
+                            -from.orthogonal()
+                        } else if self.pursuit_direction {
+                            from.orthogonal()
+                        } else {
+                            -from.orthogonal()
+                        };
+                } else {
+                    let dir = (from + from.orthogonal()).normalized();
+                    Self::zombie_collide(collision, dir * speed, 10);
+                }
+            }
         }
     }
 

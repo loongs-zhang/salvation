@@ -6,6 +6,8 @@
 
 [node name="RustWorld" type="Node2D"]
 
+[node name="RustPlayer" parent="." instance=ExtResource("3_pq2bf")]
+
 [node name="RustZombie" parent="." instance=ExtResource("2_v67k6")]
 moveable = false
 attackable = false
@@ -27,5 +29,3 @@ moveable = false
 attackable = false
 position = Vector2(300, 200)
 rotation = -3.14159
-
-[node name="RustPlayer" parent="." instance=ExtResource("3_pq2bf")]
