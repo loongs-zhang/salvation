@@ -14,20 +14,28 @@ pub mod save;
 #[derive(GodotClass, Debug)]
 #[class(base=Node2D)]
 pub struct ZombieGenerator {
+    #[doc = "是否立刻刷新一波"]
     #[export]
     immediate: bool,
+    #[doc = "是否为BOSS"]
     #[export]
     boss: bool,
+    #[doc = "刷新的僵尸总数"]
     #[export]
     total: u32,
+    #[doc = "每次刷新的僵尸数"]
     #[export]
     refresh_count: u32,
+    #[doc = "积攒到多少僵尸再一波刷新"]
     #[export]
     pub(crate) refresh_barrier: u32,
+    #[doc = "每隔多少秒刷新一波"]
     #[export]
     refresh_time: f64,
+    #[doc = "最大僵尸同屏数量"]
     #[export]
     max_screen_count: u32,
+    #[doc = "僵尸实体场景列表"]
     #[export]
     zombie_scenes: Array<Gd<PackedScene>>,
     pub(crate) current_total: u32,

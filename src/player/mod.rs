@@ -12,7 +12,8 @@ use godot::builtin::{Array, GString, Vector2, real};
 use godot::classes::node::PhysicsInterpolationMode;
 use godot::classes::{
     AnimatedSprite2D, AudioStreamPlayer2D, Camera2D, CharacterBody2D, GpuParticles2D,
-    ICharacterBody2D, Input, InputEvent, Label, Node2D, PackedScene, RemoteTransform2D,
+    ICharacterBody2D, Input, InputEvent, Label, Line2D, Node2D, PackedScene, RayCast2D,
+    RemoteTransform2D,
 };
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
@@ -40,43 +41,46 @@ const GRENADE: LazyLock<Gd<PackedScene>> =
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
 pub struct RustPlayer {
+    #[doc = "玩家名称"]
     #[export]
     player_name: GString,
-    // 玩家无敌
+    #[doc = "玩家无敌状态"]
     #[export]
     invincible: bool,
-    // 当前武器下标
+    #[doc = "当前武器下标"]
     #[export]
     current_weapon_index: i32,
-    // 玩家剩余生命条数
+    #[doc = "玩家剩余生命条数"]
     #[export]
     lives: u32,
-    // 玩家伤害
+    #[doc = "玩家伤害"]
     #[export]
     damage: i64,
-    // 玩家射程
+    #[doc = "玩家射程"]
     #[export]
     distance: real,
-    // 玩家穿透
+    #[doc = "玩家穿透"]
     #[export]
     penetrate: real,
-    // 玩家击退
+    #[doc = "玩家击退系数"]
     #[export]
     repel: real,
-    // 玩家最大生命值
+    #[doc = "玩家最大生命值"]
     #[export]
     health: u32,
-    // 玩家移动速度
+    #[doc = "玩家移动速度"]
     #[export]
     speed: real,
-    // 升级所需的分数
+    #[doc = "玩家升级所需的分数"]
     #[export]
     level_up_barrier: u32,
+    #[doc = "手雷冷却时间"]
     #[export]
     grenade_cooldown: real,
-    // 手雷类型
+    #[doc = "手雷实体场景"]
     #[export]
     grenade_scenes: Array<Gd<PackedScene>>,
+    #[doc = "斩击冷却时间"]
     #[export]
     chop_cooldown: real,
     current_chop_cooldown: f64,
@@ -113,6 +117,8 @@ pub struct RustPlayer {
     zoom_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     headshot_audio: OnReady<Gd<AudioStreamPlayer2D>>,
     grenade_point: OnReady<Gd<Node2D>>,
+    line2d: OnReady<Gd<Line2D>>,
+    ray_cast2d: OnReady<Gd<RayCast2D>>,
     base: Base<CharacterBody2D>,
 }
 
@@ -164,11 +170,14 @@ impl ICharacterBody2D for RustPlayer {
             zoom_audio: OnReady::from_node("ZoomAudio"),
             headshot_audio: OnReady::from_node("HeadshotAudio"),
             grenade_point: OnReady::from_node("GrenadePoint"),
+            line2d: OnReady::from_node("Line2D"),
+            ray_cast2d: OnReady::from_node("RayCast2D"),
             base,
         }
     }
 
     fn process(&mut self, delta: f64) {
+        self.update_laser();
         self.hud.bind_mut().update_fps_hud();
         if self.remote_transform2d.is_instance_valid() {
             self.remote_transform2d.set_global_rotation_degrees(0.0);
@@ -435,6 +444,12 @@ impl RustPlayer {
                 .get_viewport()
                 .expect("Viewport not found")
                 .get_mouse_position()
+    }
+
+    #[func]
+    pub fn get_current_direction(&self) -> Vector2 {
+        let rotation = self.base().get_rotation();
+        Vector2::new(rotation.cos(), rotation.sin())
     }
 
     #[func]

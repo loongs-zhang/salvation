@@ -19,8 +19,10 @@ static PAUSED: AtomicBool = AtomicBool::new(false);
 #[derive(GodotClass)]
 #[class(base=Node2D)]
 pub struct RustWorld {
+    #[doc = "是否进入地狱"]
     #[export]
     hell: bool,
+    #[doc = "是否加载存档"]
     #[export]
     load: bool,
     entrance_scene: OnReady<Gd<PackedScene>>,

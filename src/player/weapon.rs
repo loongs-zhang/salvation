@@ -47,6 +47,8 @@ impl RustPlayer {
                 let mut weapon = node.cast::<RustWeapon>();
                 if weapon_index == i {
                     weapon.set_visible(true);
+                    self.ray_cast2d
+                        .set_target_position(Vector2::new(weapon.bind().get_distance(), 0.0));
                     let mut hud = self.hud.bind_mut();
                     let weapon_name = weapon.get_name().to_upper();
                     hud.update_weapon_name_hud(&if weapon.bind().get_silenced() {
@@ -91,6 +93,19 @@ impl RustPlayer {
         self.current_speed = self.speed * 0.75;
         self.current_weapon_index = weapon_index;
         self.change_success_audio.play();
+    }
+
+    pub fn update_laser(&mut self) {
+        if self.ray_cast2d.is_colliding() {
+            let point = self
+                .ray_cast2d
+                .get_collision_point()
+                .distance_to(self.ray_cast2d.get_global_position());
+            self.line2d.set_point_position(1, Vector2::new(point, 0.0));
+        } else {
+            self.line2d
+                .set_point_position(1, self.ray_cast2d.get_target_position());
+        }
     }
 
     #[func]

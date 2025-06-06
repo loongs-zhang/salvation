@@ -326,8 +326,9 @@ shape = SubResource("CircleShape2D_h4u8k")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_g8j1n")
-animation = &"chop"
+animation = &"guard"
 autoplay = "guard"
+offset = Vector2(0, -2)
 
 [node name="Camera2D" type="Camera2D" parent="."]
 
@@ -337,7 +338,7 @@ position = Vector2(-2, 12)
 rotation = -1.1781
 
 [node name="Weapon" type="Node2D" parent="."]
-position = Vector2(10, 2)
+position = Vector2(10, 0)
 
 [node name="USP" parent="Weapon" instance=ExtResource("7_3nwbu")]
 
@@ -383,3 +384,15 @@ position = Vector2(20, 0)
 stream = ExtResource("17_3nwbu")
 max_distance = 4096.0
 attenuation = 4.02679e-05
+
+[node name="Line2D" type="Line2D" parent="."]
+position = Vector2(28, 0)
+points = PackedVector2Array(0, 0, 400, 0)
+width = 1.0
+default_color = Color(0.705882, 0, 0, 1)
+
+[node name="RayCast2D" type="RayCast2D" parent="."]
+light_mask = 0
+visibility_layer = 4
+position = Vector2(28, 0)
+target_position = Vector2(400, 0)

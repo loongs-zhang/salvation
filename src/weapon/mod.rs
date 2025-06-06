@@ -31,48 +31,55 @@ const BULLET: LazyLock<Gd<PackedScene>> =
 #[derive(GodotClass)]
 #[class(base=Node2D)]
 pub struct RustWeapon {
-    //是否消音
+    #[doc = "是否消音"]
     #[export]
     silenced: bool,
-    //武器伤害
+    #[doc = "武器伤害"]
     #[export]
     damage: i64,
-    //持有武器的移动速度比例，模拟武器重量
+    #[doc = "持有武器的移动速度比例"]
     #[export]
     weight: real,
-    //武器射程
+    #[doc = "武器射程"]
     #[export]
     distance: real,
+    #[doc = "子弹初速"]
     #[export]
     speed: real,
-    //武器弹夹容量
+    #[doc = "武器弹夹容量"]
     #[export]
     clip: i32,
-    //子弹抖动系数
+    #[doc = "子弹抖动系数"]
     #[export]
     jitter: real,
-    //是否每次都从所有子弹点射出子弹
+    #[doc = "是否每次都从所有子弹点射出子弹"]
     #[export]
     explode: bool,
-    //子弹类型
+    #[doc = "子弹实体场景"]
     #[export]
     bullet_scenes: Array<Gd<PackedScene>>,
+    #[doc = "是否在部署后拉栓"]
     #[export]
     pull_after_deploy: bool,
+    #[doc = "是否在重新装填后拉栓"]
     #[export]
     pull_after_reload: bool,
+    #[doc = "是否在开火后拉栓"]
     #[export]
     pull_after_fire: bool,
-    //武器击退
+    #[doc = "武器击退系数"]
     #[export]
     repel: real,
-    //武器穿透
+    #[doc = "武器穿透系数"]
     #[export]
     penetrate: real,
+    #[doc = "武器开火冷却时间"]
     #[export]
     fire_cooldown: real,
+    #[doc = "武器重新装填时间"]
     #[export]
     reload_time: real,
+    #[doc = "是否支持单发装填"]
     #[export]
     reload_part: bool,
     state: WeaponState,

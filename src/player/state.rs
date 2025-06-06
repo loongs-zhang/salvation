@@ -16,6 +16,7 @@ impl RustPlayer {
         }
         self.current_lives -= 1;
         self.weapons.set_visible(true);
+        self.line2d.set_visible(true);
         self.animated_sprite2d.play_ex().name("guard").done();
         self.current_speed = self.speed * self.get_current_weapon().bind().get_weight();
         self.state = PlayerState::Born;
@@ -42,6 +43,7 @@ impl RustPlayer {
             return;
         }
         self.weapons.set_visible(true);
+        self.line2d.set_visible(true);
         self.animated_sprite2d.play_ex().name("guard").done();
         self.current_speed = self.speed * self.get_current_weapon().bind().get_weight();
         self.state = PlayerState::Guard;
@@ -58,6 +60,7 @@ impl RustPlayer {
             return;
         }
         self.weapons.set_visible(false);
+        self.line2d.set_visible(false);
         self.animated_sprite2d.play_ex().name("run").done();
         self.current_speed = self.speed * 1.5 * self.get_current_weapon().bind().get_weight();
         self.state = PlayerState::Run;
@@ -98,6 +101,7 @@ impl RustPlayer {
             return;
         }
         rust_weapon.set_visible(true);
+        self.line2d.set_visible(true);
         self.animated_sprite2d.play_ex().name("guard").done();
         self.current_speed = self.speed * 0.5 * rust_weapon.bind().get_weight();
         self.state = PlayerState::Shoot;
@@ -123,6 +127,7 @@ impl RustPlayer {
         }
         self.current_chop_cooldown = self.chop_cooldown as f64;
         self.weapons.set_visible(false);
+        self.line2d.set_visible(false);
         self.animated_sprite2d.play_ex().name("chop").done();
         self.current_speed = self.speed * 0.75;
         self.state = PlayerState::Chop;
@@ -156,6 +161,7 @@ impl RustPlayer {
             return;
         }
         self.weapons.set_visible(true);
+        self.line2d.set_visible(false);
         self.animated_sprite2d.play_ex().name("reload").done();
         self.current_speed = self.speed * 0.75 * rust_weapon.bind().get_weight();
         self.state = PlayerState::Reload;
@@ -189,6 +195,7 @@ impl RustPlayer {
             return;
         }
         self.weapons.set_visible(false);
+        self.line2d.set_visible(false);
         self.animated_sprite2d.play_ex().name("hit").done();
         self.current_speed = self.speed * 0.5 * self.get_current_weapon().bind().get_weight();
         self.state = PlayerState::Hit;
@@ -219,6 +226,7 @@ impl RustPlayer {
             return;
         }
         self.weapons.set_visible(false);
+        self.line2d.set_visible(false);
         self.animated_sprite2d.play_ex().name("bump").done();
         self.current_speed = self.speed * 1.25;
         self.state = PlayerState::Impact;
@@ -272,6 +280,7 @@ impl RustPlayer {
             return;
         }
         self.weapons.set_visible(false);
+        self.line2d.set_visible(false);
         self.animated_sprite2d.look_at(hit_position);
         self.animated_sprite2d.play_ex().name("die").done();
         self.current_speed = 0.0;

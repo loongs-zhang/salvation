@@ -35,20 +35,28 @@ static LIVE_COUNT: AtomicU32 = AtomicU32::new(0);
 #[derive(GodotClass)]
 #[class(base=Node2D)]
 pub struct RustLevel {
+    #[doc = "是否开启地狱模式"]
     #[export]
     hell: bool,
+    #[doc = "当前关卡难度等级"]
     #[export]
     level: u32,
+    #[doc = "下一关强度提升系数"]
     #[export]
     grow_rate: real,
+    #[doc = "僵尸狂暴倒计时"]
     #[export]
     rampage_time: real,
+    #[doc = "普通僵尸刷新间隔"]
     #[export]
     zombie_refresh_time: f64,
+    #[doc = "自爆者刷新间隔"]
     #[export]
     boomer_refresh_time: f64,
+    #[doc = "投掷者刷新间隔"]
     #[export]
     pitcher_refresh_time: f64,
+    #[doc = "BOSS刷新间隔"]
     #[export]
     boss_refresh_time: f64,
     left_rampage_time: real,
