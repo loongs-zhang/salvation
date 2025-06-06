@@ -262,6 +262,10 @@ pub fn random_bool() -> bool {
     rand::thread_rng().gen_range(-1.0..=1.0) >= 0.0
 }
 
+pub fn random_degree() -> real {
+    rand::thread_rng().gen_range(0.0..=180.0)
+}
+
 pub fn random_direction() -> Vector2 {
     let mut rng = rand::thread_rng();
     Vector2::new(rng.gen_range(-1.0..=1.0), rng.gen_range(-1.0..=1.0)).normalized()

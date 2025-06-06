@@ -1,6 +1,7 @@
 use crate::is_survivor;
 use crate::zombie::pitcher::RustPitcher;
 use godot::classes::{Area2D, IArea2D, Node, Node2D, Object};
+use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, WithBaseField, WithUserSignals};
 use godot::register::{GodotClass, godot_api};
 
@@ -42,8 +43,8 @@ impl ZombiePitchArea {
                     return;
                 }
                 // 僵尸面向玩家才发起攻击
-                pitcher.bind_mut().attack();
-                pitcher.bind_mut().set_attacking(true);
+                pitcher.call_deferred("attack", &[]);
+                pitcher.call_deferred("set_attacking", &[true.to_variant()]);
             }
         }
     }
@@ -55,8 +56,8 @@ impl ZombiePitchArea {
         }
         if is_survivor(&***body) {
             if let Ok(mut pitcher) = self.get_parent().try_cast::<RustPitcher>() {
-                pitcher.bind_mut().set_attacking(false);
-                pitcher.bind_mut().guard();
+                pitcher.call_deferred("set_attacking", &[false.to_variant()]);
+                pitcher.call_deferred("guard", &[]);
             }
         }
     }

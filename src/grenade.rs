@@ -226,9 +226,9 @@ impl RustGrenade {
             }
         }
         self.damage_area.queue_free();
-        if self.from_zombie {
-            ZOMBIE_NOISE_POSITION.store(position);
-            if let Some(mut tree) = self.base().get_tree() {
+        if let Some(mut tree) = self.base().get_tree() {
+            if self.from_zombie {
+                ZOMBIE_NOISE_POSITION.store(position);
                 if let Some(mut timer) = tree.create_timer(2.0) {
                     timer.connect(
                         "timeout",
@@ -238,10 +238,8 @@ impl RustGrenade {
                         }),
                     );
                 }
-            }
-        } else {
-            NOISE_POSITION.store(position);
-            if let Some(mut tree) = self.base().get_tree() {
+            } else {
+                NOISE_POSITION.store(position);
                 if let Some(mut timer) = tree.create_timer(8.0) {
                     timer.connect(
                         "timeout",
@@ -252,15 +250,21 @@ impl RustGrenade {
                     );
                 }
             }
+            if let Some(mut timer) = tree.create_timer(5.0) {
+                timer.connect("timeout", &self.base().callable("clean_body"));
+            }
         }
     }
 
     #[func]
     pub fn clean_body(&mut self) {
+        if !self.base().is_instance_valid() {
+            return;
+        }
         if !self.explode_flash.is_playing() {
             self.explode_flash.set_visible(false);
         }
-        if self.is_cleaned() {
+        if self.explode_audio.is_playing() || self.explode_flash.is_playing() {
             return;
         }
         self.explode_audio.set_stream(Gd::null_arg());

@@ -1,7 +1,7 @@
 use crate::level::RustLevel;
 use crate::player::RustPlayer;
 use crate::world::RustWorld;
-use crate::{ZOMBIE_MAX_SCREEN_COUNT, ZOMBIE_REFRESH_BARRIER};
+use crate::{ZOMBIE_MAX_SCREEN_COUNT, ZOMBIE_REFRESH_BARRIER, random_degree};
 use godot::builtin::Array;
 use godot::classes::{INode2D, InputEvent, Node, Node2D, PackedScene, Timer};
 use godot::global::godot_error;
@@ -199,6 +199,7 @@ impl ZombieGenerator {
             if let Some(mut zombie) = zombie_scene.try_instantiate_as::<Node2D>() {
                 zombie
                     .set_global_position(RustPlayer::get_position() + RustWorld::random_position());
+                zombie.set_global_rotation_degrees(random_degree());
                 zombies.push(zombie.to_variant());
             }
         }

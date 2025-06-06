@@ -461,6 +461,7 @@ impl RustPitcher {
         (-60.0..=60.0).contains(&angle)
     }
 
+    #[func]
     pub fn set_attacking(&mut self, attacking: bool) {
         self.attacking = attacking;
     }

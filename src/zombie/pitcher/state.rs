@@ -73,6 +73,7 @@ impl RustPitcher {
         self.notify_animation();
     }
 
+    #[func]
     pub fn attack(&mut self) {
         if ZombieState::Dead == self.state || !self.attackable {
             return;
