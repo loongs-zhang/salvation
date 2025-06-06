@@ -8,6 +8,7 @@ use godot::global::godot_error;
 use godot::meta::ToGodot;
 use godot::obj::{Base, Gd, OnReady, WithBaseField};
 use godot::register::{GodotClass, godot_api};
+use std::sync::atomic::{AtomicU32, Ordering};
 
 pub mod save;
 
@@ -17,9 +18,8 @@ pub struct ZombieGenerator {
     #[doc = "是否立刻刷新一波"]
     #[export]
     immediate: bool,
-    #[doc = "是否为BOSS"]
-    #[export]
-    boss: bool,
+    #[doc = "当前等级已击杀的僵尸总数"]
+    pub(crate) killed: AtomicU32,
     #[doc = "刷新的僵尸总数"]
     #[export]
     total: u32,
@@ -51,7 +51,7 @@ impl INode2D for ZombieGenerator {
     fn init(base: Base<Node2D>) -> Self {
         Self {
             immediate: false,
-            boss: false,
+            killed: AtomicU32::new(0),
             total: 30,
             refresh_count: 3,
             refresh_barrier: ZOMBIE_REFRESH_BARRIER,
@@ -80,16 +80,14 @@ impl INode2D for ZombieGenerator {
         if event.is_action_pressed("esc") {
             RustPlayer::reset_last_score_update();
             if self.timer.is_stopped() {
-                self.timer.start();
+                self.start_timer();
             } else {
                 self.timer.stop();
             }
             self.update_refresh_hud();
         } else if event.is_action_pressed("l") {
             RustPlayer::reset_last_score_update();
-            if self.current < self.current_total
-                && self.current.saturating_sub(self.get_kill_count()) < self.max_screen_count
-            {
+            if self.current.saturating_sub(self.get_killed()) < self.max_screen_count {
                 self.timer.set_wait_time(0.2);
                 self.timer.start();
                 self.update_refresh_hud();
@@ -103,14 +101,13 @@ impl ZombieGenerator {
     pub fn level_up(
         &mut self,
         jump: bool,
-        boss: bool,
         rate: f32,
         refresh_barrier: u32,
         max_screen_count: u32,
         refresh_time: f64,
     ) {
         self.current = 0;
-        self.boss = boss;
+        self.killed.store(0, Ordering::Release);
         self.refresh_barrier = refresh_barrier;
         self.current_refresh_barrier = refresh_barrier;
         self.max_screen_count = max_screen_count;
@@ -133,13 +130,16 @@ impl ZombieGenerator {
             return;
         }
         self.timer.set_wait_time(refresh_time);
-        self.timer.start();
-        self.update_refresh_hud();
+        self.start_timer();
     }
 
     #[func]
     pub fn start_timer(&mut self) {
+        if self.current >= self.current_total {
+            return;
+        }
         self.timer.start();
+        self.generate();
         self.update_refresh_hud();
     }
 
@@ -152,9 +152,12 @@ impl ZombieGenerator {
     #[func]
     pub fn generate(&mut self) {
         for _ in 0..self.current_refresh_count {
-            let kill_count = self.get_kill_count();
-            if 0 < kill_count && kill_count < self.current_refresh_barrier
-                || self.current.saturating_sub(kill_count) >= self.max_screen_count
+            let kill_count = self.get_killed();
+            let live_count = self.current.saturating_sub(kill_count);
+            if 0 < kill_count
+                && kill_count < self.current_refresh_barrier
+                && self.current_refresh_barrier < self.current_total
+                || live_count >= self.max_screen_count
             {
                 break;
             }
@@ -165,24 +168,24 @@ impl ZombieGenerator {
             self.generate_zombie();
             self.current += 1;
         }
-        while self.get_kill_count() >= self.current_refresh_barrier {
+        while self.get_killed() >= self.current_refresh_barrier {
             self.current_refresh_barrier += self.refresh_barrier;
         }
     }
 
     fn update_refresh_hud(&self) {
-        self.base()
-            .get_parent()
-            .unwrap()
-            .call_deferred("update_refresh_hud", &[]);
+        if let Some(mut level) = RustLevel::get() {
+            level.call_deferred("update_refresh_hud", &[]);
+        }
     }
 
-    fn get_kill_count(&self) -> u32 {
-        if self.boss {
-            RustLevel::get_kill_boss_count()
-        } else {
-            RustLevel::get_kill_count()
+    #[func]
+    pub fn kill_confirmed(&mut self) {
+        self.killed.fetch_add(1, Ordering::Release);
+        if let Some(mut level) = RustLevel::get() {
+            level.call_deferred("update_progress_hud", &[]);
         }
+        RustPlayer::get().call_deferred("add_kill_count", &[]);
     }
 
     pub fn generate_zombie(&self) {
@@ -205,5 +208,9 @@ impl ZombieGenerator {
             }
         }
         godot_error!("Failed to instantiate zombie scene");
+    }
+
+    pub fn get_killed(&self) -> u32 {
+        self.killed.load(Ordering::Acquire)
     }
 }

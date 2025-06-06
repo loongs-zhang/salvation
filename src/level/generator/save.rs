@@ -13,7 +13,7 @@ impl Serialize for ZombieGenerator {
         let mut state = serializer.serialize_struct("ZombieGenerator", 1)?;
         state.serialize_field("name", &self.base().get_name())?;
         state.serialize_field("immediate", &self.immediate)?;
-        state.serialize_field("boss", &self.boss)?;
+        state.serialize_field("killed", &self.killed)?;
         state.serialize_field("total", &self.total)?;
         state.serialize_field("refresh_count", &self.refresh_count)?;
         state.serialize_field("refresh_barrier", &self.refresh_barrier)?;
@@ -32,7 +32,7 @@ impl Serialize for ZombieGenerator {
 struct GeneratorData {
     name: StringName,
     immediate: bool,
-    boss: bool,
+    killed: AtomicU32,
     total: u32,
     refresh_count: u32,
     refresh_barrier: u32,
@@ -68,7 +68,7 @@ impl ZombieGenerator {
                         continue;
                     }
                     self.immediate = save_data.immediate;
-                    self.boss = save_data.boss;
+                    self.killed = save_data.killed;
                     self.total = save_data.total;
                     self.refresh_count = save_data.refresh_count;
                     self.refresh_barrier = save_data.refresh_barrier;

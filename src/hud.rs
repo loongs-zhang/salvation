@@ -13,6 +13,7 @@ use godot::register::{GodotClass, godot_api};
 #[derive(GodotClass)]
 #[class(base=CanvasLayer)]
 pub struct RustHUD {
+    start_time: f64,
     cross_hair: OnReady<Gd<TextureRect>>,
     control: OnReady<Gd<Control>>,
     upgrade: OnReady<Gd<Control>>,
@@ -23,6 +24,7 @@ pub struct RustHUD {
 impl ICanvasLayer for RustHUD {
     fn init(base: Base<CanvasLayer>) -> Self {
         Self {
+            start_time: 0.0,
             cross_hair: OnReady::from_node("CrossHair"),
             control: OnReady::from_node("Control"),
             upgrade: OnReady::from_node("Upgrade"),
@@ -44,12 +46,15 @@ impl ICanvasLayer for RustHUD {
         }
     }
 
-    fn process(&mut self, _delta: f64) {
+    fn process(&mut self, delta: f64) {
         let viewport = self.base().get_viewport().unwrap();
         let affine_inverse = self.base().get_transform().affine_inverse();
         let mouse_position =
             affine_inverse * viewport.get_mouse_position() - self.cross_hair.get_size() / 2.0;
         self.cross_hair.set_position(mouse_position);
+        self.start_time += delta;
+        self.update_fps_hud();
+        self.update_played_time_hud();
     }
 
     fn exit_tree(&mut self) {
@@ -169,9 +174,9 @@ impl RustHUD {
         jitter_hud.show();
     }
 
-    pub fn update_killed_hud(&mut self, kill_boss_count: u32, kill_count: u32) {
+    pub fn update_killed_hud(&mut self, kill_count: u32) {
         let mut repel_hud = self.get_hcontainer().get_node_as::<Label>("Killed");
-        repel_hud.set_text(&format!("KILLED {}+{}", kill_boss_count, kill_count,));
+        repel_hud.set_text(&format!("KILLED {}", kill_count,));
         repel_hud.show();
     }
 
@@ -216,6 +221,7 @@ impl RustHUD {
         label.show();
     }
 
+    #[func]
     pub fn update_refresh_zombie_hud(
         &mut self,
         is_stopped: bool,
@@ -234,6 +240,7 @@ impl RustHUD {
         label.show();
     }
 
+    #[func]
     pub fn update_refresh_pitcher_hud(
         &mut self,
         is_stopped: bool,
@@ -252,6 +259,7 @@ impl RustHUD {
         label.show();
     }
 
+    #[func]
     pub fn update_refresh_boomer_hud(
         &mut self,
         is_stopped: bool,
@@ -270,6 +278,7 @@ impl RustHUD {
         label.show();
     }
 
+    #[func]
     pub fn update_refresh_boss_hud(
         &mut self,
         is_stopped: bool,
@@ -293,6 +302,20 @@ impl RustHUD {
         label.set_text(&format!(
             "FPS {}",
             Engine::singleton().get_frames_per_second(),
+        ));
+        label.show();
+    }
+
+    pub fn update_played_time_hud(&mut self) {
+        let hours = self.start_time / 3600.0;
+        let minutes = (self.start_time % 3600.0) / 60.0;
+        let seconds = self.start_time % 60.0;
+        let mut label = self
+            .get_right_top_container()
+            .get_node_as::<Label>("PlayedTime");
+        label.set_text(&format!(
+            "PLAYED {:.0}h{:.0}m{:.0}s",
+            hours, minutes, seconds
         ));
         label.show();
     }

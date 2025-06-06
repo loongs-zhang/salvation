@@ -1,5 +1,6 @@
 use super::*;
 use crate::ZOMBIE_REFRESH_BARRIER;
+use crate::level::generator::ZombieGenerator;
 use crate::world::ground::RustGround;
 
 #[godot_api(secondary)]
@@ -145,8 +146,11 @@ impl RustZombie {
             }
         }
         // 击杀僵尸确认
-        if let Some(mut level) = RustLevel::get() {
-            level.bind_mut().kill_confirmed();
+        if let Some(level) = RustLevel::get() {
+            level
+                .get_node_as::<ZombieGenerator>("ZombieGenerator")
+                .bind_mut()
+                .kill_confirmed();
         }
     }
 }

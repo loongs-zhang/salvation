@@ -1,4 +1,5 @@
 use super::*;
+use crate::level::generator::ZombieGenerator;
 use crate::world::ground::RustGround;
 
 #[godot_api(secondary)]
@@ -109,8 +110,11 @@ impl RustBoss {
             }
         }
         // 击杀僵尸确认
-        if let Some(mut level) = RustLevel::get() {
-            level.bind_mut().kill_boss_confirmed();
+        if let Some(level) = RustLevel::get() {
+            level
+                .get_node_as::<ZombieGenerator>("BossGenerator")
+                .bind_mut()
+                .kill_confirmed();
         }
     }
 }

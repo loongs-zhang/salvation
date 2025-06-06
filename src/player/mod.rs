@@ -96,10 +96,8 @@ pub struct RustPlayer {
     score: u32,
     // 玩家死亡的次数
     died: u32,
-    // 击杀普通僵尸数
+    // 击杀僵尸数
     kill_count: u32,
-    // 击杀BOSS数
-    kill_boss_count: u32,
     remote_transform2d: OnReady<Gd<RemoteTransform2D>>,
     animated_sprite2d: OnReady<Gd<AnimatedSprite2D>>,
     camera: OnReady<Gd<Camera2D>>,
@@ -127,7 +125,7 @@ impl ICharacterBody2D for RustPlayer {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
             player_name: GString::new(),
-            invincible: false,
+            invincible: cfg!(feature = "develop"),
             current_weapon_index: 0,
             lives: PLAYER_MAX_LIVES,
             damage: 0,
@@ -152,7 +150,6 @@ impl ICharacterBody2D for RustPlayer {
             score: 0,
             died: 0,
             kill_count: 0,
-            kill_boss_count: 0,
             remote_transform2d: OnReady::from_node("RemoteTransform2D"),
             animated_sprite2d: OnReady::from_node("AnimatedSprite2D"),
             camera: OnReady::from_node("Camera2D"),
@@ -178,7 +175,6 @@ impl ICharacterBody2D for RustPlayer {
 
     fn process(&mut self, delta: f64) {
         self.update_laser();
-        self.hud.bind_mut().update_fps_hud();
         if self.remote_transform2d.is_instance_valid() {
             self.remote_transform2d.set_global_rotation_degrees(0.0);
         }
@@ -189,7 +185,7 @@ impl ICharacterBody2D for RustPlayer {
         self.current_chop_cooldown -= delta;
         self.level_up();
         let mut hud = self.hud.bind_mut();
-        hud.update_killed_hud(self.kill_boss_count, self.kill_count);
+        hud.update_killed_hud(self.kill_count);
         hud.update_score_hud(self.score);
         hud.update_died_hud(self.died);
         drop(hud);
@@ -268,7 +264,7 @@ impl ICharacterBody2D for RustPlayer {
         hud.update_distance_hud(rust_weapon.bind().get_distance(), self.distance);
         hud.update_repel_hud(rust_weapon.bind().get_repel(), self.repel);
         hud.update_penetrate_hud(rust_weapon.bind().get_penetrate(), self.penetrate);
-        hud.update_killed_hud(self.kill_boss_count, self.kill_count);
+        hud.update_killed_hud(self.kill_count);
         hud.update_score_hud(self.score);
         hud.update_died_hud(self.died);
         if self.grenade_scenes.is_empty() {
@@ -331,6 +327,8 @@ impl ICharacterBody2D for RustPlayer {
                 new_weapon_index = self.weapons.get_child_count() - 1;
             }
             self.change_weapon(new_weapon_index);
+        } else if cfg!(feature = "develop") && event.is_action_pressed("p") {
+            self.die(Vector2::ZERO);
         }
     }
 }
@@ -375,7 +373,6 @@ impl RustPlayer {
         self.score = 0;
         self.died = 0;
         self.kill_count = 0;
-        self.kill_boss_count = 0;
         self.current_lives = self.lives.saturating_add(1);
         self.born();
         let rust_weapon = self.get_current_weapon();
@@ -384,7 +381,7 @@ impl RustPlayer {
         hud.update_distance_hud(rust_weapon.bind().get_distance(), self.distance);
         hud.update_repel_hud(rust_weapon.bind().get_repel(), self.repel);
         hud.update_penetrate_hud(rust_weapon.bind().get_penetrate(), self.penetrate);
-        hud.update_killed_hud(self.kill_boss_count, self.kill_count);
+        hud.update_killed_hud(self.kill_count);
         hud.update_score_hud(self.score);
         hud.update_died_hud(self.died);
     }
@@ -455,11 +452,6 @@ impl RustPlayer {
     #[func]
     pub fn add_kill_count(&mut self) {
         self.kill_count += 1;
-    }
-
-    #[func]
-    pub fn add_kill_boss_count(&mut self) {
-        self.kill_boss_count += 1;
     }
 
     #[func]

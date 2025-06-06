@@ -33,7 +33,6 @@ impl Serialize for RustPlayer {
         state.serialize_field("score", &self.score)?;
         state.serialize_field("died", &self.died)?;
         state.serialize_field("kill_count", &self.kill_count)?;
-        state.serialize_field("kill_boss_count", &self.kill_boss_count)?;
         state.end()
     }
 }
@@ -62,7 +61,6 @@ struct PlayerData {
     score: u32,
     died: u32,
     kill_count: u32,
-    kill_boss_count: u32,
 }
 
 #[godot_api(secondary)]
@@ -103,7 +101,6 @@ impl RustPlayer {
                 self.score = save_data.score;
                 self.died = save_data.died;
                 self.kill_count = save_data.kill_count;
-                self.kill_boss_count = save_data.kill_boss_count;
                 self.ready();
             }
         }

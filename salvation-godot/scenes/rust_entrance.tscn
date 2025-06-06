@@ -110,8 +110,6 @@ size_flags_vertical = 0
 theme_override_colors/font_color = Color(0.545098, 0, 0, 1)
 text = "Help
 PauseGame: esc
-JumpLevel: J
-KillZombies: K
 RefreshZombies: L"
 vertical_alignment = 1
 

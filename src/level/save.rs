@@ -19,8 +19,6 @@ impl Serialize for RustLevel {
         state.serialize_field("boomer_refresh_time", &self.boomer_refresh_time)?;
         state.serialize_field("boss_refresh_time", &self.boss_refresh_time)?;
         state.serialize_field("left_rampage_time", &self.left_rampage_time)?;
-        state.serialize_field("zombie_killed", &self.zombie_killed)?;
-        state.serialize_field("boss_killed", &self.boss_killed)?;
         state.end()
     }
 }
@@ -35,8 +33,6 @@ struct LevelData {
     boomer_refresh_time: f64,
     boss_refresh_time: f64,
     left_rampage_time: real,
-    zombie_killed: AtomicU32,
-    boss_killed: AtomicU32,
 }
 
 #[godot_api(secondary)]
@@ -62,8 +58,6 @@ impl RustLevel {
                 self.boomer_refresh_time = save_data.boomer_refresh_time;
                 self.boss_refresh_time = save_data.boss_refresh_time;
                 self.left_rampage_time = save_data.left_rampage_time;
-                self.zombie_killed = save_data.zombie_killed;
-                self.boss_killed = save_data.boss_killed;
             }
             // 生成召唤尸
             for mut child in self.base().get_children().iter_shared() {

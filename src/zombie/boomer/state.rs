@@ -1,4 +1,5 @@
 use super::*;
+use crate::level::generator::ZombieGenerator;
 use crate::{BOOMER_DAMAGE, BOOMER_REPEL, EXPLODE_AUDIOS, is_survivor, is_zombie};
 use godot::builtin::Callable;
 use godot::global::godot_error;
@@ -152,8 +153,11 @@ impl RustBoomer {
         self.rampage_audio.queue_free();
         self.attack_scream_audio.queue_free();
         // 击杀僵尸确认
-        if let Some(mut level) = RustLevel::get() {
-            level.bind_mut().kill_confirmed();
+        if let Some(level) = RustLevel::get() {
+            level
+                .get_node_as::<ZombieGenerator>("BoomerGenerator")
+                .bind_mut()
+                .kill_confirmed();
         }
     }
 }

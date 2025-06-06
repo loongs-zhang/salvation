@@ -22,13 +22,8 @@ pub mod generator;
 
 pub mod save;
 
-// todo 重构level的代码
 //todo 僵尸对象池优化，僵尸被清理后不是free而是返回对象池
 static RAMPAGE: AtomicBool = AtomicBool::new(false);
-
-static KILL_COUNT: AtomicU32 = AtomicU32::new(0);
-
-static KILL_BOSS_COUNT: AtomicU32 = AtomicU32::new(0);
 
 static LIVE_COUNT: AtomicU32 = AtomicU32::new(0);
 
@@ -60,8 +55,6 @@ pub struct RustLevel {
     #[export]
     boss_refresh_time: f64,
     left_rampage_time: real,
-    zombie_killed: AtomicU32,
-    boss_killed: AtomicU32,
     zombie_generator: OnReady<Gd<ZombieGenerator>>,
     boomer_generator: OnReady<Gd<ZombieGenerator>>,
     pitcher_generator: OnReady<Gd<ZombieGenerator>>,
@@ -85,8 +78,6 @@ impl INode2D for RustLevel {
             pitcher_refresh_time: 10.0,
             boss_refresh_time: 60.0,
             left_rampage_time: LEVEL_RAMPAGE_TIME,
-            zombie_killed: AtomicU32::new(0),
-            boss_killed: AtomicU32::new(0),
             zombie_generator: OnReady::from_node("ZombieGenerator"),
             boomer_generator: OnReady::from_node("BoomerGenerator"),
             pitcher_generator: OnReady::from_node("PitcherGenerator"),
@@ -106,44 +97,25 @@ impl INode2D for RustLevel {
         if RustWorld::is_paused() {
             return;
         }
-        let zombie_killed = self.zombie_killed.load(Ordering::Acquire);
-        let boss_killed = self.boss_killed.load(Ordering::Acquire);
+        let zombie_killed = self.get_zombie_killed();
+        let boss_killed = self.get_boss_killed();
         let killed = zombie_killed.saturating_add(boss_killed);
-        let zombie_generator = self.zombie_generator.bind();
-        let boomer_generator = self.boomer_generator.bind();
-        let pitcher_generator = self.pitcher_generator.bind();
-        let boss_generator = self.boss_generator.bind();
-        let zombie_current =
-            zombie_generator.current + boomer_generator.current + pitcher_generator.current;
-        let boss_current = boss_generator.current;
-        let zombie_total = zombie_generator.current_total
-            + boomer_generator.current_total
-            + pitcher_generator.current_total;
-        let boss_total = boss_generator.current_total;
-        let zombie_refresh_count = zombie_generator.current_refresh_count
-            + boomer_generator.current_refresh_count
-            + pitcher_generator.current_refresh_count;
-        let boss_refresh_count = boss_generator.current_refresh_count;
-        let zombie_timer = self.zombie_generator.get_node_as::<Timer>("Timer");
-        let boomer_timer = self.boomer_generator.get_node_as::<Timer>("Timer");
-        let pitcher_timer = self.pitcher_generator.get_node_as::<Timer>("Timer");
-        let boss_timer = self.boss_generator.get_node_as::<Timer>("Timer");
-        if zombie_timer.is_stopped()
-            && boomer_timer.is_stopped()
-            && pitcher_timer.is_stopped()
-            && boss_timer.is_stopped()
+        let zombie_current = self.get_zombie_current();
+        let boss_current = self.get_boss_current();
+        let zombie_total = self.get_zombie_total();
+        let boss_total = self.get_boss_total();
+        let zombie_refresh_count = self.get_zombie_current_refresh_count();
+        let boss_refresh_count = self.get_boss_current_refresh_count();
+        if self.is_stopped()
             && SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .expect("1970-01-01 00:00:00 UTC was {} seconds ago!")
                 .as_secs()
                 - RustPlayer::get_last_score_update()
-                >= boss_timer
-                    .get_wait_time()
-                    .max(zombie_timer.get_wait_time())
-                    .max(30.0) as u64
+                >= 20
         {
             RustPlayer::reset_last_score_update();
-            //30s内玩家未造成任何伤害，认为卡关了，实际上玩家击杀数足够，但击杀统计少了，强制刷新一批僵尸
+            //20s内玩家未造成任何伤害，认为卡关了，实际上玩家击杀数足够，但击杀统计少了，强制刷新一批僵尸
             let refresh_zombie_count = zombie_total
                 .saturating_sub(zombie_killed)
                 .min(zombie_refresh_count);
@@ -153,15 +125,15 @@ impl INode2D for RustLevel {
             for _ in 0..refresh_zombie_count {
                 match rand::thread_rng().gen_range(-1..=2) {
                     // 生成投手僵尸
-                    -1 => pitcher_generator.generate_zombie(),
+                    -1 => self.pitcher_generator.bind().generate_zombie(),
                     // 生成爆炸僵尸
-                    0 => boomer_generator.generate_zombie(),
+                    0 => self.boomer_generator.bind().generate_zombie(),
                     // 生成普通僵尸
-                    _ => zombie_generator.generate_zombie(),
+                    _ => self.zombie_generator.bind().generate_zombie(),
                 }
             }
             for _ in 0..refresh_boss_count {
-                boss_generator.generate_zombie();
+                self.boss_generator.bind().generate_zombie();
             }
             godot_warn!(
                 "Level{} is blocked, forcing refresh {} zombies and {} bosses",
@@ -170,18 +142,12 @@ impl INode2D for RustLevel {
                 refresh_boss_count
             );
         }
-        KILL_COUNT.store(zombie_killed, Ordering::Release);
-        KILL_BOSS_COUNT.store(boss_killed, Ordering::Release);
         LIVE_COUNT.store(
             zombie_current
                 .saturating_add(boss_current)
                 .saturating_sub(killed),
             Ordering::Release,
         );
-        drop(zombie_generator);
-        drop(boomer_generator);
-        drop(pitcher_generator);
-        drop(boss_generator);
         self.left_rampage_time = (self.left_rampage_time - delta as real).max(0.0);
         self.update_rampage_hud();
         self.update_progress_hud();
@@ -202,7 +168,6 @@ impl INode2D for RustLevel {
         } else if boss_killed < boss_current {
             self.play_boss_bgm();
         } else {
-            RAMPAGE.store(false, Ordering::Release);
             self.play_bgm();
         }
         if zombie_killed >= zombie_total && boss_killed >= boss_total {
@@ -230,7 +195,7 @@ impl INode2D for RustLevel {
     fn input(&mut self, event: Gd<InputEvent>) {
         if event.is_action_pressed("l") {
             self.left_rampage_time = 0.0;
-        } else if event.is_action_pressed("j") {
+        } else if cfg!(feature = "develop") && event.is_action_pressed("j") {
             //在这一帧清理所有僵尸
             kill_all_zombies();
             //下一帧跳关
@@ -242,20 +207,6 @@ impl INode2D for RustLevel {
 
 #[godot_api]
 impl RustLevel {
-    #[func]
-    pub fn kill_confirmed(&mut self) {
-        self.zombie_killed.fetch_add(1, Ordering::Release);
-        self.update_progress_hud();
-        RustPlayer::get().call_deferred("add_kill_count", &[]);
-    }
-
-    #[func]
-    pub fn kill_boss_confirmed(&mut self) {
-        self.boss_killed.fetch_add(1, Ordering::Release);
-        self.update_progress_hud();
-        RustPlayer::get().call_deferred("add_kill_boss_count", &[]);
-    }
-
     pub fn update_level_hud(&mut self) {
         RustHUD::get().bind_mut().update_level_hud(self.level);
     }
@@ -266,79 +217,141 @@ impl RustLevel {
             .update_rampage_hud(self.left_rampage_time);
     }
 
+    #[func]
     pub fn update_progress_hud(&mut self) {
-        let boss_refreshed = self.boss_generator.bind().current;
-        let zombie_refreshed = self.zombie_generator.bind().current
-            + self.boomer_generator.bind().current
-            + self.pitcher_generator.bind().current;
-        let boss_total = self.boss_generator.bind().current_total;
-        let zombie_total = self.zombie_generator.bind().current_total
-            + self.boomer_generator.bind().current_total
-            + self.pitcher_generator.bind().current_total;
         RustHUD::get().bind_mut().update_progress_hud(
-            self.boss_killed.load(Ordering::Acquire),
-            self.zombie_killed.load(Ordering::Acquire),
-            boss_refreshed,
-            zombie_refreshed,
-            boss_total,
-            zombie_total,
+            self.get_boss_killed(),
+            self.get_zombie_killed(),
+            self.get_boss_current(),
+            self.get_zombie_current(),
+            self.get_boss_total(),
+            self.get_zombie_total(),
         );
     }
 
     #[func]
     pub fn update_refresh_hud(&mut self) {
         let mut hud = RustHUD::get();
-        let zombie_refresh_count = self
-            .zombie_generator
-            .bind()
-            .current_refresh_count
-            .min(self.zombie_generator.bind().refresh_barrier);
-        let zombie_timer = self.zombie_generator.get_node_as::<Timer>("Timer");
-        let zombie_wait_time = zombie_timer.get_wait_time();
-        hud.bind_mut().update_refresh_zombie_hud(
-            zombie_timer.is_stopped(),
-            zombie_refresh_count,
-            zombie_wait_time,
-        );
+        for child in self.base().get_children().iter_shared() {
+            if child.is_class("ZombieGenerator") {
+                let generator_type = child.get_name().replace("Generator", "").to_lower();
+                let zombie_generator = child.cast::<ZombieGenerator>();
+                let zombie_refresh_count = zombie_generator
+                    .bind()
+                    .current_refresh_count
+                    .min(zombie_generator.bind().refresh_barrier);
+                let zombie_timer = zombie_generator.get_node_as::<Timer>("Timer");
+                let zombie_wait_time = zombie_timer.get_wait_time();
+                hud.call_deferred(
+                    &format!("update_refresh_{}_hud", generator_type),
+                    &[
+                        zombie_timer.is_stopped().to_variant(),
+                        zombie_refresh_count.to_variant(),
+                        zombie_wait_time.to_variant(),
+                    ],
+                );
+            }
+        }
+    }
 
-        let boomer_refresh_count = self
-            .boomer_generator
-            .bind()
-            .current_refresh_count
-            .min(self.boomer_generator.bind().refresh_barrier);
-        let boomer_timer = self.boomer_generator.get_node_as::<Timer>("Timer");
-        let boomer_wait_time = boomer_timer.get_wait_time();
-        hud.bind_mut().update_refresh_boomer_hud(
-            boomer_timer.is_stopped(),
-            boomer_refresh_count,
-            boomer_wait_time,
-        );
+    pub fn is_stopped(&self) -> bool {
+        for child in self.base().get_children().iter_shared() {
+            if child.is_class("ZombieGenerator") {
+                let zombie_generator = child.cast::<ZombieGenerator>();
+                if zombie_generator.get_node_as::<Timer>("Timer").is_stopped() {
+                    return true;
+                }
+            }
+        }
+        false
+    }
 
-        let pitcher_refresh_count = self
-            .pitcher_generator
-            .bind()
-            .current_refresh_count
-            .min(self.pitcher_generator.bind().refresh_barrier);
-        let pitcher_timer = self.pitcher_generator.get_node_as::<Timer>("Timer");
-        let pitcher_wait_time = pitcher_timer.get_wait_time();
-        hud.bind_mut().update_refresh_pitcher_hud(
-            pitcher_timer.is_stopped(),
-            pitcher_refresh_count,
-            pitcher_wait_time,
-        );
+    pub fn get_zombie_total(&self) -> u32 {
+        let mut zombie_total = 0;
+        for child in self.base().get_children().iter_shared() {
+            if child.is_class("ZombieGenerator") && !child.get_name().contains("Boss") {
+                let zombie_generator = child.cast::<ZombieGenerator>();
+                zombie_total += zombie_generator.bind().current_total;
+            }
+        }
+        zombie_total
+    }
 
-        let boss_refresh_count = self
-            .boss_generator
-            .bind()
-            .current_refresh_count
-            .min(self.boss_generator.bind().refresh_barrier);
-        let boss_timer = self.boss_generator.get_node_as::<Timer>("Timer");
-        let boss_wait_time = boss_timer.get_wait_time();
-        hud.bind_mut().update_refresh_boss_hud(
-            boss_timer.is_stopped(),
-            boss_refresh_count,
-            boss_wait_time,
-        );
+    pub fn get_zombie_current(&self) -> u32 {
+        let mut zombie_current = 0;
+        for child in self.base().get_children().iter_shared() {
+            if child.is_class("ZombieGenerator") && !child.get_name().contains("Boss") {
+                let zombie_generator = child.cast::<ZombieGenerator>();
+                zombie_current += zombie_generator.bind().current;
+            }
+        }
+        zombie_current
+    }
+
+    pub fn get_zombie_killed(&self) -> u32 {
+        let mut zombie_killed = 0;
+        for child in self.base().get_children().iter_shared() {
+            if child.is_class("ZombieGenerator") && !child.get_name().contains("Boss") {
+                let zombie_generator = child.cast::<ZombieGenerator>();
+                zombie_killed += zombie_generator.bind().get_killed();
+            }
+        }
+        zombie_killed
+    }
+
+    pub fn get_zombie_current_refresh_count(&self) -> u32 {
+        let mut current_refresh_count = 0;
+        for child in self.base().get_children().iter_shared() {
+            if child.is_class("ZombieGenerator") && !child.get_name().contains("Boss") {
+                let zombie_generator = child.cast::<ZombieGenerator>();
+                current_refresh_count += zombie_generator.bind().current_refresh_count;
+            }
+        }
+        current_refresh_count
+    }
+
+    pub fn get_boss_total(&self) -> u32 {
+        let mut boss_total = 0;
+        for child in self.base().get_children().iter_shared() {
+            if child.is_class("ZombieGenerator") && child.get_name().contains("Boss") {
+                let zombie_generator = child.cast::<ZombieGenerator>();
+                boss_total += zombie_generator.bind().current_total;
+            }
+        }
+        boss_total
+    }
+
+    pub fn get_boss_current(&self) -> u32 {
+        let mut zombie_current = 0;
+        for child in self.base().get_children().iter_shared() {
+            if child.is_class("ZombieGenerator") && child.get_name().contains("Boss") {
+                let zombie_generator = child.cast::<ZombieGenerator>();
+                zombie_current += zombie_generator.bind().current;
+            }
+        }
+        zombie_current
+    }
+
+    pub fn get_boss_current_refresh_count(&self) -> u32 {
+        let mut current_refresh_count = 0;
+        for child in self.base().get_children().iter_shared() {
+            if child.is_class("ZombieGenerator") && child.get_name().contains("Boss") {
+                let zombie_generator = child.cast::<ZombieGenerator>();
+                current_refresh_count += zombie_generator.bind().current_refresh_count;
+            }
+        }
+        current_refresh_count
+    }
+
+    pub fn get_boss_killed(&self) -> u32 {
+        let mut zombie_current = 0;
+        for child in self.base().get_children().iter_shared() {
+            if child.is_class("ZombieGenerator") && child.get_name().contains("Boss") {
+                let zombie_generator = child.cast::<ZombieGenerator>();
+                zombie_current += zombie_generator.bind().get_killed();
+            }
+        }
+        zombie_current
     }
 
     #[func]
@@ -359,17 +372,15 @@ impl RustLevel {
         if self.level > 1 {
             RustSaveLoader::get().call_deferred("save_game", &[]);
         }
+        RAMPAGE.store(false, Ordering::Release);
         RustPlayer::reset_last_score_update();
         let rate = self.grow_rate.powf(self.level as f32);
         self.level += 1;
-        self.zombie_killed.store(0, Ordering::Release);
-        self.boss_killed.store(0, Ordering::Release);
         // 加强M4A1，不然后续的消音没什么意义
         // self.left_rampage_time = self.rampage_time / rate;
         self.left_rampage_time = self.rampage_time;
         self.zombie_generator.bind_mut().level_up(
             jump,
-            false,
             rate,
             ZOMBIE_REFRESH_BARRIER,
             if self.hell {
@@ -381,7 +392,6 @@ impl RustLevel {
         );
         self.boomer_generator.bind_mut().level_up(
             jump,
-            false,
             rate,
             BOOMER_REFRESH_BARRIER,
             if self.hell {
@@ -393,7 +403,6 @@ impl RustLevel {
         );
         self.pitcher_generator.bind_mut().level_up(
             jump,
-            false,
             rate,
             PITCHER_REFRESH_BARRIER,
             if self.hell {
@@ -405,7 +414,6 @@ impl RustLevel {
         );
         self.boss_generator.bind_mut().level_up(
             jump,
-            true,
             rate,
             BOSS_REFRESH_BARRIER,
             BOSS_MAX_SCREEN_COUNT,
@@ -552,14 +560,6 @@ impl RustLevel {
 
     pub fn is_rampage() -> bool {
         RAMPAGE.load(Ordering::Acquire)
-    }
-
-    pub fn get_kill_count() -> u32 {
-        KILL_COUNT.load(Ordering::Acquire)
-    }
-
-    pub fn get_kill_boss_count() -> u32 {
-        KILL_BOSS_COUNT.load(Ordering::Acquire)
     }
 
     pub fn get_live_count() -> u32 {

@@ -1,4 +1,5 @@
 use super::*;
+use crate::level::generator::ZombieGenerator;
 use crate::world::ground::RustGround;
 
 #[godot_api(secondary)]
@@ -131,8 +132,11 @@ impl RustPitcher {
             }
         }
         // 击杀僵尸确认
-        if let Some(mut level) = RustLevel::get() {
-            level.bind_mut().kill_confirmed();
+        if let Some(level) = RustLevel::get() {
+            level
+                .get_node_as::<ZombieGenerator>("PitcherGenerator")
+                .bind_mut()
+                .kill_confirmed();
         }
     }
 }

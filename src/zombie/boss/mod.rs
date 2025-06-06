@@ -217,7 +217,7 @@ impl ICharacterBody2D for RustBoss {
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
-        if event.is_action_pressed("k") {
+        if cfg!(feature = "develop") && event.is_action_pressed("k") {
             self.die();
         }
     }
