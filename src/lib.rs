@@ -303,11 +303,15 @@ pub fn is_boss<T: Deref<Target = Object>>(gd: &T) -> bool {
 }
 
 pub fn not_boss<T: Deref<Target = Object>>(gd: &T) -> bool {
-    gd.is_class("RustZombie") || is_elite(gd)
+    normal_zombie(gd) || is_elite(gd)
 }
 
 pub fn is_zombie<T: Deref<Target = Object>>(gd: &T) -> bool {
     not_boss(gd) || is_boss(gd)
+}
+
+pub fn normal_zombie<T: Deref<Target = Object>>(gd: &T) -> bool {
+    gd.is_class("RustZombie")
 }
 
 pub fn not_normal_zombie<T: Deref<Target = Object>>(gd: &T) -> bool {

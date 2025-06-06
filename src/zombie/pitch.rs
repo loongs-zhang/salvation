@@ -33,6 +33,9 @@ impl ZombiePitchArea {
 
     #[func]
     pub fn on_area_2d_body_entered(&mut self, body: Gd<Node2D>) {
+        if !body.is_instance_valid() {
+            return;
+        }
         if is_survivor(&***body) {
             if let Ok(mut pitcher) = self.get_parent().try_cast::<RustPitcher>() {
                 if !pitcher.bind().is_face_to_user() {
@@ -47,10 +50,13 @@ impl ZombiePitchArea {
 
     #[func]
     pub fn on_area_2d_body_exited(&mut self, body: Gd<Node2D>) {
+        if !body.is_instance_valid() {
+            return;
+        }
         if is_survivor(&***body) {
             if let Ok(mut pitcher) = self.get_parent().try_cast::<RustPitcher>() {
-                pitcher.bind_mut().guard();
                 pitcher.bind_mut().set_attacking(false);
+                pitcher.bind_mut().guard();
             }
         }
     }

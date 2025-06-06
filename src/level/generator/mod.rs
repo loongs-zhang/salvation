@@ -91,6 +91,7 @@ impl INode2D for ZombieGenerator {
                 self.timer.set_wait_time(0.2);
                 self.timer.start();
                 self.update_refresh_hud();
+                self.generate();
             }
         }
     }
@@ -139,7 +140,6 @@ impl ZombieGenerator {
             return;
         }
         self.timer.start();
-        self.generate();
         self.update_refresh_hud();
     }
 
@@ -157,6 +157,8 @@ impl ZombieGenerator {
             if 0 < kill_count
                 && kill_count < self.current_refresh_barrier
                 && self.current_refresh_barrier < self.current_total
+                && 0 < live_count
+                && live_count < self.refresh_barrier
                 || live_count >= self.max_screen_count
             {
                 break;

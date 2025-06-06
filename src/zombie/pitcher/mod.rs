@@ -99,7 +99,7 @@ pub struct RustPitcher {
 impl ICharacterBody2D for RustPitcher {
     fn init(base: Base<CharacterBody2D>) -> Self {
         Self {
-            pitcher_name: GString::new(),
+            pitcher_name: GString::from("PITCHER"),
             invincible: false,
             moveable: true,
             rotatable: true,
@@ -163,7 +163,7 @@ impl ICharacterBody2D for RustPitcher {
         let distance = zombie_position.distance_to(player_position);
         self.current_grenade_cooldown -= delta as real;
         if self.attacking || self.is_face_to_user() && distance <= PITCHER_ATTACK_DISTANCE {
-            self.throw_grenade();
+            self.attack();
             return;
         }
         self.current_rotate_cooldown -= delta as real;

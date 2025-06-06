@@ -1,12 +1,12 @@
-[gd_scene load_steps=3 format=3 uid="uid://dgev7615nhr3d"]
+[gd_scene load_steps=4 format=3 uid="uid://dgev7615nhr3d"]
 
 [ext_resource type="PackedScene" uid="uid://b8ou2gd7qcb4n" path="res://scenes/zombies/rust_boss.tscn" id="2_in42s"]
 [ext_resource type="PackedScene" uid="uid://d1fywhnf12yb8" path="res://scenes/rust_player_unlock.tscn" id="2_ycg68"]
+[ext_resource type="PackedScene" uid="uid://bvtoo68byrg0h" path="res://scenes/zombies/rust_pitcher.tscn" id="3_ycg68"]
 
 [node name="RustWorld" type="Node2D"]
 
 [node name="RustPlayer" parent="." instance=ExtResource("2_ycg68")]
-invincible = true
 
 [node name="RustBoss1" parent="." instance=ExtResource("2_in42s")]
 collidable = false
@@ -31,3 +31,38 @@ position = Vector2(700, 0)
 [node name="RustBoss6" parent="." instance=ExtResource("2_in42s")]
 collidable = false
 position = Vector2(800, 0)
+
+[node name="RustPitcher1" parent="." instance=ExtResource("3_ycg68")]
+rampage_time = 0.0
+alarm_time = 0.0
+position = Vector2(250, 0)
+
+[node name="RustPitcher2" parent="." instance=ExtResource("3_ycg68")]
+rampage_time = 0.0
+alarm_time = 0.0
+position = Vector2(250, -25)
+
+[node name="RustPitcher3" parent="." instance=ExtResource("3_ycg68")]
+rampage_time = 0.0
+alarm_time = 0.0
+position = Vector2(250, 25)
+
+[node name="RustPitcher4" parent="." instance=ExtResource("3_ycg68")]
+rampage_time = 0.0
+alarm_time = 0.0
+position = Vector2(250, -50)
+
+[node name="RustPitcher5" parent="." instance=ExtResource("3_ycg68")]
+rampage_time = 0.0
+alarm_time = 0.0
+position = Vector2(250, 50)
+
+[node name="RustPitcher6" parent="." instance=ExtResource("3_ycg68")]
+rampage_time = 0.0
+alarm_time = 0.0
+position = Vector2(250, -75)
+
+[node name="RustPitcher7" parent="." instance=ExtResource("3_ycg68")]
+rampage_time = 0.0
+alarm_time = 0.0
+position = Vector2(250, 75)

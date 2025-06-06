@@ -170,7 +170,7 @@ impl ICharacterBody2D for RustBoss {
         if !self.moveable {
             return;
         }
-        let speed = self.current_speed;
+        let speed = self.current_speed * 8.0;
         self.collision = Vector2::ZERO;
         if let Some(collision) = self.base.to_gd().move_and_collide(velocity) {
             // 发出排斥力的方向
@@ -189,7 +189,7 @@ impl ICharacterBody2D for RustBoss {
                         } else {
                             -from.orthogonal()
                         };
-                } else {
+                } else if not_boss(&object) {
                     let dir = (from + from.orthogonal()).normalized();
                     Self::zombie_collide(collision, dir * speed, 10);
                 }

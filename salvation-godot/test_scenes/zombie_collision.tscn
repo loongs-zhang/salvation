@@ -6,7 +6,6 @@
 [node name="RustWorld" type="Node2D"]
 
 [node name="RustPlayer" parent="." instance=ExtResource("2_qlaaq")]
-invincible = true
 
 [node name="RustZombie1" parent="." instance=ExtResource("2_06lkw")]
 rampage_time = 0.0

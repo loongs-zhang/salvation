@@ -77,7 +77,7 @@ impl RustPlayer {
     pub fn upgrade_health(&mut self) {
         //生命值升级
         self.health = self.health.saturating_add(10);
-        self.current_health = self.current_health.saturating_add(10);
+        self.current_health = self.health;
         self.hud
             .bind_mut()
             .update_hp_hud(self.current_health, self.health);
