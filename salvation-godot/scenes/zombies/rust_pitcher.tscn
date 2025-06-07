@@ -212,6 +212,7 @@ scale_curve = SubResource("CurveTexture_ulhoy")
 color_ramp = SubResource("GradientTexture1D_fuakc")
 
 [node name="RustPitcher" type="RustPitcher" groups=["preservable", "zombie"]]
+health = 150
 z_index = 2
 
 [node name="RemoteTransform2D" type="RemoteTransform2D" parent="."]

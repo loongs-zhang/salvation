@@ -181,7 +181,6 @@ impl ICharacterBody2D for RustPitcher {
         } else {
             to_player_dir
         };
-        let mut character_body2d = self.base.to_gd();
         let velocity = if distance > PITCHER_ATTACK_DISTANCE
             && (self.is_alarmed() || RustLevel::is_rampage())
         {
@@ -215,7 +214,7 @@ impl ICharacterBody2D for RustPitcher {
             } else if self.rotatable && self.current_rotate_cooldown <= 0.0 {
                 // 无目的移动
                 let direction = random_direction();
-                character_body2d.look_at(zombie_position + direction);
+                self.base_mut().look_at(zombie_position + direction);
                 self.current_rotate_cooldown = self.rotate_cooldown;
                 direction * self.current_speed
             } else {
@@ -223,31 +222,7 @@ impl ICharacterBody2D for RustPitcher {
                 self.get_current_direction() * self.current_speed
             }
         };
-        if !self.moveable {
-            return;
-        }
-        //撞到僵尸了
-        self.collision = Vector2::ZERO;
-        if let Some(collision) = character_body2d.move_and_collide(velocity) {
-            // 发出排斥力的方向
-            let from = collision.get_normal();
-            if let Some(object) = collision.get_collider() {
-                if not_normal_zombie(&object) {
-                    let dir = NEXT_ATTACK_DIRECTION.load();
-                    let move_angle = to_player_dir.angle_to(dir).to_degrees();
-                    self.collision =
-                        if (0.0..=120.0).contains(&move_angle) || dir.x.abs() >= dir.y.abs() {
-                            from.orthogonal()
-                        } else if (-120.0..0.0).contains(&move_angle) || dir.x.abs() < dir.y.abs() {
-                            -from.orthogonal()
-                        } else if self.pursuit_direction {
-                            from.orthogonal()
-                        } else {
-                            -from.orthogonal()
-                        };
-                }
-            }
-        }
+        self.move_and_collide(to_player_dir, velocity);
     }
 
     fn ready(&mut self) {
@@ -295,6 +270,34 @@ impl RustPitcher {
         } else {
             self.guard();
             self.get_current_direction() * self.current_speed
+        }
+    }
+
+    fn move_and_collide(&mut self, to_player_dir: Vector2, velocity: Vector2) {
+        if !self.moveable {
+            return;
+        }
+        //撞到僵尸了
+        self.collision = Vector2::ZERO;
+        if let Some(collision) = self.base.to_gd().move_and_collide(velocity) {
+            // 发出排斥力的方向
+            let from = collision.get_normal();
+            if let Some(object) = collision.get_collider() {
+                if not_normal_zombie(&object) {
+                    let dir = NEXT_ATTACK_DIRECTION.load();
+                    let move_angle = to_player_dir.angle_to(dir).to_degrees();
+                    self.collision =
+                        if (0.0..=120.0).contains(&move_angle) || dir.x.abs() >= dir.y.abs() {
+                            from.orthogonal()
+                        } else if (-120.0..0.0).contains(&move_angle) || dir.x.abs() < dir.y.abs() {
+                            -from.orthogonal()
+                        } else if self.pursuit_direction {
+                            from.orthogonal()
+                        } else {
+                            -from.orthogonal()
+                        };
+                }
+            }
         }
     }
 

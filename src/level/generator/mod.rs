@@ -40,7 +40,8 @@ pub struct ZombieGenerator {
     zombie_scenes: Array<Gd<PackedScene>>,
     pub(crate) current_total: u32,
     pub(crate) current_refresh_count: u32,
-    pub(crate) current: u32,
+    #[doc = "当前等级已刷新的僵尸总数"]
+    pub(crate) current: AtomicU32,
     current_refresh_barrier: u32,
     timer: OnReady<Gd<Timer>>,
     base: Base<Node2D>,
@@ -58,7 +59,7 @@ impl INode2D for ZombieGenerator {
             refresh_time: 3.0,
             max_screen_count: ZOMBIE_MAX_SCREEN_COUNT,
             zombie_scenes: Array::new(),
-            current: 0,
+            current: AtomicU32::new(0),
             current_total: 30,
             current_refresh_count: 3,
             current_refresh_barrier: ZOMBIE_REFRESH_BARRIER,
@@ -87,7 +88,12 @@ impl INode2D for ZombieGenerator {
             self.update_refresh_hud();
         } else if event.is_action_pressed("l") {
             RustPlayer::reset_last_score_update();
-            if self.current.saturating_sub(self.get_killed()) < self.max_screen_count {
+            if self
+                .current
+                .load(Ordering::Acquire)
+                .saturating_sub(self.get_killed())
+                < self.max_screen_count
+            {
                 self.timer.set_wait_time(0.2);
                 self.timer.start();
                 self.update_refresh_hud();
@@ -107,7 +113,7 @@ impl ZombieGenerator {
         max_screen_count: u32,
         refresh_time: f64,
     ) {
-        self.current = 0;
+        self.current.store(0, Ordering::Release);
         self.killed.store(0, Ordering::Release);
         self.refresh_barrier = refresh_barrier;
         self.current_refresh_barrier = refresh_barrier;
@@ -136,7 +142,7 @@ impl ZombieGenerator {
 
     #[func]
     pub fn start_timer(&mut self) {
-        if self.current >= self.current_total {
+        if self.current.load(Ordering::Acquire) >= self.current_total {
             return;
         }
         self.timer.start();
@@ -153,7 +159,10 @@ impl ZombieGenerator {
     pub fn generate(&mut self) {
         for _ in 0..self.current_refresh_count {
             let kill_count = self.get_killed();
-            let live_count = self.current.saturating_sub(kill_count);
+            let live_count = self
+                .current
+                .load(Ordering::Acquire)
+                .saturating_sub(kill_count);
             if 0 < kill_count
                 && kill_count < self.current_refresh_barrier
                 && self.current_refresh_barrier < self.current_total
@@ -163,16 +172,20 @@ impl ZombieGenerator {
             {
                 break;
             }
-            if self.current >= self.current_total {
+            if self.current.load(Ordering::Acquire) >= self.current_total {
                 self.stop_timer();
                 break;
             }
             self.generate_zombie();
-            self.current += 1;
+            self.add_current();
         }
         while self.get_killed() >= self.current_refresh_barrier {
             self.current_refresh_barrier += self.refresh_barrier;
         }
+    }
+
+    pub fn add_current(&self) {
+        self.current.fetch_add(1, Ordering::Release);
     }
 
     fn update_refresh_hud(&self) {

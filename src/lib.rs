@@ -12,6 +12,8 @@ use std::collections::HashSet;
 use std::ops::Deref;
 use std::sync::LazyLock;
 
+// todo 增加汉化及切换设置
+// todo 使用MultiMeshInstance2D优化普通僵尸，减少draw call
 // todo 增加双持刀、双持武器，双持武器时，鼠标左键开一边，鼠标右键开另一边
 // todo 增加僵尸死亡掉落金币，需要过去拾取
 // todo 增加局外可升级的技能树
@@ -143,7 +145,7 @@ const ZOMBIE_RAMPAGE_TIME: real = 30.0;
 const ZOMBIE_ROTATE_COOLDOWN: real = 8.0;
 
 // boomer
-const BOOMER_MOVE_SPEED: real = 2.0;
+const BOOMER_MOVE_SPEED: real = 1.8;
 
 const BOOMER_EXPLODE_COUNTDOWN: f64 = 1.25;
 
@@ -160,7 +162,7 @@ const BOOMER_ALARM_DISTANCE: real = 600.0;
 // pitcher
 const ZOMBIE_GRENADE_DISTANCE: real = 250.0;
 
-const PITCHER_MOVE_SPEED: real = 1.6;
+const PITCHER_MOVE_SPEED: real = 1.5;
 
 const PITCHER_GRENADE_COUNTDOWN: real = 3.0;
 
@@ -177,6 +179,11 @@ const PITCHER_REFRESH_BARRIER: u32 = 4;
 const PITCHER_MAX_SCREEN_COUNT: u32 = 7;
 
 const PITCHER_ALARM_DISTANCE: real = 500.0;
+
+// rusher
+const RUSHER_REFRESH_BARRIER: u32 = 4;
+
+const RUSHER_MAX_SCREEN_COUNT: u32 = 7;
 
 // boss
 const BOSS_MAX_HEALTH: u32 = 7200;

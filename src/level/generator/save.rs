@@ -40,7 +40,7 @@ struct GeneratorData {
     max_screen_count: u32,
     current_total: u32,
     current_refresh_count: u32,
-    current: u32,
+    current: AtomicU32,
     current_refresh_barrier: u32,
     stopped: bool,
 }

@@ -71,6 +71,8 @@ pub struct RustZombie {
     rampage_time: real,
     #[export]
     alarm_time: real,
+    #[export]
+    skip_frame: bool,
     current_alarm_time: real,
     current_rotate_cooldown: real,
     state: ZombieState,
@@ -112,6 +114,7 @@ impl ICharacterBody2D for RustZombie {
             health: ZOMBIE_MAX_HEALTH,
             rampage_time: ZOMBIE_RAMPAGE_TIME,
             alarm_time: ZOMBIE_ALARM_TIME,
+            skip_frame: true,
             current_alarm_time: 0.0,
             current_rotate_cooldown: 0.0,
             state: ZombieState::Guard,
@@ -141,12 +144,18 @@ impl ICharacterBody2D for RustZombie {
     }
 
     fn process(&mut self, delta: f64) {
+        // todo 重构为行为责任链
         if self.hud.is_instance_valid() {
             self.hud.set_global_rotation_degrees(0.0);
         }
-        self.frame_counter = self.frame_counter.wrapping_add(1);
-        if RustWorld::is_paused() || 0 == self.frame_counter % ZOMBIE_SKIP_FRAME {
+        if RustWorld::is_paused() {
             return;
+        }
+        if self.skip_frame {
+            self.frame_counter = self.frame_counter.wrapping_add(1);
+            if 0 == self.frame_counter % ZOMBIE_SKIP_FRAME {
+                return;
+            }
         }
         if ZombieState::Dead == self.state {
             if BODY_COUNT.load(Ordering::Acquire) >= ZOMBIE_MAX_BODY_COUNT {
@@ -248,6 +257,12 @@ impl ICharacterBody2D for RustZombie {
     }
 
     fn ready(&mut self) {
+        if let Some(mut born_audio) = self
+            .base()
+            .try_get_node_as::<AudioStreamPlayer2D>("BornAudio")
+        {
+            born_audio.play();
+        }
         let gd = self.to_gd();
         self.die_audio
             .signals()

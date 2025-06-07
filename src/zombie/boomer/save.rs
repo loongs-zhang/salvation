@@ -105,10 +105,10 @@ impl RustBoomer {
                             boomer.bind_mut().pursuit_direction = save_data.pursuit_direction;
                             parent.add_child(&boomer);
                             if let Some(level) = RustLevel::get() {
-                                if let Some(mut generator) =
+                                if let Some(generator) =
                                     level.try_get_node_as::<ZombieGenerator>("BoomerGenerator")
                                 {
-                                    generator.bind_mut().current += 1;
+                                    generator.bind().add_current();
                                 }
                             }
                         }

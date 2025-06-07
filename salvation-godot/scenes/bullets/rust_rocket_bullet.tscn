@@ -170,7 +170,7 @@ height = 24.0
 [sub_resource type="CircleShape2D" id="CircleShape2D_04lso"]
 radius = 200.0
 
-[node name="RustRocket" type="RustGrenade"]
+[node name="RustRocketBullet" type="RustGrenade"]
 timed = false
 light_mask = 0
 visibility_layer = 6

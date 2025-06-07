@@ -91,10 +91,10 @@ impl RustBoss {
                             boss.bind_mut().speed = save_data.speed;
                             parent.add_child(&boss);
                             if let Some(level) = RustLevel::get() {
-                                if let Some(mut generator) =
+                                if let Some(generator) =
                                     level.try_get_node_as::<ZombieGenerator>("BossGenerator")
                                 {
-                                    generator.bind_mut().current += 1;
+                                    generator.bind().add_current();
                                 }
                             }
                         }

@@ -65,7 +65,8 @@ radius = 20.0
 [sub_resource type="CircleShape2D" id="CircleShape2D_04lso"]
 radius = 60.0
 
-[node name="RustGrenade" type="RustGrenade"]
+[node name="ZombieGrenade" type="RustGrenade"]
+speed = 600.0
 countdown = 1.25
 from_zombie = true
 light_mask = 0

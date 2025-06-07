@@ -30,7 +30,7 @@ impl RustPitcher {
             return;
         }
         self.animated_sprite2d.play_ex().name("run").done();
-        self.current_speed = self.speed * 1.35;
+        self.current_speed = self.speed * 1.5;
         self.state = ZombieState::Run;
         if !self.run_audio.is_playing() && self.run_audio.is_inside_tree() {
             self.run_audio.play();
@@ -78,7 +78,17 @@ impl RustPitcher {
         if ZombieState::Dead == self.state || !self.attackable {
             return;
         }
-        self.animated_sprite2d.play_ex().name("guard").done();
+        self.guard();
+        let zombie_position = self.base().get_global_position();
+        let player_position = RustPlayer::get_position();
+        let distance = zombie_position.distance_to(player_position);
+        if distance >= ZOMBIE_GRENADE_DISTANCE {
+            let to_player_dir = zombie_position.direction_to(player_position).normalized();
+            let velocity = to_player_dir * self.current_speed * 2.0;
+            self.base_mut()
+                .set_global_position(zombie_position + velocity);
+            self.move_and_collide(to_player_dir, velocity);
+        }
         self.base_mut().call_deferred("throw_grenade", &[]);
         self.current_speed = 0.0;
         self.state = ZombieState::Attack;

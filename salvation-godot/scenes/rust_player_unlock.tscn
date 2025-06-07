@@ -354,7 +354,7 @@ offset = Vector2(0, -2)
 
 [node name="Knife" parent="." instance=ExtResource("6_3hcco")]
 z_as_relative = false
-position = Vector2(-2, 12)
+position = Vector2(-2, 10)
 rotation = -1.1781
 
 [node name="Weapon" type="Node2D" parent="."]

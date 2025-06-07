@@ -17,6 +17,8 @@ impl Serialize for RustLevel {
         state.serialize_field("rampage_time", &self.rampage_time)?;
         state.serialize_field("zombie_refresh_time", &self.zombie_refresh_time)?;
         state.serialize_field("boomer_refresh_time", &self.boomer_refresh_time)?;
+        state.serialize_field("pitcher_refresh_time", &self.pitcher_refresh_time)?;
+        state.serialize_field("rusher_refresh_time", &self.rusher_refresh_time)?;
         state.serialize_field("boss_refresh_time", &self.boss_refresh_time)?;
         state.serialize_field("left_rampage_time", &self.left_rampage_time)?;
         state.end()
@@ -31,6 +33,8 @@ struct LevelData {
     rampage_time: real,
     zombie_refresh_time: f64,
     boomer_refresh_time: f64,
+    pitcher_refresh_time: f64,
+    rusher_refresh_time: f64,
     boss_refresh_time: f64,
     left_rampage_time: real,
 }
@@ -56,6 +60,8 @@ impl RustLevel {
                 self.rampage_time = save_data.rampage_time;
                 self.zombie_refresh_time = save_data.zombie_refresh_time;
                 self.boomer_refresh_time = save_data.boomer_refresh_time;
+                self.pitcher_refresh_time = save_data.pitcher_refresh_time;
+                self.rusher_refresh_time = save_data.rusher_refresh_time;
                 self.boss_refresh_time = save_data.boss_refresh_time;
                 self.left_rampage_time = save_data.left_rampage_time;
             }

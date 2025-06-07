@@ -241,6 +241,25 @@ impl RustHUD {
     }
 
     #[func]
+    pub fn update_refresh_boomer_hud(
+        &mut self,
+        is_stopped: bool,
+        boomer_refresh_count: u32,
+        boomer_wait_time: f64,
+    ) {
+        let mut label = self
+            .get_right_top_container()
+            .get_node_as::<Label>("RefreshBoomer");
+        label.set_text(&format!(
+            "BOOMER {} {}/{:.1}s",
+            if is_stopped { "COMING" } else { "INCOMING" },
+            boomer_refresh_count,
+            boomer_wait_time,
+        ));
+        label.show();
+    }
+
+    #[func]
     pub fn update_refresh_pitcher_hud(
         &mut self,
         is_stopped: bool,
@@ -260,20 +279,20 @@ impl RustHUD {
     }
 
     #[func]
-    pub fn update_refresh_boomer_hud(
+    pub fn update_refresh_rusher_hud(
         &mut self,
         is_stopped: bool,
-        boomer_refresh_count: u32,
-        boomer_wait_time: f64,
+        pitcher_refresh_count: u32,
+        pitcher_wait_time: f64,
     ) {
         let mut label = self
             .get_right_top_container()
-            .get_node_as::<Label>("RefreshBoomer");
+            .get_node_as::<Label>("RefreshRusher");
         label.set_text(&format!(
-            "BOOMER {} {}/{:.1}s",
+            "RUSHER {} {}/{:.1}s",
             if is_stopped { "COMING" } else { "INCOMING" },
-            boomer_refresh_count,
-            boomer_wait_time,
+            pitcher_refresh_count,
+            pitcher_wait_time,
         ));
         label.show();
     }

@@ -32,6 +32,7 @@ impl Serialize for RustZombie {
         state.serialize_field("speed", &self.speed)?;
         state.serialize_field("rampage_time", &self.rampage_time)?;
         state.serialize_field("alarm_time", &self.alarm_time)?;
+        state.serialize_field("skip_frame", &self.skip_frame)?;
         state.serialize_field("current_alarm_time", &self.current_alarm_time)?;
         state.serialize_field("pursuit_direction", &self.pursuit_direction)?;
         state.end()
@@ -51,6 +52,7 @@ struct ZombieData {
     speed: real,
     rampage_time: real,
     alarm_time: real,
+    skip_frame: bool,
     current_alarm_time: real,
     pursuit_direction: bool,
 }
@@ -59,7 +61,7 @@ struct ZombieData {
 impl RustZombie {
     #[func]
     pub fn on_save(&self) {
-        let name = self.base().get_class().to_string();
+        let name = self.base().get_name().to_string();
         let data = serde_json::to_string(&self).unwrap();
         if let Some(mut vec) = SAVE.get_mut(&name) {
             vec.insert(data);
@@ -78,7 +80,7 @@ impl RustZombie {
 
     #[func]
     pub fn on_load(&mut self) {
-        let name = self.base().get_class().to_string();
+        let name = self.base().get_name().to_string();
         if let Some((_, vec)) = SAVE.remove(&name) {
             if let Some(mut parent) = self.base().get_parent() {
                 for json in &vec {
@@ -102,14 +104,15 @@ impl RustZombie {
                             zombie.bind_mut().speed = save_data.speed;
                             zombie.bind_mut().rampage_time = save_data.rampage_time;
                             zombie.bind_mut().alarm_time = save_data.alarm_time;
+                            zombie.bind_mut().skip_frame = save_data.skip_frame;
                             zombie.bind_mut().current_alarm_time = save_data.current_alarm_time;
                             zombie.bind_mut().pursuit_direction = save_data.pursuit_direction;
                             parent.add_child(&zombie);
                             if let Some(level) = RustLevel::get() {
-                                if let Some(mut generator) =
+                                if let Some(generator) =
                                     level.try_get_node_as::<ZombieGenerator>("ZombieGenerator")
                                 {
-                                    generator.bind_mut().current += 1;
+                                    generator.bind().add_current();
                                 }
                             }
                         }
