@@ -49,7 +49,7 @@ impl INode2D for RustGrenade {
         Self {
             speed: 500.0,
             contact_explode: true,
-            countdown: 1.25,
+            countdown: 1.0,
             timed: true,
             from_zombie: false,
             hit: false,

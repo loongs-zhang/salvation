@@ -73,7 +73,7 @@ impl RustBoomer {
     pub fn before_load(&mut self) {
         if let Some(mut parent) = self.base().get_parent() {
             parent.remove_child(&self.to_gd());
-            self.base_mut().queue_free();
+            self.clean_body();
         }
     }
 

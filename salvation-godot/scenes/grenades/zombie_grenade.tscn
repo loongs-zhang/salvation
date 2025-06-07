@@ -66,6 +66,7 @@ radius = 20.0
 radius = 60.0
 
 [node name="RustGrenade" type="RustGrenade"]
+countdown = 1.25
 from_zombie = true
 light_mask = 0
 visibility_layer = 2

@@ -160,7 +160,7 @@ const BOOMER_ALARM_DISTANCE: real = 600.0;
 // pitcher
 const ZOMBIE_GRENADE_DISTANCE: real = 250.0;
 
-const PITCHER_MOVE_SPEED: real = 1.5;
+const PITCHER_MOVE_SPEED: real = 1.6;
 
 const PITCHER_GRENADE_COUNTDOWN: real = 3.0;
 
@@ -263,7 +263,7 @@ pub fn random_bool() -> bool {
 }
 
 pub fn random_degree() -> real {
-    rand::thread_rng().gen_range(0.0..=180.0)
+    rand::thread_rng().gen_range(0.0..360.0)
 }
 
 pub fn random_direction() -> Vector2 {

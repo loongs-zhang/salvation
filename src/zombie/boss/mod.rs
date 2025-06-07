@@ -290,7 +290,9 @@ impl RustBoss {
     #[func]
     pub fn clean_body(&mut self) {
         self.base_mut().queue_free();
-        BODY_COUNT.fetch_sub(1, Ordering::Release);
+        _ = BODY_COUNT.fetch_update(Ordering::Release, Ordering::Acquire, |v| {
+            Some(v.saturating_sub(1))
+        });
     }
 
     #[func]
